@@ -488,10 +488,13 @@ function App() {
                             </span>
                           </div>
                           <p>
-                            {warn.text}{' '}
+                            {warn.text.startsWith(`${platform}:`) ? warn.text : `${platform}: ${warn.text}`}{' '}
                             <span className="text-amber-300">
                               (line {warn.location.line}, col {warn.location.column})
                             </span>
+                          </p>
+                          <p className="mt-1 text-[11px] text-amber-300/90">
+                            Code: <code className="rounded bg-amber-900/30 px-1 py-0.5">{warn.code}</code>
                           </p>
                           {warn.suggestion && (
                             <p className="mt-1 text-xs text-amber-100">
