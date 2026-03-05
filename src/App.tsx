@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  getMissingTagsForAllPlatforms,
   PLATFORM_RULE_MATRIX,
   validateCoTWithProfile,
+  type CrossPlatformMissingTagsResult,
   type MessageValidationProfile,
   type Platform,
   type ValidationResult,
@@ -41,6 +43,10 @@ function App() {
   >
   const hasHardFails = result ? result.errors.length > 0 : false
   const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
+  const crossPlatformMissing: CrossPlatformMissingTagsResult | null = useMemo(() => {
+    if (!xml.trim()) return null
+    return getMissingTagsForAllPlatforms(xml)
+  }, [xml])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -303,6 +309,68 @@ function App() {
           )}
         </section>
       </main>
+
+      <section className="mt-8 rounded-lg border border-slate-700 bg-slate-800/50 p-6">
+        <h2 className="mb-4 text-xs uppercase text-slate-500">
+          Cross-Platform Missing Tags (Side-by-Side)
+        </h2>
+
+        {!crossPlatformMissing && <p className="italic text-slate-500">Paste XML to compare platforms.</p>}
+
+        {crossPlatformMissing?.parseError && (
+          <div className="rounded border border-red-500/40 bg-red-900/20 p-3 text-sm text-red-200">
+            <p>
+              Unable to compare platforms: {crossPlatformMissing.parseError.text}{' '}
+              <span className="text-red-300">
+                (line {crossPlatformMissing.parseError.location.line}, col{' '}
+                {crossPlatformMissing.parseError.location.column})
+              </span>
+            </p>
+          </div>
+        )}
+
+        {crossPlatformMissing && !crossPlatformMissing.parseError && (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {crossPlatformMissing.reports.map((report) => (
+              <article
+                key={`compare-${report.platform}`}
+                className={`rounded border p-3 ${
+                  report.platform === platform
+                    ? 'border-emerald-500/60 bg-emerald-900/15'
+                    : 'border-slate-700 bg-slate-900/40'
+                }`}
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
+                  <span
+                    className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                      report.missingRules.length === 0
+                        ? 'bg-emerald-900/40 text-emerald-200'
+                        : 'bg-amber-900/40 text-amber-200'
+                    }`}
+                  >
+                    Missing: {report.missingRules.length}
+                  </span>
+                </div>
+
+                {report.missingRules.length === 0 && (
+                  <p className="text-xs text-emerald-300">No platform-specific tags missing.</p>
+                )}
+
+                {report.missingRules.length > 0 && (
+                  <ul className="space-y-1 text-xs text-amber-200">
+                    {report.missingRules.map((rule) => (
+                      <li key={`${report.platform}-${rule.tag}`} className="rounded bg-slate-950/60 px-2 py-1">
+                        <code className="text-amber-100">&lt;{rule.tag}&gt;</code>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }

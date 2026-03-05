@@ -45,6 +45,16 @@ export interface MessageValidationProfile {
   expectedType?: string;
 }
 
+export interface PlatformMissingTagsReport {
+  platform: Platform;
+  missingRules: PlatformRule[];
+}
+
+export interface CrossPlatformMissingTagsResult {
+  parseError: ValidationMessage | null;
+  reports: PlatformMissingTagsReport[];
+}
+
 type ParsedCoT = {
   event?: {
     [key: string]: unknown;
@@ -264,6 +274,38 @@ const pushWarning = (
   result.warnings.push({ code, text, location, suggestion });
 };
 
+const parseXmlForValidation = (
+  xmlString: string,
+): { parsed: ParsedCoT | null; parseError: ValidationMessage | null } => {
+  const parserValidation = XMLValidator.validate(xmlString);
+  if (parserValidation !== true) {
+    return {
+      parsed: null,
+      parseError: {
+        code: 'XML_PARSE_ERROR',
+        text: `Invalid XML format: ${parserValidation.err.msg}`,
+        location: { line: parserValidation.err.line, column: parserValidation.err.col },
+        suggestion: 'Check unclosed/mismatched tags at the reported location.',
+      },
+    };
+  }
+
+  try {
+    const parser = new XMLParser({ ignoreAttributes: false });
+    return { parsed: parser.parse(xmlString) as ParsedCoT, parseError: null };
+  } catch {
+    return {
+      parsed: null,
+      parseError: {
+        code: 'XML_PARSE_EXCEPTION',
+        text: 'Invalid XML format: parser failed to process document.',
+        location: ROOT_LOCATION,
+        suggestion: 'Confirm the XML is well-formed and retry.',
+      },
+    };
+  }
+};
+
 const validateSchemaBackedStructure = (
   xmlString: string,
   parsed: ParsedCoT['event'],
@@ -324,25 +366,27 @@ const validateSchemaBackedStructure = (
 };
 
 export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
-  const parser = new XMLParser({ ignoreAttributes: false });
   const result: ValidationResult = { isValid: true, errors: [], warnings: [] };
 
-  // Parse pass with source positions from XMLValidator for precise parser diagnostics.
-  const parserValidation = XMLValidator.validate(xmlString);
-  if (parserValidation !== true) {
+  const { parsed, parseError } = parseXmlForValidation(xmlString);
+  if (parseError) {
     pushError(
       result,
-      'XML_PARSE_ERROR',
-      `Invalid XML format: ${parserValidation.err.msg}`,
-      { line: parserValidation.err.line, column: parserValidation.err.col },
-      'Check unclosed/mismatched tags at the reported location.',
+      parseError.code,
+      parseError.text,
+      parseError.location,
+      parseError.suggestion,
     );
     result.isValid = false;
     return result;
   }
 
   try {
-    const parsed = parser.parse(xmlString) as ParsedCoT;
+    if (!parsed) {
+      result.isValid = false;
+      return result;
+    }
+
     const event = parsed.event;
 
     validateSchemaBackedStructure(xmlString, event, result);
@@ -399,15 +443,13 @@ export const validateCoTWithProfile = (
     return result;
   }
 
-  const parserValidation = XMLValidator.validate(xmlString);
-  if (parserValidation !== true) {
+  const parsedForProfile = parseXmlForValidation(xmlString);
+  if (parsedForProfile.parseError || !parsedForProfile.parsed) {
     return result;
   }
 
-  const parser = new XMLParser({ ignoreAttributes: false });
-
   try {
-    const parsed = parser.parse(xmlString) as ParsedCoT;
+    const parsed = parsedForProfile.parsed;
     const event = parsed.event;
     const detail = (event?.detail ?? {}) as Record<string, unknown>;
     const eventType = String(event?.['@_type'] ?? '');
@@ -458,4 +500,29 @@ export const validateCoTWithProfile = (
   } catch {
     return result;
   }
+};
+
+export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformMissingTagsResult => {
+  const emptyReports = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).map((platform) => ({
+    platform,
+    missingRules: [],
+  }));
+
+  if (!xmlString.trim()) {
+    return { parseError: null, reports: emptyReports };
+  }
+
+  const { parsed, parseError } = parseXmlForValidation(xmlString);
+  if (parseError || !parsed) {
+    return { parseError, reports: emptyReports };
+  }
+
+  const detail = (parsed.event?.detail ?? {}) as Record<string, unknown>;
+  const reports = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).map((platform) => {
+    const rules = PLATFORM_RULE_MATRIX[platform];
+    const missingRules = rules.filter((rule) => !detail[rule.tag]);
+    return { platform, missingRules };
+  });
+
+  return { parseError: null, reports };
 };
