@@ -26,49 +26,40 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
-      <header className="mb-8 flex items-center justify-between border-b border-slate-700 pb-4">
+      <header className="mb-8 border-b border-slate-700 pb-4">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
           <Activity className="text-emerald-400" /> Cursor-on-Target (CoT) Linter
         </h1>
-        <div className="flex items-center gap-4">
-          <label className="text-sm uppercase tracking-widest text-slate-400">Target Platform:</label>
-          <select
-            value={platform}
-            onChange={(e) => setPlatform(e.target.value as Platform)}
-            className="rounded border border-slate-600 bg-slate-800 px-3 py-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-          >
-            <option value="ATAK-Civ">ATAK-Civ</option>
-            <option value="CloudTAK">CloudTAK</option>
-            <option value="iTAK">iTAK</option>
-            <option value="TAK Aware">TAK Aware</option>
-            <option value="TAKx">TAKx</option>
-            <option value="WebTAK">WebTAK</option>
-            <option value="WinTAK">WinTAK</option>
-          </select>
-        </div>
       </header>
 
       <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
-        <h2 className="mb-3 text-xs uppercase tracking-widest text-slate-400">Platform Rule Matrix</h2>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-xs uppercase tracking-widest text-slate-400">Platform Rule Matrix</h2>
+          <p className="text-xs text-slate-400">
+            Select a platform: <span className="font-bold text-emerald-400">{platform}</span>
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {ruleMatrixEntries.map(([name, rules]) => (
-            <article
+            <button
+              type="button"
               key={name}
+              onClick={() => setPlatform(name)}
               className={`rounded border p-3 ${
                 name === platform
                   ? 'border-emerald-500/60 bg-emerald-900/15'
-                  : 'border-slate-600 bg-slate-900/50'
+                  : 'border-slate-600 bg-slate-900/50 hover:border-slate-400'
               }`}
             >
-              <h3 className="mb-2 text-sm font-bold text-slate-100">{name}</h3>
+              <h3 className="mb-2 text-left text-sm font-bold text-slate-100">{name}</h3>
               <ul className="list-inside list-disc space-y-1 text-xs text-slate-300">
                 {rules.map((rule) => (
-                  <li key={`${name}-${rule.tag}`}>
+                  <li key={`${name}-${rule.tag}`} className="text-left">
                     <code className="font-bold text-slate-200">&lt;{rule.tag}&gt;</code> {rule.description}
                   </li>
                 ))}
               </ul>
-            </article>
+            </button>
           ))}
         </div>
       </section>
