@@ -12,28 +12,28 @@ ${detailBody}
 
 export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   ATAK: baseTemplate(
-    '    <contact callsign="Viper-1" />\n' +
-      '    <__group name="Blue" role="Team Member" />',
+    '    <contact callsign="ODIN-ATAK" />\n' +
+      '    <__group name="Blue" role="K9" />',
   ),
   CloudTAK: baseTemplate(
-    '    <contact callsign="Cloud-1" />\n' +
+    '    <contact callsign="ODIN-CLOUDTAK" />\n' +
       '    <takv device="Android" os="Android 14" version="5.0" />',
   ),
   iTAK: baseTemplate(
-    '    <contact callsign="iTAK-Alpha" />\n' +
-      '    <__group name="Rescue" role="Medic" />',
+    '    <contact callsign="ODIN-ITAK" />\n' +
+      '    <__group name="Rescue" role="K9" />',
   ),
   'TAK Aware': baseTemplate(
-    '    <contact callsign="Aware-1" />\n' +
+    '    <contact callsign="ODIN-TAKAWARE" />\n' +
       '    <remarks>Initial report from mobile observer.</remarks>',
   ),
   TAKx: baseTemplate(
     '    <takv device="Gateway" os="Linux" version="2.1" />\n' +
-      '    <__group name="Interop" role="Relay" />',
+      '    <__group name="Interop" role="K9" />',
   ),
   WebTAK: baseTemplate(
-    '    <contact callsign="Web-Tracker" />\n' +
-      '    <__group name="Ops" role="Viewer" />',
+    '    <contact callsign="ODIN-WEBTAK" />\n' +
+      '    <__group name="Ops" role="K9" />',
   ),
   WinTAK: baseTemplate(
     '    <usericon iconsetpath="COT_MAPPING_2525C/a-f-G-U-C.png" />\n' +

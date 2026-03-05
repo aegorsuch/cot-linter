@@ -73,19 +73,19 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     {
       tag: 'contact',
       description: 'Callsign/label rendering in map views.',
-      suggestionSnippet: '<contact callsign="Viper-1" />',
+      suggestionSnippet: '<contact callsign="ODIN-ATAK" />',
     },
     {
       tag: '__group',
       description: 'Team and role grouping behavior.',
-      suggestionSnippet: '<__group name="Blue" role="Team Member" />',
+      suggestionSnippet: '<__group name="Blue" role="K9" />',
     },
   ],
   CloudTAK: [
     {
       tag: 'contact',
       description: 'Entity labeling in feed/event listings.',
-      suggestionSnippet: '<contact callsign="Cloud-1" />',
+      suggestionSnippet: '<contact callsign="ODIN-CLOUDTAK" />',
     },
     {
       tag: 'takv',
@@ -97,19 +97,19 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     {
       tag: 'contact',
       description: 'Callsign display on mobile maps.',
-      suggestionSnippet: '<contact callsign="iTAK-Alpha" />',
+      suggestionSnippet: '<contact callsign="ODIN-ITAK" />',
     },
     {
       tag: '__group',
       description: 'Team presentation consistency.',
-      suggestionSnippet: '<__group name="Rescue" role="Medic" />',
+      suggestionSnippet: '<__group name="Rescue" role="K9" />',
     },
   ],
   'TAK Aware': [
     {
       tag: 'contact',
       description: 'User-friendly labeling in shared views.',
-      suggestionSnippet: '<contact callsign="Aware-1" />',
+      suggestionSnippet: '<contact callsign="ODIN-TAKAWARE" />',
     },
     {
       tag: 'remarks',
@@ -126,19 +126,19 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     {
       tag: '__group',
       description: 'Downstream grouping behavior.',
-      suggestionSnippet: '<__group name="Interop" role="Relay" />',
+      suggestionSnippet: '<__group name="Interop" role="K9" />',
     },
   ],
   WebTAK: [
     {
       tag: 'contact',
       description: 'Map label readability in browser UI.',
-      suggestionSnippet: '<contact callsign="Web-Tracker" />',
+      suggestionSnippet: '<contact callsign="ODIN-WEBTAK" />',
     },
     {
       tag: '__group',
       description: 'Team affiliation visibility in UI panes.',
-      suggestionSnippet: '<__group name="Ops" role="Viewer" />',
+      suggestionSnippet: '<__group name="Ops" role="K9" />',
     },
   ],
   WinTAK: [
