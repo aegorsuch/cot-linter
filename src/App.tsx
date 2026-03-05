@@ -5,11 +5,12 @@ import {
   type Platform,
   type ValidationResult,
 } from './utils/cotValidator'
+import { getStarterTemplate } from './utils/cotTemplates'
 import { Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
 
 function App() {
   const [xml, setXml] = useState('')
-  const [platform, setPlatform] = useState<Platform>('ATAK-Civ')
+  const [platform, setPlatform] = useState<Platform>('ATAK')
   const [result, setResult] = useState<ValidationResult | null>(null)
 
   useEffect(() => {
@@ -35,9 +36,18 @@ function App() {
       <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
         <div className="mb-3 flex items-center justify-between gap-4">
           <h2 className="text-xs uppercase tracking-widest text-slate-400">Platform Rule Matrix</h2>
-          <p className="text-xs text-slate-400">
-            Select a platform: <span className="font-bold text-emerald-400">{platform}</span>
-          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setXml(getStarterTemplate(platform))}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Load {platform} Starter Template
+            </button>
+            <p className="text-xs text-slate-400">
+              Select a platform: <span className="font-bold text-emerald-400">{platform}</span>
+            </p>
+          </div>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {ruleMatrixEntries.map(([name, rules]) => (
@@ -102,9 +112,18 @@ function App() {
               {result.errors.length > 0 && (
                 <div>
                   <h3 className="mb-2 text-xs font-bold uppercase text-red-400">Critical Errors</h3>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-red-200">
+                  <ul className="space-y-2 text-sm text-red-200">
                     {result.errors.map((err, i) => (
-                      <li key={i}>{err}</li>
+                      <li key={i} className="rounded border border-red-900/40 bg-red-950/20 p-2">
+                        <p>
+                          {err.text} <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
+                        </p>
+                        {err.suggestion && (
+                          <p className="mt-1 text-xs text-red-100">
+                            Fix: <code className="rounded bg-red-900/40 px-1 py-0.5">{err.suggestion}</code>
+                          </p>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -115,9 +134,22 @@ function App() {
                   <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">
                     Platform Warnings ({platform})
                   </h3>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-amber-200">
+                  <ul className="space-y-2 text-sm text-amber-200">
                     {result.warnings.map((warn, i) => (
-                      <li key={i}>{warn}</li>
+                      <li key={i} className="rounded border border-amber-900/40 bg-amber-950/20 p-2">
+                        <p>
+                          {warn.text}{' '}
+                          <span className="text-amber-300">
+                            (line {warn.location.line}, col {warn.location.column})
+                          </span>
+                        </p>
+                        {warn.suggestion && (
+                          <p className="mt-1 text-xs text-amber-100">
+                            Suggested tag:{' '}
+                            <code className="rounded bg-amber-900/40 px-1 py-0.5">{warn.suggestion}</code>
+                          </p>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </div>
