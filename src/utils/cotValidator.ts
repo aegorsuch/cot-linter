@@ -4,9 +4,9 @@ export type Platform =
   | 'ATAK'
   | 'CloudTAK'
   | 'iTAK'
-  | 'WearTAK'
   | 'TAK Aware'
   | 'TAKx'
+  | 'WearTAK'
   | 'WebTAK'
   | 'WinTAK';
 
@@ -32,6 +32,17 @@ export interface PlatformRule {
   tag: string;
   description: string;
   suggestionSnippet: string;
+}
+
+export interface MessageValidationProfile {
+  id: string;
+  platform: Platform;
+  label: string;
+  description: string;
+  requiredDetailTags: string[];
+  sampleXml: string;
+  requiredEventAttributes?: string[];
+  expectedType?: string;
 }
 
 type ParsedCoT = {
@@ -106,18 +117,6 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
       suggestionSnippet: '<__group name="Rescue" role="K9" />',
     },
   ],
-  WearTAK: [
-    {
-      tag: 'contact',
-      description: 'Short-form callsign display in wearable UI.',
-      suggestionSnippet: '<contact callsign="ODIN-WEARTAK" />',
-    },
-    {
-      tag: '__group',
-      description: 'Team and role context in constrained layouts.',
-      suggestionSnippet: '<__group name="Dark Green" role="K9" />',
-    },
-  ],
   'TAK Aware': [
     {
       tag: 'contact',
@@ -140,6 +139,23 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
       tag: '__group',
       description: 'Downstream grouping behavior.',
       suggestionSnippet: '<__group name="Interop" role="K9" />',
+    },
+  ],
+  WearTAK: [
+    {
+      tag: 'contact',
+      description: 'Short-form callsign display in wearable UI.',
+      suggestionSnippet: '<contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />',
+    },
+    {
+      tag: '__group',
+      description: 'Team and role context in constrained layouts.',
+      suggestionSnippet: '<__group name="Dark Green" role="K9" />',
+    },
+    {
+      tag: 'track',
+      description: 'Device movement context for wearable SA updates.',
+      suggestionSnippet: '<track speed="0.00000000" course="0.00000000" />',
     },
   ],
   WebTAK: [
@@ -173,11 +189,11 @@ const PLATFORM_SCHEMA_FRAGMENTS: Record<Platform, string> = {
   CloudTAK:
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
   iTAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
-  WearTAK:
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
   'TAK Aware':
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',
   TAKx: '<xsd:element name="takv" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
+  WearTAK:
+    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" /><xsd:element name="track" minOccurs="1" />',
   WebTAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
   WinTAK: '<xsd:element name="usericon" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
 };
@@ -368,6 +384,78 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
       'Confirm the XML is well-formed and retry.',
     );
     result.isValid = false;
+    return result;
+  }
+};
+
+export const validateCoTWithProfile = (
+  xmlString: string,
+  platform: Platform,
+  profile: MessageValidationProfile | null,
+): ValidationResult => {
+  const result = validateCoT(xmlString, platform);
+
+  if (!profile || profile.platform !== platform) {
+    return result;
+  }
+
+  const parserValidation = XMLValidator.validate(xmlString);
+  if (parserValidation !== true) {
+    return result;
+  }
+
+  const parser = new XMLParser({ ignoreAttributes: false });
+
+  try {
+    const parsed = parser.parse(xmlString) as ParsedCoT;
+    const event = parsed.event;
+    const detail = (event?.detail ?? {}) as Record<string, unknown>;
+    const eventType = String(event?.['@_type'] ?? '');
+
+    if (profile.expectedType && eventType !== profile.expectedType) {
+      pushError(
+        result,
+        'PROFILE_EVENT_TYPE_MISMATCH',
+        `Message profile '${profile.label}' expects type '${profile.expectedType}', found '${eventType || 'undefined'}'.`,
+        findAttributeLocation(xmlString, 'event', 'type'),
+        `<event type="${profile.expectedType}">`,
+      );
+    }
+
+    for (const attr of profile.requiredEventAttributes ?? []) {
+      if (!event?.[toAttr(attr)]) {
+        pushError(
+          result,
+          'PROFILE_EVENT_ATTR_MISSING',
+          `Message profile '${profile.label}' requires event attribute '${attr}'.`,
+          findAttributeLocation(xmlString, 'event', attr),
+          `<event ${attr}="...">`,
+        );
+      }
+    }
+
+    for (const tag of profile.requiredDetailTags) {
+      if (!detail[tag]) {
+        const detailLocation = event?.detail
+          ? findTagLocation(xmlString, 'detail')
+          : findTagLocation(xmlString, 'event');
+
+        pushError(
+          result,
+          'PROFILE_DETAIL_TAG_MISSING',
+          `Message profile '${profile.label}' requires <${tag}> inside <detail>.`,
+          detailLocation,
+          `<${tag}>...</${tag}>`,
+        );
+      }
+    }
+
+    if (result.errors.length > 0) {
+      result.isValid = false;
+    }
+
+    return result;
+  } catch {
     return result;
   }
 };

@@ -1,27 +1,40 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   PLATFORM_RULE_MATRIX,
-  validateCoT,
+  validateCoTWithProfile,
+  type MessageValidationProfile,
   type Platform,
   type ValidationResult,
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
+import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 import { Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
 
 function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
+  const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [result, setResult] = useState<ValidationResult | null>(null)
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const messageProfiles = getMessageProfilesForPlatform(platform)
+  const selectedProfile: MessageValidationProfile | null =
+    selectedProfileId === 'platform-default'
+      ? null
+      : messageProfiles.find((profile) => profile.id === selectedProfileId) ?? null
+
   useEffect(() => {
     if (xml.trim()) {
-      setResult(validateCoT(xml, platform))
+      setResult(validateCoTWithProfile(xml, platform, selectedProfile))
     } else {
       setResult(null)
     }
-  }, [xml, platform])
+  }, [xml, platform, selectedProfile])
+
+  useEffect(() => {
+    setSelectedProfileId('platform-default')
+  }, [platform])
 
   const ruleMatrixEntries = Object.entries(PLATFORM_RULE_MATRIX) as Array<
     [Platform, (typeof PLATFORM_RULE_MATRIX)[Platform]]
@@ -77,15 +90,48 @@ function App() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setXml(getStarterTemplate(platform))}
+              onClick={() => {
+                if (selectedProfile) {
+                  setXml(selectedProfile.sampleXml)
+                } else {
+                  setXml(getStarterTemplate(platform))
+                }
+              }}
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
             >
-              Load {platform} Starter Template
+              {selectedProfile ? `Load ${selectedProfile.label} Sample` : `Load ${platform} Starter Template`}
             </button>
             <p className="text-xs text-slate-400">
               Select a platform: <span className="font-bold text-emerald-400">{platform}</span>
             </p>
           </div>
+        </div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedProfileId('platform-default')}
+            className={`rounded border px-2 py-1 text-xs transition-colors ${
+              selectedProfileId === 'platform-default'
+                ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
+                : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
+            }`}
+          >
+            SA
+          </button>
+          {messageProfiles.map((profile) => (
+            <button
+              type="button"
+              key={profile.id}
+              onClick={() => setSelectedProfileId(profile.id)}
+              className={`rounded border px-2 py-1 text-xs transition-colors ${
+                selectedProfileId === profile.id
+                  ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
+                  : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
+              }`}
+            >
+              {profile.label}
+            </button>
+          ))}
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
           {ruleMatrixEntries.map(([name, rules]) => (
