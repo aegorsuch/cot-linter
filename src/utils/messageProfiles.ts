@@ -24,6 +24,28 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
 </event>`,
   },
   {
+    id: 'weartak-milstd-point-clear',
+    platform: 'WearTAK',
+    label: 'MIL-STD-2525D Point Clear',
+    description: 'WearTAK point-clear payload used to remove a previously dropped point.',
+    expectedType: 'a-u-G',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['status', 'precisionlocation', 'link', 'color', 'usericon', 'remarks', 'contact'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='129c8ba2-4a50-444a-919f-ca3209eaf975' type='a-u-G' time='2026-02-27T03:16:13.000Z' start='2026-02-27T03:16:10.443Z' stale='2026-02-27T03:13:14.443Z' how='h-g-i-g-o' access='Undefined'>
+  <point lat='41.879986' lon='-87.6408946' hae='180.3' ce='15.5' le='1.6' />
+  <detail>
+    <status readiness='true' battery='91'/>
+    <precisionlocation altsrc='SRTM1'/>
+    <link uid='WEAROS_ec3eecdeb3329263' production_time='2026-02-27T03:16:10.443Z' type='a-f-G-U-C' parent_callsign='ODIN-WEARTAK' relation='p-p'/>
+    <color argb='-1'/>
+    <usericon iconsetpath=''/>
+    <remarks>ODIN-WEARTAK clearing a MIL-STD-2525D Point</remarks>
+    <contact callsign='ODIN-WEARTAK_031614Z'/>
+  </detail>
+</event>`,
+  },
+  {
     id: 'weartak-manual-alert-gunshot',
     platform: 'WearTAK',
     label: 'Manual Alert',
@@ -40,6 +62,22 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     <usericon iconsetpath='911 Alert'/>
     <color argb='-1'/>
     <contact callsign='ODIN-WEARTAK&#10;Manual Alert: Gunshot'/>
+  </detail>
+</event>`,
+  },
+  {
+    id: 'weartak-manual-alert-clear',
+    platform: 'WearTAK',
+    label: 'Manual Alert Clear',
+    description: 'WearTAK emergency cancel payload for clearing a manual alert.',
+    expectedType: 'b-a-o-can',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['emergency'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='3ec08f24-bbb4-41e8-86e1-c990e1052c44' type='b-a-o-can' time='2026-02-27T03:02:23.000Z' start='2026-02-27T03:02:24.696Z' stale='2026-02-27T03:17:24.696Z' how='h-e' access='Undefined'>
+  <point lat='41.879986' lon='-87.6409504' hae='178.1' ce='15.0' le='1.7' />
+  <detail>
+    <emergency cancel='true'>ODIN-WEARTAK</emergency>
   </detail>
 </event>`,
   },
