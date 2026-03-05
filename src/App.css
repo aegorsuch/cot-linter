@@ -1,0 +1,71 @@
+#root {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.app-shell {
+  display: grid;
+  gap: 1rem;
+  text-align: left;
+}
+
+.app-shell h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.field-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+label {
+  font-weight: 600;
+}
+
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #5e6472;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  color: inherit;
+  background: #1c1f26;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 220px;
+  line-height: 1.4;
+}
+
+.results {
+  border: 1px solid #3d4250;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #171a21;
+}
+
+.results h2 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.result-ok {
+  color: #7bbf8e;
+  margin: 0.25rem 0;
+}
+
+.result-error {
+  color: #ff4d4d;
+  margin: 0.25rem 0;
+}
+
+.result-warning {
+  color: #f1c40f;
+  margin: 0.25rem 0;
+}
