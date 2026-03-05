@@ -18,6 +18,7 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [result, setResult] = useState<ValidationResult | null>(null)
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
+  const [copyStatus, setCopyStatus] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   const messageProfiles = getMessageProfilesForPlatform(platform)
@@ -80,6 +81,113 @@ function App() {
     textarea.focus()
     textarea.setSelectionRange(range.lineStart, selectionEnd)
     setActiveDiagnosticKey(key)
+  }
+
+  const copyWithFallback = async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      const helper = document.createElement('textarea')
+      helper.value = text
+      helper.setAttribute('readonly', '')
+      helper.style.position = 'fixed'
+      helper.style.top = '-9999px'
+      document.body.appendChild(helper)
+      helper.select()
+      const didCopy = document.execCommand('copy')
+      document.body.removeChild(helper)
+      return didCopy
+    }
+  }
+
+  const getMissingTagsJsonReport = (): string | null => {
+    if (!crossPlatformMissing || crossPlatformMissing.parseError) {
+      return null
+    }
+
+    const platformsWithMissing = crossPlatformMissing.reports.filter(
+      (report) => report.missingRules.length > 0,
+    )
+
+    return JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        selectedPlatform: platform,
+        selectedProfile: selectedProfile?.label ?? 'SA',
+        summary: {
+          platformsCompared: crossPlatformMissing.reports.length,
+          platformsWithMissingTags: platformsWithMissing.length,
+          totalMissingTags: crossPlatformMissing.reports.reduce(
+            (total, current) => total + current.missingRules.length,
+            0,
+          ),
+        },
+        platforms: crossPlatformMissing.reports.map((report) => ({
+          platform: report.platform,
+          missingCount: report.missingRules.length,
+          missingTags: report.missingRules.map((rule) => ({
+            tag: rule.tag,
+            description: rule.description,
+            suggestionSnippet: rule.suggestionSnippet,
+          })),
+        })),
+      },
+      null,
+      2,
+    )
+  }
+
+  const getMissingTagsMarkdownReport = (): string | null => {
+    if (!crossPlatformMissing || crossPlatformMissing.parseError) {
+      return null
+    }
+
+    const reportLines: string[] = [
+      '# CoT Missing Tags Report',
+      '',
+      `- Generated: ${new Date().toISOString()}`,
+      `- Selected platform: ${platform}`,
+      `- Selected profile: ${selectedProfile?.label ?? 'SA'}`,
+      `- Platforms compared: ${crossPlatformMissing.reports.length}`,
+      '',
+      '## Results by Platform',
+      '',
+    ]
+
+    crossPlatformMissing.reports.forEach((report) => {
+      if (report.missingRules.length === 0) {
+        reportLines.push(`### ${report.platform}`)
+        reportLines.push('No platform-specific tags missing.')
+        reportLines.push('')
+        return
+      }
+
+      reportLines.push(`### ${report.platform}`)
+      reportLines.push(`Missing tags: ${report.missingRules.length}`)
+      reportLines.push('')
+
+      report.missingRules.forEach((rule) => {
+        reportLines.push(`- <${rule.tag}>: ${rule.description}`)
+      })
+
+      reportLines.push('')
+    })
+
+    return reportLines.join('\n')
+  }
+
+  const copyMissingTagsReport = async (format: 'json' | 'markdown') => {
+    const report =
+      format === 'json' ? getMissingTagsJsonReport() : getMissingTagsMarkdownReport()
+
+    if (!report) {
+      setCopyStatus('No cross-platform report available to copy.')
+      return
+    }
+
+    const didCopy = await copyWithFallback(report)
+    setCopyStatus(didCopy ? `Copied ${format.toUpperCase()} report.` : `Unable to copy ${format} report.`)
   }
 
   return (
@@ -314,6 +422,30 @@ function App() {
         <h2 className="mb-4 text-xs uppercase text-slate-500">
           Cross-Platform Missing Tags (Side-by-Side)
         </h2>
+
+        {crossPlatformMissing && !crossPlatformMissing.parseError && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void copyMissingTagsReport('json')
+              }}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Copy Missing Tags JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void copyMissingTagsReport('markdown')
+              }}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Copy Missing Tags Markdown
+            </button>
+            {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
+          </div>
+        )}
 
         {!crossPlatformMissing && <p className="italic text-slate-500">Paste XML to compare platforms.</p>}
 
