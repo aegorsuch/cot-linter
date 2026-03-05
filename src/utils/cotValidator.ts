@@ -15,10 +15,15 @@ export interface SourceLocation {
   column: number;
 }
 
+export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
+export type ConfidenceLevel = 'high' | 'medium' | 'low';
+
 export interface ValidationMessage {
   code: string;
   text: string;
   location: SourceLocation;
+  severity: SeverityLevel;
+  confidence: ConfidenceLevel;
   suggestion?: string;
 }
 
@@ -259,9 +264,11 @@ const pushError = (
   code: string,
   text: string,
   location: SourceLocation,
+  severity: SeverityLevel,
+  confidence: ConfidenceLevel,
   suggestion?: string,
 ): void => {
-  result.errors.push({ code, text, location, suggestion });
+  result.errors.push({ code, text, location, severity, confidence, suggestion });
 };
 
 const pushWarning = (
@@ -269,9 +276,11 @@ const pushWarning = (
   code: string,
   text: string,
   location: SourceLocation,
+  severity: SeverityLevel,
+  confidence: ConfidenceLevel,
   suggestion?: string,
 ): void => {
-  result.warnings.push({ code, text, location, suggestion });
+  result.warnings.push({ code, text, location, severity, confidence, suggestion });
 };
 
 const parseXmlForValidation = (
@@ -285,6 +294,8 @@ const parseXmlForValidation = (
         code: 'XML_PARSE_ERROR',
         text: `Invalid XML format: ${parserValidation.err.msg}`,
         location: { line: parserValidation.err.line, column: parserValidation.err.col },
+        severity: 'critical',
+        confidence: 'high',
         suggestion: 'Check unclosed/mismatched tags at the reported location.',
       },
     };
@@ -300,6 +311,8 @@ const parseXmlForValidation = (
         code: 'XML_PARSE_EXCEPTION',
         text: 'Invalid XML format: parser failed to process document.',
         location: ROOT_LOCATION,
+        severity: 'critical',
+        confidence: 'medium',
         suggestion: 'Confirm the XML is well-formed and retry.',
       },
     };
@@ -319,6 +332,8 @@ const validateSchemaBackedStructure = (
       'SCHEMA_ROOT_EVENT_MISSING',
       'Schema violation: missing root <event> element.',
       ROOT_LOCATION,
+      'critical',
+      'high',
       '<event uid="demo-uid" type="a-f-G-U-C" time="..." start="..." stale="..." how="m-g">...</event>',
     );
     return;
@@ -331,6 +346,8 @@ const validateSchemaBackedStructure = (
         'SCHEMA_EVENT_ATTR_MISSING',
         `Schema violation: <event> is missing required attribute '${attribute}'.`,
         findAttributeLocation(xmlString, 'event', attribute),
+          'high',
+          'high',
         `<event ${attribute}="...">`,
       );
     }
@@ -343,6 +360,8 @@ const validateSchemaBackedStructure = (
         'SCHEMA_EVENT_CHILD_MISSING',
         `Schema violation: <event> must include a <${child}> child element.`,
         findTagLocation(xmlString, 'event'),
+        'high',
+        'high',
         `<${child}>...</${child}>`,
       );
     }
@@ -358,6 +377,8 @@ const validateSchemaBackedStructure = (
           'SCHEMA_POINT_ATTR_MISSING',
           `Schema violation: <point> is missing required attribute '${pointAttribute}'.`,
           findAttributeLocation(xmlString, 'point', pointAttribute),
+          'high',
+          'high',
           `<point ${pointAttribute}="..." />`,
         );
       }
@@ -375,6 +396,8 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
       parseError.code,
       parseError.text,
       parseError.location,
+      parseError.severity,
+      parseError.confidence,
       parseError.suggestion,
     );
     result.isValid = false;
@@ -409,6 +432,8 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
           'PLATFORM_TAG_MISSING',
           `${platform}: Missing <${rule.tag}> tag. ${rule.description}`,
           detailLocation,
+          'medium',
+          'medium',
           rule.suggestionSnippet,
         );
       }
@@ -425,6 +450,8 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
       'XML_PARSE_EXCEPTION',
       'Invalid XML format: parser failed to process document.',
       ROOT_LOCATION,
+      'critical',
+      'medium',
       'Confirm the XML is well-formed and retry.',
     );
     result.isValid = false;
@@ -460,6 +487,8 @@ export const validateCoTWithProfile = (
         'PROFILE_EVENT_TYPE_MISMATCH',
         `Message profile '${profile.label}' expects type '${profile.expectedType}', found '${eventType || 'undefined'}'.`,
         findAttributeLocation(xmlString, 'event', 'type'),
+        'high',
+        'high',
         `<event type="${profile.expectedType}">`,
       );
     }
@@ -471,6 +500,8 @@ export const validateCoTWithProfile = (
           'PROFILE_EVENT_ATTR_MISSING',
           `Message profile '${profile.label}' requires event attribute '${attr}'.`,
           findAttributeLocation(xmlString, 'event', attr),
+          'high',
+          'high',
           `<event ${attr}="...">`,
         );
       }
@@ -487,6 +518,8 @@ export const validateCoTWithProfile = (
           'PROFILE_DETAIL_TAG_MISSING',
           `Message profile '${profile.label}' requires <${tag}> inside <detail>.`,
           detailLocation,
+          'high',
+          'high',
           `<${tag}>...</${tag}>`,
         );
       }

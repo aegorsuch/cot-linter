@@ -58,6 +58,7 @@ function App() {
   >
   const hasHardFails = result ? result.errors.length > 0 : false
   const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
+
   const crossPlatformMissing: CrossPlatformMissingTagsResult | null = useMemo(() => {
     if (!xml.trim()) return null
     return getMissingTagsForAllPlatforms(xml)
@@ -236,8 +237,8 @@ function App() {
                 1. Pick a platform and optionally a profile, then load a starter or paste XML.
               </p>
               <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                2. Review <span className="text-red-300">Hard Fails</span> (blocking) and{' '}
-                <span className="text-amber-300">Warnings</span> (non-blocking).
+                2. Review <span className="text-red-300">Blocking</span> issues first, then{' '}
+                <span className="text-amber-300">Warning</span> items.
               </p>
               <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
                 3. Use Cross-Platform Missing Tags to compare and copy JSON/Markdown share reports.
@@ -362,9 +363,9 @@ function App() {
                 )}
                 <span className="font-bold">
                   {hasHardFails
-                    ? 'BLOCKING: Hard-Fail Validation Errors'
+                    ? 'BLOCKING: Blocking Issues Found'
                     : hasCompatibilityWarnings
-                      ? 'PASSING: Compatibility Warnings Found'
+                      ? 'PASSING: Warning Items Found'
                       : 'PASSING: No Issues Detected'}
                 </span>
               </div>
@@ -377,7 +378,7 @@ function App() {
                       : 'border-slate-700 bg-slate-900/40 text-slate-300'
                   }`}
                 >
-                  <p className="text-xs uppercase tracking-wide">Hard Fails (Blocking)</p>
+                  <p className="text-xs uppercase tracking-wide">Blocking</p>
                   <p className="text-xl font-bold">{result.errors.length}</p>
                 </div>
                 <div
@@ -387,16 +388,14 @@ function App() {
                       : 'border-slate-700 bg-slate-900/40 text-slate-300'
                   }`}
                 >
-                  <p className="text-xs uppercase tracking-wide">Compatibility Warnings (Non-Blocking)</p>
+                  <p className="text-xs uppercase tracking-wide">Warning</p>
                   <p className="text-xl font-bold">{result.warnings.length}</p>
                 </div>
               </div>
 
               {result.errors.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase text-red-400">
-                    Hard Fails (Blocking)
-                  </h3>
+                  <h3 className="mb-2 text-xs font-bold uppercase text-red-400">Blocking</h3>
                   <ul className="space-y-2 text-sm text-red-200">
                     {result.errors.map((err, i) => (
                       <li key={i}>
@@ -409,6 +408,11 @@ function App() {
                               : 'border-red-900/40 bg-red-950/20 hover:border-red-700/60'
                           }`}
                         >
+                          <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px]">
+                            <span className="rounded border border-red-500/60 bg-red-900/35 px-1.5 py-0.5 font-bold text-red-200">
+                              Blocking
+                            </span>
+                          </div>
                           <p>
                             {err.text}{' '}
                             <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
@@ -427,9 +431,7 @@ function App() {
 
               {result.warnings.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">
-                    Compatibility Warnings (Non-Blocking) ({platform})
-                  </h3>
+                  <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">Warning ({platform})</h3>
                   <ul className="space-y-2 text-sm text-amber-200">
                     {result.warnings.map((warn, i) => (
                       <li key={i}>
@@ -442,6 +444,11 @@ function App() {
                               : 'border-amber-900/40 bg-amber-950/20 hover:border-amber-700/60'
                           }`}
                         >
+                          <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px]">
+                            <span className="rounded border border-amber-500/60 bg-amber-900/35 px-1.5 py-0.5 font-bold text-amber-200">
+                              Warning
+                            </span>
+                          </div>
                           <p>
                             {warn.text}{' '}
                             <span className="text-amber-300">
