@@ -33,6 +33,9 @@ function App() {
     selectedProfileId === 'platform-default'
       ? null
       : messageProfiles.find((profile) => profile.id === selectedProfileId) ?? null
+  const selectedTemplateLabel = selectedProfile
+    ? `${platform} ${selectedProfile.label} Template`
+    : `${platform} SA Template`
 
   useEffect(() => {
     if (xml.trim()) {
@@ -125,7 +128,7 @@ function App() {
       {
         generatedAt: new Date().toISOString(),
         selectedPlatform: platform,
-        selectedProfile: selectedProfile?.label ?? 'SA',
+        selectedProfile: selectedTemplateLabel,
         summary: {
           platformsCompared: crossPlatformMissing.reports.length,
           platformsWithMissingTags: platformsWithMissing.length,
@@ -159,7 +162,7 @@ function App() {
       '',
       `- Generated: ${new Date().toISOString()}`,
       `- Selected platform: ${platform}`,
-      `- Selected profile: ${selectedProfile?.label ?? 'SA'}`,
+      `- Selected profile: ${selectedTemplateLabel}`,
       `- Platforms compared: ${crossPlatformMissing.reports.length}`,
       '',
       '## Results by Platform',
@@ -205,7 +208,8 @@ function App() {
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
       <header className="mb-8 border-b border-slate-700 pb-4">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Activity className="text-emerald-400" /> Cursor-on-Target (CoT) Linter
+          <Activity className="text-emerald-400" /> Tactical Assault Kit (TAK) Cursor-on-Target (CoT)
+          {' '}Linter
         </h1>
       </header>
 
@@ -258,7 +262,7 @@ function App() {
               }}
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
             >
-              {selectedProfile ? `Load ${selectedProfile.label} Sample` : `Load ${platform} Starter Template`}
+              {`Load ${selectedTemplateLabel}`}
             </button>
             <p className="text-xs text-slate-400">
               Select a platform: <span className="font-bold text-emerald-400">{platform}</span>
@@ -269,26 +273,28 @@ function App() {
           <button
             type="button"
             onClick={() => setSelectedProfileId('platform-default')}
+            title={`${platform} SA Template`}
             className={`rounded border px-2 py-1 text-xs transition-colors ${
               selectedProfileId === 'platform-default'
                 ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                 : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
-            }`}
+            } max-w-[15rem] truncate md:max-w-none`}
           >
-            SA
+            {`${platform} SA Template`}
           </button>
           {messageProfiles.map((profile) => (
             <button
               type="button"
               key={profile.id}
               onClick={() => setSelectedProfileId(profile.id)}
+              title={`${platform} ${profile.label} Template`}
               className={`rounded border px-2 py-1 text-xs transition-colors ${
                 selectedProfileId === profile.id
                   ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                   : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
-              }`}
+              } max-w-[15rem] truncate md:max-w-none`}
             >
-              {profile.label}
+              {`${platform} ${profile.label} Template`}
             </button>
           ))}
         </div>
