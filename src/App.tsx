@@ -12,6 +12,8 @@ import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 import { Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
 
+const GUIDE_VISIBILITY_STORAGE_KEY = 'cot-linter-show-guide'
+
 function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
@@ -19,6 +21,11 @@ function App() {
   const [result, setResult] = useState<ValidationResult | null>(null)
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const [showGuide, setShowGuide] = useState(() => {
+    const saved = localStorage.getItem(GUIDE_VISIBILITY_STORAGE_KEY)
+    if (saved === null) return true
+    return saved === 'true'
+  })
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   const messageProfiles = getMessageProfilesForPlatform(platform)
@@ -38,6 +45,10 @@ function App() {
   useEffect(() => {
     setSelectedProfileId('platform-default')
   }, [platform])
+
+  useEffect(() => {
+    localStorage.setItem(GUIDE_VISIBILITY_STORAGE_KEY, String(showGuide))
+  }, [showGuide])
 
   const ruleMatrixEntries = Object.entries(PLATFORM_RULE_MATRIX) as Array<
     [Platform, (typeof PLATFORM_RULE_MATRIX)[Platform]]
@@ -197,6 +208,40 @@ function App() {
           <Activity className="text-emerald-400" /> Cursor-on-Target (CoT) Linter
         </h1>
       </header>
+
+      <section className="mb-6 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="text-xs uppercase tracking-widest text-slate-400">Inspector Quick Guide</h2>
+          <button
+            type="button"
+            onClick={() => setShowGuide((current) => !current)}
+            className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+          >
+            {showGuide ? 'Hide Help' : 'Show Help'}
+          </button>
+        </div>
+
+        {showGuide && (
+          <>
+            <p className="mb-3 text-sm text-slate-300">
+              This inspector validates CoT XML for core schema correctness, platform compatibility,
+              and optional message-profile requirements before deploy.
+            </p>
+            <div className="grid grid-cols-1 gap-2 text-xs text-slate-300 md:grid-cols-3">
+              <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
+                1. Pick a platform and optionally a profile, then load a starter or paste XML.
+              </p>
+              <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
+                2. Review <span className="text-red-300">Hard Fails</span> (blocking) and{' '}
+                <span className="text-amber-300">Warnings</span> (non-blocking).
+              </p>
+              <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
+                3. Use Cross-Platform Missing Tags to compare and copy JSON/Markdown share reports.
+              </p>
+            </div>
+          </>
+        )}
+      </section>
 
       <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
         <div className="mb-3 flex items-center justify-between gap-4">
