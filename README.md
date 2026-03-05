@@ -1,73 +1,151 @@
-# React + TypeScript + Vite
+# CoT-Linter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A web-based Cursor-on-Target (CoT) XML linter for fast schema checks, platform compatibility checks, and profile-specific validation.
 
-Currently, two official plugins are available:
+This project is built with React, TypeScript, and Vite, and is designed to help operators and developers quickly identify CoT payload issues before deployment.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## What It Does
 
-## React Compiler
+- Validates CoT XML structure and required core schema attributes.
+- Flags blocking issues (hard fails) with line and column locations.
+- Flags non-blocking platform compatibility warnings for missing platform tags.
+- Supports profile-driven validation for specific message styles.
+- Compares missing tags across all supported platforms side-by-side.
+- Copies missing tag comparison reports as JSON or Markdown for sharing.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Supported Platforms
 
-## Expanding the ESLint configuration
+- ATAK
+- CloudTAK
+- iTAK
+- TAK Aware
+- TAKx
+- WearTAK
+- WebTAK
+- WinTAK
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Each platform has a rule matrix of recommended detail tags (for example `contact`, `__group`, `takv`, `usericon`, `track`, `remarks`).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Validation Model
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+The linter has two result classes:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Hard Fails (blocking):
+  Missing required CoT structure and profile-required fields. These set `isValid` to `false`.
+- Compatibility Warnings (non-blocking):
+  Missing platform-specific recommended tags. These do not block validity by themselves.
+
+Core schema checks include:
+
+- Required `<event>` attributes: `uid`, `type`, `time`, `start`, `stale`, `how`
+- Required `<event>` children: `point`, `detail`
+- Required `<point>` attributes: `lat`, `lon`, `hae`, `ce`, `le`
+
+Profile checks (when selected) can also enforce:
+
+- Expected event `type`
+- Additional required event attributes
+- Specific required tags inside `<detail>`
+
+## Message Profiles
+
+The app includes profile-based validation for WearTAK message types, including:
+
+- MIL-STD-2525D Point Drop
+- MIL-STD-2525D Point Clear
+- Manual Alert
+- Manual Alert Clear
+
+Selecting a profile updates validation requirements and can load a sample message for that profile.
+
+## UI Highlights
+
+- Platform Rule Matrix selector for platform-specific behavior.
+- Starter template loader per platform.
+- Profile selector with sample payload loading.
+- Diagnostic click-to-jump that focuses the input and highlights the relevant line.
+- Cross-platform missing-tag comparison cards.
+- Copy report buttons:
+  - `Copy Missing Tags JSON`
+  - `Copy Missing Tags Markdown`
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+ recommended
+- npm 10+ recommended
+
+### Install
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Run Development Server
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+Then open the local Vite URL shown in your terminal.
+
+### Build
+
+```bash
+npm run build
+```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+### Lint
+
+```bash
+npm run lint
+```
+
+## Usage
+
+1. Choose a platform from the rule matrix.
+2. Optionally choose a message profile.
+3. Paste CoT XML into the input area, or load a starter/profile sample.
+4. Review hard fails and warnings in the status panel.
+5. Click any diagnostic item to jump to the related XML location.
+6. Use the cross-platform section to compare missing tags.
+7. Copy a missing-tags report in JSON or Markdown format for sharing.
+
+## Project Structure
+
+```text
+src/
+  App.tsx                    Main UI and interaction flow
+  utils/
+    cotValidator.ts          Core validation and rule matrix
+    cotTemplates.ts          Platform starter XML templates
+    messageProfiles.ts       Profile definitions and sample messages
+```
+
+## Report Output Notes
+
+The copied missing-tags report includes:
+
+- Generation timestamp
+- Selected platform and profile
+- Aggregate summary counts
+- Per-platform missing tags with descriptions and suggestion snippets
+
+If clipboard APIs are unavailable in the browser context, the app uses a fallback copy mechanism.
+
+## Known Limitations
+
+- Validation is rule-based and not a full external XSD validation pipeline.
+- Platform checks currently focus on presence of key detail tags, not full semantic correctness of each tag payload.
+- Empty input intentionally shows an empty comparison baseline across platforms.
+
+## License
+
+See `LICENSE`.
