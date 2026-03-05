@@ -18,13 +18,13 @@ describe('App platform and profile behavior', () => {
       screen.getByRole('button', { name: /WearTAK MIL-STD-2525D Point Drop Template/i }),
     )
 
-    expect(
-      screen.getByRole('button', { name: /Load WearTAK MIL-STD-2525D Point Drop Template/i }),
-    ).toBeInTheDocument()
+    expect(screen.getByText(/Sample loaded from/i)).toHaveTextContent(
+      'WearTAK MIL-STD-2525D Point Drop Template',
+    )
 
     await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
 
-    expect(screen.getByRole('button', { name: /Load ATAK SA Template/i })).toBeInTheDocument()
+    expect(screen.getByText(/Sample loaded from/i)).toHaveTextContent('ATAK SA Template')
   })
 
   it('renders merged cross-platform compatibility details after XML is loaded', async () => {
@@ -36,9 +36,9 @@ describe('App platform and profile behavior', () => {
     await user.selectOptions(platformSelect, 'WearTAK')
     expect(platformSelect).toHaveValue('WearTAK')
 
-    await user.click(screen.getByRole('button', { name: /Load WearTAK SA Template/i }))
+    await user.click(screen.getByRole('button', { name: /Load Sample Into Input/i }))
 
-    expect(screen.getByRole('heading', { name: /Cross-Platform Compatibility Matrix/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Validation Matrix/i })).toBeInTheDocument()
     expect(screen.getAllByText(/Present:/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/expected tags/i).length).toBeGreaterThan(0)
     expect(screen.queryByText(/Platform Rule Matrix/i)).not.toBeInTheDocument()

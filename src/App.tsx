@@ -10,7 +10,7 @@ import {
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
-import { Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { Activity } from 'lucide-react'
 
 const GUIDE_VISIBILITY_STORAGE_KEY = 'cot-linter-show-guide'
 
@@ -25,26 +25,31 @@ function App() {
     if (saved === null) return true
     return saved === 'true'
   })
+
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const platforms = Object.keys(PLATFORM_RULE_MATRIX) as Platform[]
   const messageProfiles = getMessageProfilesForPlatform(platform)
   const selectedProfile: MessageValidationProfile | null =
     selectedProfileId === 'platform-default'
       ? null
       : messageProfiles.find((profile) => profile.id === selectedProfileId) ?? null
+
   const selectedTemplateLabel = selectedProfile
     ? `${platform} ${selectedProfile.label} Template`
     : `${platform} SA Template`
+
+  const selectedTemplateXml = useMemo(() => {
+    if (selectedProfile) {
+      return selectedProfile.sampleXml
+    }
+    return getStarterTemplate(platform)
+  }, [platform, selectedProfile])
 
   const result: ValidationResult | null = xml.trim()
     ? validateCoTWithProfile(xml, platform, selectedProfile)
     : null
 
-  useEffect(() => {
-    localStorage.setItem(GUIDE_VISIBILITY_STORAGE_KEY, String(showGuide))
-  }, [showGuide])
-
-  const platforms = Object.keys(PLATFORM_RULE_MATRIX) as Platform[]
   const hasHardFails = result ? result.errors.length > 0 : false
   const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
 
@@ -52,6 +57,24 @@ function App() {
     if (!xml.trim()) return null
     return getMissingTagsForAllPlatforms(xml)
   }, [xml])
+
+  const warningLocationByTag = useMemo(() => {
+    const map = new Map<string, { line: number; column: number }>()
+    if (!result) return map
+
+    result.warnings.forEach((warning) => {
+      const tagMatch = /Missing\s*<([^>]+)>\s*tag/i.exec(warning.text)
+      if (tagMatch && tagMatch[1] && !map.has(tagMatch[1])) {
+        map.set(tagMatch[1], warning.location)
+      }
+    })
+
+    return map
+  }, [result])
+
+  useEffect(() => {
+    localStorage.setItem(GUIDE_VISIBILITY_STORAGE_KEY, String(showGuide))
+  }, [showGuide])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -85,6 +108,45 @@ function App() {
     textarea.focus()
     textarea.setSelectionRange(range.lineStart, selectionEnd)
     setActiveDiagnosticKey(key)
+  }
+
+  const toLineColFromOffset = (text: string, index: number): { line: number; column: number } => {
+    if (index < 0) {
+      return { line: 1, column: 1 }
+    }
+
+    let line = 1
+    let column = 1
+
+    for (let i = 0; i < index && i < text.length; i += 1) {
+      if (text[i] === '\n') {
+        line += 1
+        column = 1
+      } else {
+        column += 1
+      }
+    }
+
+    return { line, column }
+  }
+
+  const getDetailOrEventLocation = (text: string): { line: number; column: number } => {
+    const detailMatch = /<\s*detail(\s|>)/i.exec(text)
+    if (detailMatch && detailMatch.index >= 0) {
+      return toLineColFromOffset(text, detailMatch.index)
+    }
+
+    const eventMatch = /<\s*event(\s|>)/i.exec(text)
+    if (eventMatch && eventMatch.index >= 0) {
+      return toLineColFromOffset(text, eventMatch.index)
+    }
+
+    return { line: 1, column: 1 }
+  }
+
+  const jumpToMissingTagContext = (tag: string, key: string) => {
+    const location = warningLocationByTag.get(tag) ?? getDetailOrEventLocation(xml)
+    jumpToLocation(location.line, location.column, key)
   }
 
   const copyWithFallback = async (text: string): Promise<boolean> => {
@@ -223,26 +285,25 @@ function App() {
             </p>
             <div className="grid grid-cols-1 gap-2 text-xs text-slate-300 md:grid-cols-3">
               <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                1. Pick a platform and optionally a profile, then load a starter or paste XML.
+                1. Choose platform/profile context and review the sample template.
               </p>
               <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                2. Review <span className="text-red-300">Blocking</span> issues first, then{' '}
-                <span className="text-amber-300">Warning</span> items.
+                2. Paste XML on the left or load the sample from the right panel.
               </p>
               <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                3. Use Cross-Platform Missing Tags to compare and copy JSON/Markdown share reports.
+                3. Use the validation matrix below for diagnostics, missing tags, and jump-to-line actions.
               </p>
             </div>
           </>
         )}
       </section>
 
-      <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
+      <section className="mb-6 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
         <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-xs uppercase tracking-widest text-slate-400">Validation Context</h2>
             <p className="mt-1 text-xs text-slate-400">
-              Pick a warning/profile context, then paste XML to compare compatibility across all platforms.
+              Select one platform and profile context for warning interpretation and starter samples.
             </p>
           </div>
 
@@ -265,19 +326,6 @@ function App() {
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              onClick={() => {
-                if (selectedProfile) {
-                  setXml(selectedProfile.sampleXml)
-                } else {
-                  setXml(getStarterTemplate(platform))
-                }
-              }}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-            >
-              {`Load ${selectedTemplateLabel}`}
-            </button>
             <p className="text-xs text-slate-400">
               Active: <span className="font-bold text-emerald-400">{platform}</span>
             </p>
@@ -314,18 +362,14 @@ function App() {
           ))}
         </div>
 
-        <p className="mb-3 text-[11px] text-slate-400">
+        <p className="text-[11px] text-slate-400">
           Profiles shown here are for <span className="font-bold text-emerald-400">{platform}</span> only.
         </p>
       </section>
 
-      <main className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section>
           <h2 className="mb-2 text-xs uppercase text-slate-500">Input CoT XML</h2>
-          <p className="mb-2 text-[11px] text-slate-400">
-            Legend: <span className="text-red-300">Blocking</span> stops deploy;{' '}
-            <span className="text-amber-300">Warning</span> is advisory.
-          </p>
           <textarea
             ref={textareaRef}
             className="h-[500px] w-full rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
@@ -335,152 +379,146 @@ function App() {
           />
         </section>
 
-        <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-          <h2 className="mb-4 text-xs uppercase text-slate-500">Validation Status</h2>
-
-          {!result && <div className="italic text-slate-500">Waiting for input...</div>}
-
-          {result && (
-            <div className="space-y-6">
-              <div
-                className={`flex items-center gap-3 rounded p-4 ${
-                  hasHardFails
-                    ? 'border border-red-500/50 bg-red-900/20'
-                    : hasCompatibilityWarnings
-                      ? 'border border-amber-500/50 bg-amber-900/20'
-                      : 'border border-emerald-500/50 bg-emerald-900/20'
-                }`}
-              >
-                {!hasHardFails ? (
-                  <ShieldCheck className="text-emerald-400" />
-                ) : (
-                  <ShieldAlert className="text-red-400" />
-                )}
-                <span className="font-bold">
-                  {hasHardFails
-                    ? 'BLOCKING: Blocking Issues Found'
-                    : hasCompatibilityWarnings
-                      ? 'PASSING: Warning Items Found'
-                      : 'PASSING: No Issues Detected'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div
-                  className={`rounded border p-3 ${
-                    hasHardFails
-                      ? 'border-red-500/60 bg-red-900/20 text-red-100'
-                      : 'border-slate-700 bg-slate-900/40 text-slate-300'
-                  }`}
-                >
-                  <p className="text-xs uppercase tracking-wide">Blocking</p>
-                  <p className="text-xl font-bold">{result.errors.length}</p>
-                </div>
-                <div
-                  className={`rounded border p-3 ${
-                    hasCompatibilityWarnings
-                      ? 'border-amber-500/60 bg-amber-900/20 text-amber-100'
-                      : 'border-slate-700 bg-slate-900/40 text-slate-300'
-                  }`}
-                >
-                  <p className="text-xs uppercase tracking-wide">Warning</p>
-                  <p className="text-xl font-bold">{result.warnings.length}</p>
-                </div>
-              </div>
-
-              {result.errors.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase text-red-400">Blocking</h3>
-                  <ul className="space-y-2 text-sm text-red-200">
-                    {result.errors.map((err, i) => (
-                      <li key={i}>
-                        <button
-                          type="button"
-                          onClick={() => jumpToLocation(err.location.line, err.location.column, `error-${i}`)}
-                          className={`w-full rounded border p-2 text-left transition-colors ${
-                            activeDiagnosticKey === `error-${i}`
-                              ? 'border-red-500 bg-red-900/35'
-                              : 'border-red-900/40 bg-red-950/20 hover:border-red-700/60'
-                          }`}
-                        >
-                          <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px]">
-                            <span className="rounded border border-red-500/60 bg-red-900/35 px-1.5 py-0.5 font-bold text-red-200">
-                              Blocking
-                            </span>
-                          </div>
-                          <p>
-                            {err.text}{' '}
-                            <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
-                          </p>
-                          {err.suggestion && (
-                            <p className="mt-1 text-xs text-red-100">
-                              Fix: <code className="rounded bg-red-900/40 px-1 py-0.5">{err.suggestion}</code>
-                            </p>
-                          )}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {result.warnings.length > 0 && (
-                <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">Warning ({platform})</h3>
-                  <ul className="space-y-2 text-sm text-amber-200">
-                    {result.warnings.map((warn, i) => (
-                      <li key={i}>
-                        <button
-                          type="button"
-                          onClick={() => jumpToLocation(warn.location.line, warn.location.column, `warn-${i}`)}
-                          className={`w-full rounded border p-2 text-left transition-colors ${
-                            activeDiagnosticKey === `warn-${i}`
-                              ? 'border-amber-500 bg-amber-900/35'
-                              : 'border-amber-900/40 bg-amber-950/20 hover:border-amber-700/60'
-                          }`}
-                        >
-                          <div className="mb-1 flex flex-wrap items-center gap-2 text-[11px]">
-                            <span className="rounded border border-amber-500/60 bg-amber-900/35 px-1.5 py-0.5 font-bold text-amber-200">
-                              Warning
-                            </span>
-                          </div>
-                          <p>
-                            {warn.text.startsWith(`${platform}:`) ? warn.text : `${platform}: ${warn.text}`}{' '}
-                            <span className="text-amber-300">
-                              (line {warn.location.line}, col {warn.location.column})
-                            </span>
-                          </p>
-                          <p className="mt-1 text-[11px] text-amber-300/90">
-                            Code: <code className="rounded bg-amber-900/30 px-1 py-0.5">{warn.code}</code>
-                          </p>
-                          {warn.suggestion && (
-                            <p className="mt-1 text-xs text-amber-100">
-                              Suggested tag:{' '}
-                              <code className="rounded bg-amber-900/40 px-1 py-0.5">{warn.suggestion}</code>
-                            </p>
-                          )}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {result.isValid && result.errors.length === 0 && result.warnings.length === 0 && (
-                <p className="text-sm text-emerald-400">Ready for deployment to {platform}.</p>
-              )}
-            </div>
-          )}
+        <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+          <h2 className="mb-2 text-xs uppercase text-slate-500">Sample CoT (Read-Only)</h2>
+          <p className="mb-2 text-[11px] text-slate-400">
+            Sample loaded from <span className="font-bold text-emerald-300">{selectedTemplateLabel}</span>
+          </p>
+          <textarea
+            readOnly
+            value={selectedTemplateXml}
+            className="h-[440px] w-full rounded border border-slate-700 bg-slate-950/70 p-4 font-mono text-sm text-slate-300"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setXml(selectedTemplateXml)}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Load Sample Into Input
+            </button>
+            <button
+              type="button"
+              onClick={() => setXml('')}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-slate-400"
+            >
+              Clear Input
+            </button>
+          </div>
         </section>
       </main>
 
-      <section className="mt-8 rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-        <h2 className="mb-4 text-xs uppercase text-slate-500">
-          Cross-Platform Compatibility Matrix
-        </h2>
+      <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
+        <h2 className="mb-4 text-xs uppercase text-slate-500">Validation Matrix (Cross-Platform Compatibility)</h2>
         <p className="mb-4 text-[11px] text-slate-400">
-          Each card shows platform rule coverage for the current XML payload.
+          Diagnostics and per-platform tag coverage are shown together for faster triage.
         </p>
+
+        {!result && (
+          <p className="mb-4 italic text-slate-500">Paste or load XML to generate diagnostics and matrix output.</p>
+        )}
+
+        {result && (
+          <div className="mb-6 space-y-4 rounded border border-slate-700 bg-slate-900/35 p-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div
+                className={`rounded border p-3 ${
+                  hasHardFails
+                    ? 'border-red-500/60 bg-red-900/20 text-red-100'
+                    : 'border-slate-700 bg-slate-900/40 text-slate-300'
+                }`}
+              >
+                <p className="text-xs uppercase tracking-wide">Blocking</p>
+                <p className="text-xl font-bold">{result.errors.length}</p>
+              </div>
+              <div
+                className={`rounded border p-3 ${
+                  hasCompatibilityWarnings
+                    ? 'border-amber-500/60 bg-amber-900/20 text-amber-100'
+                    : 'border-slate-700 bg-slate-900/40 text-slate-300'
+                }`}
+              >
+                <p className="text-xs uppercase tracking-wide">Warning ({platform})</p>
+                <p className="text-xl font-bold">{result.warnings.length}</p>
+              </div>
+            </div>
+
+            {result.errors.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-xs font-bold uppercase text-red-400">Blocking Diagnostics</h3>
+                <ul className="space-y-2 text-sm text-red-200">
+                  {result.errors.map((err, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        onClick={() => jumpToLocation(err.location.line, err.location.column, `error-${i}`)}
+                        className={`w-full rounded border p-2 text-left transition-colors ${
+                          activeDiagnosticKey === `error-${i}`
+                            ? 'border-red-500 bg-red-900/35'
+                            : 'border-red-900/40 bg-red-950/20 hover:border-red-700/60'
+                        }`}
+                      >
+                        <p>
+                          {err.text}{' '}
+                          <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
+                        </p>
+                        <p className="mt-1 text-[11px] text-red-300/90">
+                          Code: <code className="rounded bg-red-900/30 px-1 py-0.5">{err.code}</code>
+                        </p>
+                        {err.suggestion && (
+                          <p className="mt-1 text-xs text-red-100">
+                            Fix: <code className="rounded bg-red-900/40 px-1 py-0.5">{err.suggestion}</code>
+                          </p>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {result.warnings.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">Warning Diagnostics ({platform})</h3>
+                <ul className="space-y-2 text-sm text-amber-200">
+                  {result.warnings.map((warn, i) => (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        onClick={() => jumpToLocation(warn.location.line, warn.location.column, `warn-${i}`)}
+                        className={`w-full rounded border p-2 text-left transition-colors ${
+                          activeDiagnosticKey === `warn-${i}`
+                            ? 'border-amber-500 bg-amber-900/35'
+                            : 'border-amber-900/40 bg-amber-950/20 hover:border-amber-700/60'
+                        }`}
+                      >
+                        <p>
+                          {warn.text.startsWith(`${platform}:`) ? warn.text : `${platform}: ${warn.text}`}{' '}
+                          <span className="text-amber-300">
+                            (line {warn.location.line}, col {warn.location.column})
+                          </span>
+                        </p>
+                        <p className="mt-1 text-[11px] text-amber-300/90">
+                          Code: <code className="rounded bg-amber-900/30 px-1 py-0.5">{warn.code}</code>
+                        </p>
+                        {warn.suggestion && (
+                          <p className="mt-1 text-xs text-amber-100">
+                            Suggested tag:{' '}
+                            <code className="rounded bg-amber-900/40 px-1 py-0.5">{warn.suggestion}</code>
+                          </p>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {result.isValid && result.errors.length === 0 && result.warnings.length === 0 && (
+              <p className="text-sm text-emerald-400">Ready for deployment to {platform}.</p>
+            )}
+          </div>
+        )}
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
           <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -522,75 +560,88 @@ function App() {
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {crossPlatformMissing.reports.map((report) => (
-              (() => {
-                const platformRules = PLATFORM_RULE_MATRIX[report.platform]
-                const missingTagSet = new Set(report.missingRules.map((rule) => rule.tag))
-                const presentCount = platformRules.length - report.missingRules.length
+            {crossPlatformMissing.reports.map((report) => {
+              const platformRules = PLATFORM_RULE_MATRIX[report.platform]
+              const missingTagSet = new Set(report.missingRules.map((rule) => rule.tag))
+              const presentCount = platformRules.length - report.missingRules.length
 
-                return (
-                  <article
-                    key={`compare-${report.platform}`}
-                    className={`rounded border p-3 ${
-                      report.platform === platform
-                        ? 'border-emerald-500/60 bg-emerald-900/15'
-                        : 'border-slate-700 bg-slate-900/40'
-                    }`}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
-                      <span
-                        className={`rounded px-2 py-0.5 text-[11px] font-bold ${
-                          report.missingRules.length === 0
-                            ? 'bg-emerald-900/40 text-emerald-200'
-                            : 'bg-amber-900/40 text-amber-200'
-                        }`}
-                      >
-                        Missing: {report.missingRules.length}
-                      </span>
-                    </div>
+              return (
+                <article
+                  key={`compare-${report.platform}`}
+                  className={`rounded border p-3 ${
+                    report.platform === platform
+                      ? 'border-emerald-500/60 bg-emerald-900/15'
+                      : 'border-slate-700 bg-slate-900/40'
+                  }`}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
+                    <span
+                      className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                        report.missingRules.length === 0
+                          ? 'bg-emerald-900/40 text-emerald-200'
+                          : 'bg-amber-900/40 text-amber-200'
+                      }`}
+                    >
+                      Missing: {report.missingRules.length}
+                    </span>
+                  </div>
 
-                    <p className="mb-2 text-[11px] text-slate-400">
-                      Present: <span className="font-bold text-emerald-300">{presentCount}</span>
-                      {' '}of {platformRules.length} expected tags
-                    </p>
+                  <p className="mb-2 text-[11px] text-slate-400">
+                    Present: <span className="font-bold text-emerald-300">{presentCount}</span> of{' '}
+                    {platformRules.length} expected tags
+                  </p>
 
-                    <ul className="space-y-1 text-xs">
-                      {platformRules.map((rule) => {
-                        const isMissing = missingTagSet.has(rule.tag)
+                  <ul className="space-y-1 text-xs">
+                    {platformRules.map((rule) => {
+                      const isMissing = missingTagSet.has(rule.tag)
+                      const diagnosticKey = `matrix-${report.platform}-${rule.tag}`
 
-                        return (
-                          <li
-                            key={`${report.platform}-${rule.tag}`}
-                            className={`rounded border px-2 py-1 ${
-                              isMissing
-                                ? 'border-amber-700/40 bg-amber-950/25 text-amber-200'
-                                : 'border-emerald-700/30 bg-emerald-950/20 text-emerald-200'
-                            }`}
-                          >
-                            <p className="flex flex-wrap items-center gap-2">
-                              <code className="font-bold">&lt;{rule.tag}&gt;</code>
-                              <span className="text-[11px] uppercase tracking-wide">
-                                {isMissing ? 'missing' : 'present'}
-                              </span>
-                            </p>
-                            <p className="mt-1 text-[11px] text-slate-300">{rule.description}</p>
-                            {isMissing && (
+                      return (
+                        <li
+                          key={`${report.platform}-${rule.tag}`}
+                          className={`rounded border px-2 py-1 ${
+                            isMissing
+                              ? 'border-amber-700/40 bg-amber-950/25 text-amber-200'
+                              : 'border-emerald-700/30 bg-emerald-950/20 text-emerald-200'
+                          }`}
+                        >
+                          <p className="flex flex-wrap items-center gap-2">
+                            <code className="font-bold">&lt;{rule.tag}&gt;</code>
+                            <span className="text-[11px] uppercase tracking-wide">
+                              {isMissing ? 'missing' : 'present'}
+                            </span>
+                          </p>
+                          <p className="mt-1 text-[11px] text-slate-300">{rule.description}</p>
+
+                          {isMissing && (
+                            <>
                               <p className="mt-1 text-[11px] text-amber-100">
                                 Add:{' '}
                                 <code className="rounded bg-amber-900/30 px-1 py-0.5">
                                   {rule.suggestionSnippet}
                                 </code>
                               </p>
-                            )}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </article>
-                )
-              })()
-            ))}
+                              <button
+                                type="button"
+                                onClick={() => jumpToMissingTagContext(rule.tag, diagnosticKey)}
+                                className={`mt-2 rounded border px-2 py-0.5 text-[11px] transition-colors ${
+                                  activeDiagnosticKey === diagnosticKey
+                                    ? 'border-amber-500/80 bg-amber-900/35 text-amber-100'
+                                    : 'border-amber-700/50 text-amber-200 hover:border-amber-500/80'
+                                }`}
+                              >
+                                Go to insertion point
+                              </button>
+                            </>
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </article>
+              )
+            })}
           </div>
         )}
       </section>
