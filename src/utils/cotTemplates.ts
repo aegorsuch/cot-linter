@@ -13,7 +13,7 @@ ${detailBody}
 export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   ATAK: baseTemplate(
     '    <contact callsign="ODIN-ATAK" />\n' +
-      '    <__group name="Blue" role="K9" />',
+      '    <__group name="Dark Green" role="K9" />',
   ),
   CloudTAK: baseTemplate(
     '    <contact callsign="ODIN-CLOUDTAK" />\n' +
@@ -22,6 +22,10 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   iTAK: baseTemplate(
     '    <contact callsign="ODIN-ITAK" />\n' +
       '    <__group name="Rescue" role="K9" />',
+  ),
+  WearTAK: baseTemplate(
+    '    <contact callsign="ODIN-WEARTAK" />\n' +
+      '    <__group name="Dark Green" role="K9" />',
   ),
   'TAK Aware': baseTemplate(
     '    <contact callsign="ODIN-TAKAWARE" />\n' +

@@ -4,6 +4,7 @@ export type Platform =
   | 'ATAK'
   | 'CloudTAK'
   | 'iTAK'
+  | 'WearTAK'
   | 'TAK Aware'
   | 'TAKx'
   | 'WebTAK'
@@ -78,7 +79,7 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     {
       tag: '__group',
       description: 'Team and role grouping behavior.',
-      suggestionSnippet: '<__group name="Blue" role="K9" />',
+      suggestionSnippet: '<__group name="Dark Green" role="K9" />',
     },
   ],
   CloudTAK: [
@@ -103,6 +104,18 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
       tag: '__group',
       description: 'Team presentation consistency.',
       suggestionSnippet: '<__group name="Rescue" role="K9" />',
+    },
+  ],
+  WearTAK: [
+    {
+      tag: 'contact',
+      description: 'Short-form callsign display in wearable UI.',
+      suggestionSnippet: '<contact callsign="ODIN-WEARTAK" />',
+    },
+    {
+      tag: '__group',
+      description: 'Team and role context in constrained layouts.',
+      suggestionSnippet: '<__group name="Dark Green" role="K9" />',
     },
   ],
   'TAK Aware': [
@@ -160,6 +173,8 @@ const PLATFORM_SCHEMA_FRAGMENTS: Record<Platform, string> = {
   CloudTAK:
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
   iTAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
+  WearTAK:
+    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
   'TAK Aware':
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',
   TAKx: '<xsd:element name="takv" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
