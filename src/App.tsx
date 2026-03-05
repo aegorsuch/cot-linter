@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   PLATFORM_RULE_MATRIX,
   validateCoT,
@@ -12,6 +12,8 @@ function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
   const [result, setResult] = useState<ValidationResult | null>(null)
+  const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => {
     if (xml.trim()) {
@@ -26,6 +28,40 @@ function App() {
   >
   const hasHardFails = result ? result.errors.length > 0 : false
   const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
+
+  const getLineRange = (text: string, line: number, column: number) => {
+    const clampedLine = Math.max(1, line)
+    const clampedColumn = Math.max(1, column)
+    const lines = text.split('\n')
+
+    const lineIndex = Math.min(clampedLine - 1, Math.max(lines.length - 1, 0))
+    let lineStart = 0
+
+    for (let i = 0; i < lineIndex; i += 1) {
+      lineStart += lines[i].length + 1
+    }
+
+    const lineText = lines[lineIndex] ?? ''
+    const cursorOffset = Math.min(clampedColumn - 1, lineText.length)
+
+    return {
+      cursorStart: lineStart + cursorOffset,
+      lineStart,
+      lineEnd: lineStart + lineText.length,
+    }
+  }
+
+  const jumpToLocation = (line: number, column: number, key: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+
+    const range = getLineRange(xml, line, column)
+    const selectionEnd = range.lineEnd > range.lineStart ? range.lineEnd : range.cursorStart + 1
+
+    textarea.focus()
+    textarea.setSelectionRange(range.lineStart, selectionEnd)
+    setActiveDiagnosticKey(key)
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
@@ -84,6 +120,7 @@ function App() {
             <span className="text-amber-300">Warning</span> is advisory.
           </p>
           <textarea
+            ref={textareaRef}
             className="h-[500px] w-full rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
             placeholder="Paste <event>...</event> here..."
             value={xml}
@@ -151,15 +188,26 @@ function App() {
                   </h3>
                   <ul className="space-y-2 text-sm text-red-200">
                     {result.errors.map((err, i) => (
-                      <li key={i} className="rounded border border-red-900/40 bg-red-950/20 p-2">
-                        <p>
-                          {err.text} <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
-                        </p>
-                        {err.suggestion && (
-                          <p className="mt-1 text-xs text-red-100">
-                            Fix: <code className="rounded bg-red-900/40 px-1 py-0.5">{err.suggestion}</code>
+                      <li key={i}>
+                        <button
+                          type="button"
+                          onClick={() => jumpToLocation(err.location.line, err.location.column, `error-${i}`)}
+                          className={`w-full rounded border p-2 text-left transition-colors ${
+                            activeDiagnosticKey === `error-${i}`
+                              ? 'border-red-500 bg-red-900/35'
+                              : 'border-red-900/40 bg-red-950/20 hover:border-red-700/60'
+                          }`}
+                        >
+                          <p>
+                            {err.text}{' '}
+                            <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
                           </p>
-                        )}
+                          {err.suggestion && (
+                            <p className="mt-1 text-xs text-red-100">
+                              Fix: <code className="rounded bg-red-900/40 px-1 py-0.5">{err.suggestion}</code>
+                            </p>
+                          )}
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -173,19 +221,29 @@ function App() {
                   </h3>
                   <ul className="space-y-2 text-sm text-amber-200">
                     {result.warnings.map((warn, i) => (
-                      <li key={i} className="rounded border border-amber-900/40 bg-amber-950/20 p-2">
-                        <p>
-                          {warn.text}{' '}
-                          <span className="text-amber-300">
-                            (line {warn.location.line}, col {warn.location.column})
-                          </span>
-                        </p>
-                        {warn.suggestion && (
-                          <p className="mt-1 text-xs text-amber-100">
-                            Suggested tag:{' '}
-                            <code className="rounded bg-amber-900/40 px-1 py-0.5">{warn.suggestion}</code>
+                      <li key={i}>
+                        <button
+                          type="button"
+                          onClick={() => jumpToLocation(warn.location.line, warn.location.column, `warn-${i}`)}
+                          className={`w-full rounded border p-2 text-left transition-colors ${
+                            activeDiagnosticKey === `warn-${i}`
+                              ? 'border-amber-500 bg-amber-900/35'
+                              : 'border-amber-900/40 bg-amber-950/20 hover:border-amber-700/60'
+                          }`}
+                        >
+                          <p>
+                            {warn.text}{' '}
+                            <span className="text-amber-300">
+                              (line {warn.location.line}, col {warn.location.column})
+                            </span>
                           </p>
-                        )}
+                          {warn.suggestion && (
+                            <p className="mt-1 text-xs text-amber-100">
+                              Suggested tag:{' '}
+                              <code className="rounded bg-amber-900/40 px-1 py-0.5">{warn.suggestion}</code>
+                            </p>
+                          )}
+                        </button>
                       </li>
                     ))}
                   </ul>
