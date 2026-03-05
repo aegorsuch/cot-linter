@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
-import { validateCoT, type Platform, type ValidationResult } from './utils/cotValidator'
+import {
+  PLATFORM_RULE_MATRIX,
+  validateCoT,
+  type Platform,
+  type ValidationResult,
+} from './utils/cotValidator'
 import { Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
 
 function App() {
   const [xml, setXml] = useState('')
-  const [platform, setPlatform] = useState<Platform>('ATAK')
+  const [platform, setPlatform] = useState<Platform>('ATAK-Civ')
   const [result, setResult] = useState<ValidationResult | null>(null)
 
   useEffect(() => {
@@ -15,11 +20,15 @@ function App() {
     }
   }, [xml, platform])
 
+  const ruleMatrixEntries = Object.entries(PLATFORM_RULE_MATRIX) as Array<
+    [Platform, (typeof PLATFORM_RULE_MATRIX)[Platform]]
+  >
+
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
       <header className="mb-8 flex items-center justify-between border-b border-slate-700 pb-4">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Activity className="text-emerald-400" /> WearTAK CoT Linter
+          <Activity className="text-emerald-400" /> Cursor-on-Target (CoT) Linter
         </h1>
         <div className="flex items-center gap-4">
           <label className="text-sm uppercase tracking-widest text-slate-400">Target Platform:</label>
@@ -28,12 +37,41 @@ function App() {
             onChange={(e) => setPlatform(e.target.value as Platform)}
             className="rounded border border-slate-600 bg-slate-800 px-3 py-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
           >
-            <option value="ATAK">ATAK-CIV</option>
-            <option value="WinTAK">WinTAK</option>
+            <option value="ATAK-Civ">ATAK-Civ</option>
+            <option value="CloudTAK">CloudTAK</option>
             <option value="iTAK">iTAK</option>
+            <option value="TAK Aware">TAK Aware</option>
+            <option value="TAKx">TAKx</option>
+            <option value="WebTAK">WebTAK</option>
+            <option value="WinTAK">WinTAK</option>
           </select>
         </div>
       </header>
+
+      <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
+        <h2 className="mb-3 text-xs uppercase tracking-widest text-slate-400">Platform Rule Matrix</h2>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {ruleMatrixEntries.map(([name, rules]) => (
+            <article
+              key={name}
+              className={`rounded border p-3 ${
+                name === platform
+                  ? 'border-emerald-500/60 bg-emerald-900/15'
+                  : 'border-slate-600 bg-slate-900/50'
+              }`}
+            >
+              <h3 className="mb-2 text-sm font-bold text-slate-100">{name}</h3>
+              <ul className="list-inside list-disc space-y-1 text-xs text-slate-300">
+                {rules.map((rule) => (
+                  <li key={`${name}-${rule.tag}`}>
+                    <code className="font-bold text-slate-200">&lt;{rule.tag}&gt;</code> {rule.description}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <main className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <section>
