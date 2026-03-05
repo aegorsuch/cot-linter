@@ -4,8 +4,8 @@ import {
   validateCoT,
   type Platform,
   type ValidationResult,
-} from './utils/cotValidator'
-import { getStarterTemplate } from './utils/cotTemplates'
+} from './utils/cotValidator.ts'
+import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { Activity, ShieldAlert, ShieldCheck } from 'lucide-react'
 
 function App() {
