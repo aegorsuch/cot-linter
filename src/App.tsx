@@ -18,7 +18,6 @@ function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
-  const [result, setResult] = useState<ValidationResult | null>(null)
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
   const [showGuide, setShowGuide] = useState(() => {
@@ -37,17 +36,9 @@ function App() {
     ? `${platform} ${selectedProfile.label} Template`
     : `${platform} SA Template`
 
-  useEffect(() => {
-    if (xml.trim()) {
-      setResult(validateCoTWithProfile(xml, platform, selectedProfile))
-    } else {
-      setResult(null)
-    }
-  }, [xml, platform, selectedProfile])
-
-  useEffect(() => {
-    setSelectedProfileId('platform-default')
-  }, [platform])
+  const result: ValidationResult | null = xml.trim()
+    ? validateCoTWithProfile(xml, platform, selectedProfile)
+    : null
 
   useEffect(() => {
     localStorage.setItem(GUIDE_VISIBILITY_STORAGE_KEY, String(showGuide))
@@ -304,7 +295,10 @@ function App() {
             <button
               type="button"
               key={name}
-              onClick={() => setPlatform(name)}
+              onClick={() => {
+                setPlatform(name)
+                setSelectedProfileId('platform-default')
+              }}
               className={`rounded border p-3 ${
                 name === platform
                   ? 'border-emerald-500/60 bg-emerald-900/15'
