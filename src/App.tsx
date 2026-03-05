@@ -20,7 +20,6 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
-  const [showOnlyActiveComparison, setShowOnlyActiveComparison] = useState(false)
   const [showGuide, setShowGuide] = useState(() => {
     const saved = localStorage.getItem(GUIDE_VISIBILITY_STORAGE_KEY)
     if (saved === null) return true
@@ -45,9 +44,7 @@ function App() {
     localStorage.setItem(GUIDE_VISIBILITY_STORAGE_KEY, String(showGuide))
   }, [showGuide])
 
-  const ruleMatrixEntries = Object.entries(PLATFORM_RULE_MATRIX) as Array<
-    [Platform, (typeof PLATFORM_RULE_MATRIX)[Platform]]
-  >
+  const platforms = Object.keys(PLATFORM_RULE_MATRIX) as Platform[]
   const hasHardFails = result ? result.errors.length > 0 : false
   const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
 
@@ -55,18 +52,6 @@ function App() {
     if (!xml.trim()) return null
     return getMissingTagsForAllPlatforms(xml)
   }, [xml])
-
-  const visibleCrossPlatformReports = useMemo(() => {
-    if (!crossPlatformMissing || crossPlatformMissing.parseError) {
-      return []
-    }
-
-    if (!showOnlyActiveComparison) {
-      return crossPlatformMissing.reports
-    }
-
-    return crossPlatformMissing.reports.filter((report) => report.platform === platform)
-  }, [crossPlatformMissing, showOnlyActiveComparison, platform])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -255,9 +240,9 @@ function App() {
       <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
         <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-xs uppercase tracking-widest text-slate-400">Validation Platform</h2>
+            <h2 className="text-xs uppercase tracking-widest text-slate-400">Validation Context</h2>
             <p className="mt-1 text-xs text-slate-400">
-              Select one platform for warnings and template loading.
+              Pick a warning/profile context, then paste XML to compare compatibility across all platforms.
             </p>
           </div>
 
@@ -274,9 +259,9 @@ function App() {
               }}
               className="rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-slate-200 outline-none transition-colors hover:border-slate-400 focus:border-emerald-500"
             >
-              {ruleMatrixEntries.map(([name]) => (
-                <option key={`platform-option-${name}`} value={name}>
-                  {name}
+              {platforms.map((platformName) => (
+                <option key={`platform-option-${platformName}`} value={platformName}>
+                  {platformName}
                 </option>
               ))}
             </select>
@@ -332,34 +317,6 @@ function App() {
         <p className="mb-3 text-[11px] text-slate-400">
           Profiles shown here are for <span className="font-bold text-emerald-400">{platform}</span> only.
         </p>
-
-        <h3 className="mb-3 text-xs uppercase tracking-widest text-slate-500">
-          Platform Rule Matrix (Reference / Compare)
-        </h3>
-        <div
-          data-testid="platform-rule-matrix"
-          className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
-        >
-          {ruleMatrixEntries.map(([name, rules]) => (
-            <article
-              key={name}
-              className={`rounded border p-3 ${
-                name === platform
-                  ? 'border-emerald-500/60 bg-emerald-900/15'
-                  : 'border-slate-600 bg-slate-900/50 hover:border-slate-400'
-              }`}
-            >
-              <h3 className="mb-2 text-left text-sm font-bold text-slate-100">{name}</h3>
-              <ul className="list-inside list-disc space-y-1 text-xs text-slate-300">
-                {rules.map((rule) => (
-                  <li key={`${name}-${rule.tag}`} className="text-left">
-                    <code className="font-bold text-slate-200">&lt;{rule.tag}&gt;</code> {rule.description}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
       </section>
 
       <main className="grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -519,51 +476,33 @@ function App() {
 
       <section className="mt-8 rounded-lg border border-slate-700 bg-slate-800/50 p-6">
         <h2 className="mb-4 text-xs uppercase text-slate-500">
-          Cross-Platform Missing Tags (Side-by-Side)
+          Cross-Platform Compatibility Matrix
         </h2>
         <p className="mb-4 text-[11px] text-slate-400">
-          Compare all platforms, or focus this view on the current selection.
+          Each card shows platform rule coverage for the current XML payload.
         </p>
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
-          <div className="mb-4 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  void copyMissingTagsReport('json')
-                }}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-              >
-                Copy Missing Tags JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void copyMissingTagsReport('markdown')
-                }}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-              >
-                Copy Missing Tags Markdown
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowOnlyActiveComparison((current) => !current)}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-              >
-                {showOnlyActiveComparison
-                  ? 'Show All Platforms'
-                  : `Focus Selected Platform (${platform})`}
-              </button>
-              {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
-            </div>
-
-            {showOnlyActiveComparison && (
-              <p className="inline-flex w-fit items-center gap-1 rounded border border-emerald-500/50 bg-emerald-900/25 px-2 py-1 text-xs text-emerald-200">
-                <span className="uppercase tracking-wide text-emerald-300">Focused on</span>
-                <span className="font-bold">{platform}</span>
-              </p>
-            )}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void copyMissingTagsReport('json')
+              }}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Copy Missing Tags JSON
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                void copyMissingTagsReport('markdown')
+              }}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Copy Missing Tags Markdown
+            </button>
+            {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
           </div>
         )}
 
@@ -583,42 +522,74 @@ function App() {
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {visibleCrossPlatformReports.map((report) => (
-              <article
-                key={`compare-${report.platform}`}
-                className={`rounded border p-3 ${
-                  report.platform === platform
-                    ? 'border-emerald-500/60 bg-emerald-900/15'
-                    : 'border-slate-700 bg-slate-900/40'
-                }`}
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
-                  <span
-                    className={`rounded px-2 py-0.5 text-[11px] font-bold ${
-                      report.missingRules.length === 0
-                        ? 'bg-emerald-900/40 text-emerald-200'
-                        : 'bg-amber-900/40 text-amber-200'
+            {crossPlatformMissing.reports.map((report) => (
+              (() => {
+                const platformRules = PLATFORM_RULE_MATRIX[report.platform]
+                const missingTagSet = new Set(report.missingRules.map((rule) => rule.tag))
+                const presentCount = platformRules.length - report.missingRules.length
+
+                return (
+                  <article
+                    key={`compare-${report.platform}`}
+                    className={`rounded border p-3 ${
+                      report.platform === platform
+                        ? 'border-emerald-500/60 bg-emerald-900/15'
+                        : 'border-slate-700 bg-slate-900/40'
                     }`}
                   >
-                    Missing: {report.missingRules.length}
-                  </span>
-                </div>
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
+                      <span
+                        className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                          report.missingRules.length === 0
+                            ? 'bg-emerald-900/40 text-emerald-200'
+                            : 'bg-amber-900/40 text-amber-200'
+                        }`}
+                      >
+                        Missing: {report.missingRules.length}
+                      </span>
+                    </div>
 
-                {report.missingRules.length === 0 && (
-                  <p className="text-xs text-emerald-300">No platform-specific tags missing.</p>
-                )}
+                    <p className="mb-2 text-[11px] text-slate-400">
+                      Present: <span className="font-bold text-emerald-300">{presentCount}</span>
+                      {' '}of {platformRules.length} expected tags
+                    </p>
 
-                {report.missingRules.length > 0 && (
-                  <ul className="space-y-1 text-xs text-amber-200">
-                    {report.missingRules.map((rule) => (
-                      <li key={`${report.platform}-${rule.tag}`} className="rounded bg-slate-950/60 px-2 py-1">
-                        <code className="text-amber-100">&lt;{rule.tag}&gt;</code>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </article>
+                    <ul className="space-y-1 text-xs">
+                      {platformRules.map((rule) => {
+                        const isMissing = missingTagSet.has(rule.tag)
+
+                        return (
+                          <li
+                            key={`${report.platform}-${rule.tag}`}
+                            className={`rounded border px-2 py-1 ${
+                              isMissing
+                                ? 'border-amber-700/40 bg-amber-950/25 text-amber-200'
+                                : 'border-emerald-700/30 bg-emerald-950/20 text-emerald-200'
+                            }`}
+                          >
+                            <p className="flex flex-wrap items-center gap-2">
+                              <code className="font-bold">&lt;{rule.tag}&gt;</code>
+                              <span className="text-[11px] uppercase tracking-wide">
+                                {isMissing ? 'missing' : 'present'}
+                              </span>
+                            </p>
+                            <p className="mt-1 text-[11px] text-slate-300">{rule.description}</p>
+                            {isMissing && (
+                              <p className="mt-1 text-[11px] text-amber-100">
+                                Add:{' '}
+                                <code className="rounded bg-amber-900/30 px-1 py-0.5">
+                                  {rule.suggestionSnippet}
+                                </code>
+                              </p>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </article>
+                )
+              })()
             ))}
           </div>
         )}

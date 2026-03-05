@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from './App'
@@ -27,7 +27,7 @@ describe('App platform and profile behavior', () => {
     expect(screen.getByRole('button', { name: /Load ATAK SA Template/i })).toBeInTheDocument()
   })
 
-  it('keeps active platform unchanged when clicking rule matrix cards', async () => {
+  it('renders merged cross-platform compatibility details after XML is loaded', async () => {
     const user = userEvent.setup()
 
     render(<App />)
@@ -36,10 +36,11 @@ describe('App platform and profile behavior', () => {
     await user.selectOptions(platformSelect, 'WearTAK')
     expect(platformSelect).toHaveValue('WearTAK')
 
-    const matrix = screen.getByTestId('platform-rule-matrix')
-    await user.click(within(matrix).getByText('ATAK'))
+    await user.click(screen.getByRole('button', { name: /Load WearTAK SA Template/i }))
 
-    expect(platformSelect).toHaveValue('WearTAK')
-    expect(screen.getByRole('button', { name: /Load WearTAK SA Template/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /Cross-Platform Compatibility Matrix/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/Present:/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/expected tags/i).length).toBeGreaterThan(0)
+    expect(screen.queryByText(/Platform Rule Matrix/i)).not.toBeInTheDocument()
   })
 })
