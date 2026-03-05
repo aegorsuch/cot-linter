@@ -1,12 +1,86 @@
 import { XMLParser } from 'fast-xml-parser';
 
-export type Platform = 'ATAK' | 'WinTAK' | 'iTAK';
+export type Platform =
+  | 'ATAK-Civ'
+  | 'CloudTAK'
+  | 'iTAK'
+  | 'TAK Aware'
+  | 'TAKx'
+  | 'WebTAK'
+  | 'WinTAK';
 
 export interface ValidationResult {
   isValid: boolean;
   errors: string[];
   warnings: string[];
 }
+
+export interface PlatformRule {
+  tag: string;
+  description: string;
+}
+
+export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
+  'ATAK-Civ': [
+    { tag: 'contact', description: 'Callsign/label rendering in map views.' },
+    { tag: '__group', description: 'Team and role grouping behavior.' },
+  ],
+  CloudTAK: [
+    { tag: 'contact', description: 'Entity labeling in feed/event listings.' },
+    { tag: 'takv', description: 'Client/version context for interoperability.' },
+  ],
+  iTAK: [
+    { tag: 'contact', description: 'Callsign display on mobile maps.' },
+    { tag: '__group', description: 'Team presentation consistency.' },
+  ],
+  'TAK Aware': [
+    { tag: 'contact', description: 'User-friendly labeling in shared views.' },
+    { tag: 'remarks', description: 'Additional event context text.' },
+  ],
+  TAKx: [
+    { tag: 'takv', description: 'Producer metadata for routing/interop.' },
+    { tag: '__group', description: 'Downstream grouping behavior.' },
+  ],
+  WebTAK: [
+    { tag: 'contact', description: 'Map label readability in browser UI.' },
+    { tag: '__group', description: 'Team affiliation visibility in UI panes.' },
+  ],
+  WinTAK: [
+    { tag: 'usericon', description: 'Expected icon/symbol rendering.' },
+    { tag: 'takv', description: 'Client metadata for diagnostics.' },
+  ],
+};
+
+const PLATFORM_WARNING_MESSAGES: Record<Platform, Record<string, string>> = {
+  'ATAK-Civ': {
+    contact: 'Callsign/Label may not appear.',
+    __group: 'Team/role visualization may be reduced.',
+  },
+  CloudTAK: {
+    contact: 'Entity labels can be less useful in feeds.',
+    takv: 'Client/version context is recommended for interoperability.',
+  },
+  iTAK: {
+    contact: 'Callsign display may be limited.',
+    __group: 'Team presentation may be inconsistent.',
+  },
+  'TAK Aware': {
+    contact: 'User-friendly labeling may be reduced.',
+    remarks: 'Supplemental context is recommended.',
+  },
+  TAKx: {
+    takv: 'Producer metadata is recommended for multi-client routing.',
+    __group: 'Downstream grouping behavior may vary.',
+  },
+  WebTAK: {
+    contact: 'Map labels can be less informative.',
+    __group: 'Team affiliation may not be clear in UI views.',
+  },
+  WinTAK: {
+    usericon: 'Symbol may not render correctly.',
+    takv: 'Client metadata is recommended for diagnostics.',
+  },
+};
 
 export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
   const parser = new XMLParser({ ignoreAttributes: false });
@@ -28,14 +102,14 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
       if (!event[attr]) result.errors.push(`Missing mandatory attribute: ${attr.replace('@_', '')}`);
     });
 
-    // WinTAK Specific Rule
-    if (platform === 'WinTAK' && !event.detail?.usericon) {
-      result.warnings.push("WinTAK: Missing <usericon> tag. Symbol may not render correctly.");
-    }
+    const detail = (event.detail ?? {}) as Record<string, unknown>;
+    const rules = PLATFORM_RULE_MATRIX[platform];
 
-    // ATAK Specific Rule
-    if (platform === 'ATAK' && !event.detail?.contact) {
-      result.warnings.push("ATAK: Missing <contact> tag. Callsign/Label will not appear.");
+    for (const rule of rules) {
+      if (!detail[rule.tag]) {
+        const message = PLATFORM_WARNING_MESSAGES[platform][rule.tag];
+        result.warnings.push(`${platform}: Missing <${rule.tag}> tag. ${message}`);
+      }
     }
 
     if (result.errors.length > 0) result.isValid = false;
