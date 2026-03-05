@@ -20,6 +20,7 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const [showOnlyActiveComparison, setShowOnlyActiveComparison] = useState(false)
   const [showGuide, setShowGuide] = useState(() => {
     const saved = localStorage.getItem(GUIDE_VISIBILITY_STORAGE_KEY)
     if (saved === null) return true
@@ -54,6 +55,18 @@ function App() {
     if (!xml.trim()) return null
     return getMissingTagsForAllPlatforms(xml)
   }, [xml])
+
+  const visibleCrossPlatformReports = useMemo(() => {
+    if (!crossPlatformMissing || crossPlatformMissing.parseError) {
+      return []
+    }
+
+    if (!showOnlyActiveComparison) {
+      return crossPlatformMissing.reports
+    }
+
+    return crossPlatformMissing.reports.filter((report) => report.platform === platform)
+  }, [crossPlatformMissing, showOnlyActiveComparison, platform])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -240,9 +253,33 @@ function App() {
       </section>
 
       <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <h2 className="text-xs uppercase tracking-widest text-slate-400">Platform Rule Matrix</h2>
-          <div className="flex items-center gap-3">
+        <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-xs uppercase tracking-widest text-slate-400">Validation Platform</h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Select one platform for warnings and template loading.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor="platform-select" className="text-xs text-slate-400">
+              Platform
+            </label>
+            <select
+              id="platform-select"
+              value={platform}
+              onChange={(e) => {
+                setPlatform(e.target.value as Platform)
+                setSelectedProfileId('platform-default')
+              }}
+              className="rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-slate-200 outline-none transition-colors hover:border-slate-400 focus:border-emerald-500"
+            >
+              {ruleMatrixEntries.map(([name]) => (
+                <option key={`platform-option-${name}`} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={() => {
@@ -257,10 +294,11 @@ function App() {
               {`Load ${selectedTemplateLabel}`}
             </button>
             <p className="text-xs text-slate-400">
-              Select a platform: <span className="font-bold text-emerald-400">{platform}</span>
+              Active: <span className="font-bold text-emerald-400">{platform}</span>
             </p>
           </div>
         </div>
+
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -290,15 +328,21 @@ function App() {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+
+        <p className="mb-3 text-[11px] text-slate-400">
+          Profiles shown here are for <span className="font-bold text-emerald-400">{platform}</span> only.
+        </p>
+
+        <h3 className="mb-3 text-xs uppercase tracking-widest text-slate-500">
+          Platform Rule Matrix (Reference / Compare)
+        </h3>
+        <div
+          data-testid="platform-rule-matrix"
+          className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
+        >
           {ruleMatrixEntries.map(([name, rules]) => (
-            <button
-              type="button"
+            <article
               key={name}
-              onClick={() => {
-                setPlatform(name)
-                setSelectedProfileId('platform-default')
-              }}
               className={`rounded border p-3 ${
                 name === platform
                   ? 'border-emerald-500/60 bg-emerald-900/15'
@@ -313,7 +357,7 @@ function App() {
                   </li>
                 ))}
               </ul>
-            </button>
+            </article>
           ))}
         </div>
       </section>
@@ -474,28 +518,49 @@ function App() {
         <h2 className="mb-4 text-xs uppercase text-slate-500">
           Cross-Platform Missing Tags (Side-by-Side)
         </h2>
+        <p className="mb-4 text-[11px] text-slate-400">
+          Compare all platforms, or focus this view on the current selection.
+        </p>
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                void copyMissingTagsReport('json')
-              }}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-            >
-              Copy Missing Tags JSON
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                void copyMissingTagsReport('markdown')
-              }}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-            >
-              Copy Missing Tags Markdown
-            </button>
-            {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
+          <div className="mb-4 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  void copyMissingTagsReport('json')
+                }}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                Copy Missing Tags JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void copyMissingTagsReport('markdown')
+                }}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                Copy Missing Tags Markdown
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowOnlyActiveComparison((current) => !current)}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                {showOnlyActiveComparison
+                  ? 'Show All Platforms'
+                  : `Focus Selected Platform (${platform})`}
+              </button>
+              {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
+            </div>
+
+            {showOnlyActiveComparison && (
+              <p className="inline-flex w-fit items-center gap-1 rounded border border-emerald-500/50 bg-emerald-900/25 px-2 py-1 text-xs text-emerald-200">
+                <span className="uppercase tracking-wide text-emerald-300">Focused on</span>
+                <span className="font-bold">{platform}</span>
+              </p>
+            )}
           </div>
         )}
 
@@ -515,7 +580,7 @@ function App() {
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {crossPlatformMissing.reports.map((report) => (
+            {visibleCrossPlatformReports.map((report) => (
               <article
                 key={`compare-${report.platform}`}
                 className={`rounded border p-3 ${
