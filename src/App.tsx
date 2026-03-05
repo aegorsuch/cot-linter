@@ -24,6 +24,8 @@ function App() {
   const ruleMatrixEntries = Object.entries(PLATFORM_RULE_MATRIX) as Array<
     [Platform, (typeof PLATFORM_RULE_MATRIX)[Platform]]
   >
+  const hasHardFails = result ? result.errors.length > 0 : false
+  const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
 
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
@@ -77,6 +79,10 @@ function App() {
       <main className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <section>
           <h2 className="mb-2 text-xs uppercase text-slate-500">Input CoT XML</h2>
+          <p className="mb-2 text-[11px] text-slate-400">
+            Legend: <span className="text-red-300">Blocking</span> stops deploy;{' '}
+            <span className="text-amber-300">Warning</span> is advisory.
+          </p>
           <textarea
             className="h-[500px] w-full rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
             placeholder="Paste <event>...</event> here..."
@@ -94,24 +100,55 @@ function App() {
             <div className="space-y-6">
               <div
                 className={`flex items-center gap-3 rounded p-4 ${
-                  result.isValid
-                    ? 'border border-emerald-500/50 bg-emerald-900/20'
-                    : 'border border-red-500/50 bg-red-900/20'
+                  hasHardFails
+                    ? 'border border-red-500/50 bg-red-900/20'
+                    : hasCompatibilityWarnings
+                      ? 'border border-amber-500/50 bg-amber-900/20'
+                      : 'border border-emerald-500/50 bg-emerald-900/20'
                 }`}
               >
-                {result.isValid ? (
+                {!hasHardFails ? (
                   <ShieldCheck className="text-emerald-400" />
                 ) : (
                   <ShieldAlert className="text-red-400" />
                 )}
                 <span className="font-bold">
-                  {result.isValid ? 'XML VALID' : 'SYNTAX ERRORS DETECTED'}
+                  {hasHardFails
+                    ? 'BLOCKING: Hard-Fail Validation Errors'
+                    : hasCompatibilityWarnings
+                      ? 'PASSING: Compatibility Warnings Found'
+                      : 'PASSING: No Issues Detected'}
                 </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div
+                  className={`rounded border p-3 ${
+                    hasHardFails
+                      ? 'border-red-500/60 bg-red-900/20 text-red-100'
+                      : 'border-slate-700 bg-slate-900/40 text-slate-300'
+                  }`}
+                >
+                  <p className="text-xs uppercase tracking-wide">Hard Fails (Blocking)</p>
+                  <p className="text-xl font-bold">{result.errors.length}</p>
+                </div>
+                <div
+                  className={`rounded border p-3 ${
+                    hasCompatibilityWarnings
+                      ? 'border-amber-500/60 bg-amber-900/20 text-amber-100'
+                      : 'border-slate-700 bg-slate-900/40 text-slate-300'
+                  }`}
+                >
+                  <p className="text-xs uppercase tracking-wide">Compatibility Warnings (Non-Blocking)</p>
+                  <p className="text-xl font-bold">{result.warnings.length}</p>
+                </div>
               </div>
 
               {result.errors.length > 0 && (
                 <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase text-red-400">Critical Errors</h3>
+                  <h3 className="mb-2 text-xs font-bold uppercase text-red-400">
+                    Hard Fails (Blocking)
+                  </h3>
                   <ul className="space-y-2 text-sm text-red-200">
                     {result.errors.map((err, i) => (
                       <li key={i} className="rounded border border-red-900/40 bg-red-950/20 p-2">
@@ -132,7 +169,7 @@ function App() {
               {result.warnings.length > 0 && (
                 <div>
                   <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">
-                    Platform Warnings ({platform})
+                    Compatibility Warnings (Non-Blocking) ({platform})
                   </h3>
                   <ul className="space-y-2 text-sm text-amber-200">
                     {result.warnings.map((warn, i) => (
