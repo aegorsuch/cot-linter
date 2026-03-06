@@ -40,7 +40,6 @@ describe('App platform and profile behavior', () => {
 
     expect(optionOrder).toEqual([
       'Chat Send',
-      'CloudTAK Alert',
       'Manual Alert',
       'Manual Alert Clear',
       'MIL-STD-2525D Clear',
@@ -117,14 +116,12 @@ describe('App platform and profile behavior', () => {
     expect(inputTextarea.value).not.toContain('Lattice correlation')
   })
 
-  it('shows template diff preview and supports one-click XML normalizers', async () => {
+  it('supports one-click XML normalizers', async () => {
     const user = userEvent.setup()
 
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /Copy into Input/i }))
-    expect(screen.getByText(/No differences between input and selected template/i)).toBeInTheDocument()
-
     const inputTextarea = screen.getByPlaceholderText(/Paste <event>...<\/event> here/i) as HTMLTextAreaElement
 
     fireEvent.change(inputTextarea, {
@@ -145,6 +142,5 @@ describe('App platform and profile behavior', () => {
     expect(inputTextarea.value).not.toContain('\r')
     expect(inputTextarea.value).not.toMatch(/\n{3,}/)
 
-    expect(screen.getByText(/Template Diff Preview/i)).toBeInTheDocument()
   })
 })

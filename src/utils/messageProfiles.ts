@@ -2,10 +2,10 @@ import type { MessageValidationProfile, Platform } from './cotValidator';
 
 export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   {
-    id: 'cloudtak-alert',
+    id: 'cloudtak-manual-alert',
     platform: 'CloudTAK',
-    label: 'CloudTAK Alert',
-    description: 'CloudTAK alert payload with emergency metadata and icon rendering path.',
+    label: 'Manual Alert',
+    description: 'CloudTAK manual alert payload with emergency metadata and icon rendering path.',
     expectedType: 'b-a-o',
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['emergency', 'usericon', 'contact', 'takv'],

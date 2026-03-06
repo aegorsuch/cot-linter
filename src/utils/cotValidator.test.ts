@@ -106,7 +106,8 @@ describe('validateCoT semantic field checks', () => {
 
 describe('validateCoTWithProfile profile-specific field checks', () => {
   it('accepts CloudTAK Alert sample payload without profile field-shape errors', () => {
-    const cloudtakAlertProfile = MESSAGE_PROFILES.find((profile) => profile.id === 'cloudtak-alert') ?? null;
+    const cloudtakAlertProfile =
+      MESSAGE_PROFILES.find((profile) => profile.id === 'cloudtak-manual-alert') ?? null;
     expect(cloudtakAlertProfile).not.toBeNull();
 
     const result = validateCoTWithProfile(
@@ -120,7 +121,8 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
   });
 
   it('flags malformed CloudTAK Alert field attributes beyond required tag checks', () => {
-    const cloudtakAlertProfile = MESSAGE_PROFILES.find((profile) => profile.id === 'cloudtak-alert') ?? null;
+    const cloudtakAlertProfile =
+      MESSAGE_PROFILES.find((profile) => profile.id === 'cloudtak-manual-alert') ?? null;
     expect(cloudtakAlertProfile).not.toBeNull();
 
     const xml = `<event version="2.0" uid="cloudtak-alert-demo" type="b-a-o" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="h-e" access="Undefined">

@@ -796,7 +796,7 @@ const validateProfileFieldShape = (
   detail: Record<string, unknown>,
   result: ValidationResult,
 ): void => {
-  if (profile.id === 'cloudtak-alert') {
+  if (profile.id === 'cloudtak-manual-alert') {
     const hasEmergencyTag = hasDetailTag(detail, 'emergency');
     const hasUsericonTag = hasDetailTag(detail, 'usericon');
     const hasContactTag = hasDetailTag(detail, 'contact');
