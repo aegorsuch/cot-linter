@@ -138,6 +138,11 @@ describe('App platform and profile behavior', () => {
     await user.click(screen.getByRole('button', { name: /Format XML/i }))
     expect(inputTextarea.value).toContain('\n  <point ')
 
+    const formattedValue = inputTextarea.value
+    await user.click(screen.getByRole('button', { name: /Undo Format/i }))
+    expect(inputTextarea.value).not.toBe(formattedValue)
+    expect(inputTextarea.value).toContain('<event uid="demo"')
+
     await user.click(screen.getByRole('button', { name: /Normalize Whitespace/i }))
     expect(inputTextarea.value).not.toContain('\r')
     expect(inputTextarea.value).not.toMatch(/\n{3,}/)

@@ -71,7 +71,7 @@ const formatXmlElement = (element: Element, indentLevel: number): string => {
       return `${indent}<${element.tagName}${attributes}>${escapeXmlText(textContent)}</${element.tagName}>`
     }
 
-    return `${indent}<${element.tagName}${attributes}></${element.tagName}>`
+    return `${indent}<${element.tagName}${attributes} />`
   }
 
   const lines: string[] = [`${indent}<${element.tagName}${attributes}>`]
@@ -102,6 +102,7 @@ function App() {
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [toast, setToast] = useState<{ text: string; tone: 'success' | 'error' | 'info' } | null>(null)
   const [insertHistory, setInsertHistory] = useState<Array<{ previousXml: string; description: string }>>([])
+  const [xmlEditHistory, setXmlEditHistory] = useState<Array<{ previousXml: string; description: string }>>([])
   const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState(false)
   const [submissionPlatform, setSubmissionPlatform] = useState<Platform>('ATAK')
   const [submissionProfileLabel, setSubmissionProfileLabel] = useState('SA')
@@ -399,6 +400,12 @@ function App() {
     }
 
     const normalized = normalizeXmlWhitespace(xml)
+    if (normalized === xml) {
+      showToast('XML is already normalized.', 'info')
+      return
+    }
+
+    setXmlEditHistory((current) => [...current, { previousXml: xml, description: 'format/normalize edit' }])
     setXml(normalized)
     showToast('Normalized XML whitespace.', 'success')
   }
@@ -417,6 +424,13 @@ function App() {
 
     const declaration = getXmlDeclaration(xml)
     const formatted = formatXmlDocument(doc, declaration)
+
+    if (formatted === xml) {
+      showToast('XML already matches formatter output.', 'info')
+      return
+    }
+
+    setXmlEditHistory((current) => [...current, { previousXml: xml, description: 'format/normalize edit' }])
     setXml(formatted)
     showToast('Formatted XML.', 'success')
   }
@@ -455,14 +469,33 @@ function App() {
 
     const declaration = getXmlDeclaration(xml)
     const formatted = formatXmlDocument(doc, declaration)
-    setXml(formatted)
 
-    if (currentOrder.join('|') === sortedOrder.join('|')) {
+    if (formatted === xml) {
       showToast('<detail> tags are already sorted.', 'info')
       return
     }
 
+    setXmlEditHistory((current) => [...current, { previousXml: xml, description: 'format/normalize edit' }])
+    setXml(formatted)
+
+    if (currentOrder.join('|') === sortedOrder.join('|')) {
+      showToast('<detail> tags stayed in the same order after formatting.', 'info')
+      return
+    }
+
     showToast('Sorted <detail> tags alphabetically.', 'success')
+  }
+
+  const undoLastFormatEdit = () => {
+    if (xmlEditHistory.length === 0) {
+      showToast('Nothing to undo for format/normalize.', 'info')
+      return
+    }
+
+    const lastEdit = xmlEditHistory[xmlEditHistory.length - 1]
+    setXml(lastEdit.previousXml)
+    setXmlEditHistory((current) => current.slice(0, -1))
+    showToast('Undid last format/normalize edit.', 'success')
   }
 
   const getMissingTagsJsonReport = (): string | null => {
@@ -670,6 +703,14 @@ function App() {
                 className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
               >
                 Format XML
+              </button>
+              <button
+                type="button"
+                onClick={undoLastFormatEdit}
+                disabled={xmlEditHistory.length === 0}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors enabled:hover:border-emerald-500 enabled:hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Undo Format
               </button>
             </div>
           </div>
