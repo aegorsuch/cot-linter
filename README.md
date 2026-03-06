@@ -191,6 +191,7 @@ Maintainer setup checklist: `docs/MAINTAINERS.md`.
 
 - Project changelog is maintained in `CHANGELOG.md` using Keep a Changelog format.
 - Release Drafter composes draft release notes from merged pull requests and labels.
+- Release Drafter can also be run manually from GitHub Actions (`Run workflow`) to bootstrap the first draft.
 
 ## Usage
 

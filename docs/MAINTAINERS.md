@@ -33,6 +33,7 @@ Release Drafter updates draft release notes automatically.
 2. Confirm config exists at `.github/release-drafter.yml`.
 3. Ensure Actions are enabled for the repository.
 4. Confirm `GITHUB_TOKEN` has default workflow permissions (contents write for this workflow).
+5. If no draft appears, run the workflow manually from `Actions` -> `Release Drafter` -> `Run workflow`.
 
 ## Changelog Maintenance Policy
 
