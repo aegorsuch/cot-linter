@@ -24,7 +24,7 @@ describe('App platform and profile behavior', () => {
 
     await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
 
-    expect(screen.getByText(/Sample loaded from/i)).toHaveTextContent('ATAK SA Template')
+    expect(screen.getByText(/Sample loaded from/i)).toHaveTextContent('ATAK Starter Sample')
   })
 
   it('renders merged cross-platform compatibility details after XML is loaded', async () => {

@@ -37,7 +37,7 @@ function App() {
 
   const selectedTemplateLabel = selectedProfile
     ? `${platform} ${selectedProfile.label} Template`
-    : `${platform} SA Template`
+    : `${platform} Starter Sample`
 
   const selectedTemplateXml = useMemo(() => {
     if (selectedProfile) {
@@ -303,7 +303,7 @@ function App() {
           <div>
             <h2 className="text-xs uppercase tracking-widest text-slate-400">Validation Context</h2>
             <p className="mt-1 text-xs text-slate-400">
-              Select one platform and profile context for warning interpretation and starter samples.
+              Select a platform/profile context, then enter CoT on the left or load a sample on the right.
             </p>
           </div>
 
@@ -326,9 +326,6 @@ function App() {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-slate-400">
-              Active: <span className="font-bold text-emerald-400">{platform}</span>
-            </p>
           </div>
         </div>
 
@@ -336,14 +333,14 @@ function App() {
           <button
             type="button"
             onClick={() => setSelectedProfileId('platform-default')}
-            title={`${platform} SA Template`}
+            title="Starter Sample"
             className={`rounded border px-2 py-1 text-xs transition-colors ${
               selectedProfileId === 'platform-default'
                 ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                 : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
             } max-w-[15rem] truncate md:max-w-none`}
           >
-            {`${platform} SA Template`}
+            Starter Sample
           </button>
           {messageProfiles.map((profile) => (
             <button
@@ -361,10 +358,6 @@ function App() {
             </button>
           ))}
         </div>
-
-        <p className="text-[11px] text-slate-400">
-          Profiles shown here are for <span className="font-bold text-emerald-400">{platform}</span> only.
-        </p>
       </section>
 
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
