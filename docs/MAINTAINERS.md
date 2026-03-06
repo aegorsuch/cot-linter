@@ -48,3 +48,15 @@ Run this review monthly:
 2. Confirm CODEOWNERS paths still match critical files.
 3. Confirm Dependabot and scheduled security audit workflows are passing.
 4. Confirm release drafts are generated and readable.
+
+## Policy-Check PR (2-minute validation)
+
+Use a tiny docs-only PR to verify governance remains enforced:
+
+1. Open a PR targeting `main` with a trivial docs edit.
+2. Confirm required checks appear and block merge until complete:
+   - `docs-discipline`
+   - `quality`
+   - `e2e`
+3. Confirm `Require branches to be up to date` is active by updating `main` and checking the PR requires syncing.
+4. Confirm CODEOWNERS review is requested when touching a protected path (for example `src/utils/cotValidator.ts`).
