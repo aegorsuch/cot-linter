@@ -94,6 +94,40 @@ const formatXmlDocument = (doc: Document, declaration: string | null): string =>
   return declaration ? `${declaration}\n${formattedRoot}` : formattedRoot
 }
 
+const toLineColFromOffset = (text: string, index: number): { line: number; column: number } => {
+  if (index < 0) {
+    return { line: 1, column: 1 }
+  }
+
+  let line = 1
+  let column = 1
+
+  for (let i = 0; i < index && i < text.length; i += 1) {
+    if (text[i] === '\n') {
+      line += 1
+      column = 1
+    } else {
+      column += 1
+    }
+  }
+
+  return { line, column }
+}
+
+const getDetailOrEventLocation = (text: string): { line: number; column: number } => {
+  const detailMatch = /<\s*detail(\s|>)/i.exec(text)
+  if (detailMatch && detailMatch.index >= 0) {
+    return toLineColFromOffset(text, detailMatch.index)
+  }
+
+  const eventMatch = /<\s*event(\s|>)/i.exec(text)
+  if (eventMatch && eventMatch.index >= 0) {
+    return toLineColFromOffset(text, eventMatch.index)
+  }
+
+  return { line: 1, column: 1 }
+}
+
 
 function App() {
   const [xml, setXml] = useState('')
@@ -203,40 +237,6 @@ function App() {
     textarea.focus()
     textarea.setSelectionRange(range.lineStart, selectionEnd)
     setActiveDiagnosticKey(key)
-  }
-
-  const toLineColFromOffset = (text: string, index: number): { line: number; column: number } => {
-    if (index < 0) {
-      return { line: 1, column: 1 }
-    }
-
-    let line = 1
-    let column = 1
-
-    for (let i = 0; i < index && i < text.length; i += 1) {
-      if (text[i] === '\n') {
-        line += 1
-        column = 1
-      } else {
-        column += 1
-      }
-    }
-
-    return { line, column }
-  }
-
-  const getDetailOrEventLocation = (text: string): { line: number; column: number } => {
-    const detailMatch = /<\s*detail(\s|>)/i.exec(text)
-    if (detailMatch && detailMatch.index >= 0) {
-      return toLineColFromOffset(text, detailMatch.index)
-    }
-
-    const eventMatch = /<\s*event(\s|>)/i.exec(text)
-    if (eventMatch && eventMatch.index >= 0) {
-      return toLineColFromOffset(text, eventMatch.index)
-    }
-
-    return { line: 1, column: 1 }
   }
 
   const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])

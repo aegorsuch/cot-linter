@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 const repoName = process.env.GITHUB_REPOSITORY?.split('/')[1]
-const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
-const base = isGitHubActions && repoName ? `/${repoName}/` : '/'
+const useRepoBase = process.env.VITE_USE_REPO_BASE === 'true'
+const base = useRepoBase && repoName ? `/${repoName}/` : '/'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,5 +13,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    exclude: ['e2e/**', 'node_modules/**'],
   },
 })

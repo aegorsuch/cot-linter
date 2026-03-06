@@ -12,6 +12,7 @@ This project is built with React, TypeScript, and Vite, and is designed to help 
 - Supports profile-driven validation for specific message styles.
 - Compares missing tags across all supported platforms side-by-side.
 - Copies missing tag comparison reports as JSON or Markdown for sharing.
+- Includes browser-based E2E coverage for key UI workflows.
 
 ## Supported Platforms
 
@@ -110,6 +111,33 @@ npm run preview
 ```bash
 npm run lint
 ```
+
+### Unit Tests
+
+```bash
+npm test
+```
+
+### E2E Tests (Playwright)
+
+```bash
+npm run test:e2e
+```
+
+Optional interactive UI mode:
+
+```bash
+npm run test:e2e:ui
+```
+
+## CI
+
+GitHub Actions runs quality gates on push and pull request:
+
+- `npm run lint`
+- `npm test`
+- `npm run build`
+- `npm run test:e2e` (Chromium via Playwright)
 
 ## Usage
 
