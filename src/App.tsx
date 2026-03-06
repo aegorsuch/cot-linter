@@ -10,6 +10,8 @@ import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 import { Activity } from 'lucide-react'
 
+const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
+
 function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
@@ -17,6 +19,12 @@ function App() {
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [toast, setToast] = useState<{ text: string; tone: 'success' | 'error' | 'info' } | null>(null)
   const [insertHistory, setInsertHistory] = useState<Array<{ previousXml: string; description: string }>>([])
+  const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState(false)
+  const [submissionPlatform, setSubmissionPlatform] = useState<Platform>('ATAK')
+  const [submissionProfileLabel, setSubmissionProfileLabel] = useState('SA')
+  const [submissionXml, setSubmissionXml] = useState('')
+  const [submissionNotes, setSubmissionNotes] = useState('')
+  const [submissionContact, setSubmissionContact] = useState('')
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -388,6 +396,72 @@ function App() {
     )
   }
 
+  const openSubmitTemplateModal = () => {
+    setSubmissionPlatform(platform)
+    setSubmissionProfileLabel(selectedProfile ? selectedProfile.label : 'SA')
+    setSubmissionXml(selectedTemplateXml)
+    setSubmissionNotes('')
+    setSubmissionContact('')
+    setShowSubmitTemplateModal(true)
+  }
+
+  const buildSubmissionTemplatePayload = (): string => {
+    const payload = [
+      '# CoT Template Submission',
+      '',
+      `- Platform: ${submissionPlatform}`,
+      `- Profile/Category: ${submissionProfileLabel || 'Unspecified'}`,
+      `- Submitted at: ${new Date().toISOString()}`,
+      `- Contact: ${submissionContact || 'Not provided'}`,
+      '',
+      '## Notes',
+      submissionNotes || 'None',
+      '',
+      '## XML',
+      '```xml',
+      submissionXml,
+      '```',
+    ].join('\n')
+
+    return payload
+  }
+
+  const copySubmissionTemplateToClipboard = async () => {
+    if (!submissionXml.trim()) {
+      showToast('Submission XML is empty.', 'error')
+      return
+    }
+
+    const payload = buildSubmissionTemplatePayload()
+
+    const didCopy = await copyWithFallback(payload)
+    showToast(didCopy ? 'Copied template submission payload.' : 'Unable to copy submission payload.', didCopy ? 'success' : 'error')
+  }
+
+  const openGitHubIssueForSubmission = async () => {
+    if (!submissionXml.trim()) {
+      showToast('Submission XML is empty.', 'error')
+      return
+    }
+
+    if (GITHUB_ISSUE_URL.includes('YOUR_ORG')) {
+      showToast('Configure GITHUB_ISSUE_URL in App.tsx before using GitHub issue submit.', 'error')
+      return
+    }
+
+    const payload = buildSubmissionTemplatePayload()
+    void copyWithFallback(payload)
+
+    const issueTitle = `[Template Submission] ${submissionPlatform} - ${submissionProfileLabel || 'Unspecified'}`
+    const params = new URLSearchParams({
+      title: issueTitle,
+      body: payload,
+    })
+
+    window.open(`${GITHUB_ISSUE_URL}?${params.toString()}`, '_blank', 'noopener,noreferrer')
+    showToast('Opened GitHub issue with prefilled submission body.', 'success')
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
       <header className="mb-8 border-b border-slate-700 pb-4">
@@ -485,6 +559,13 @@ function App() {
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
             >
               Copy into Input
+            </button>
+            <button
+              type="button"
+              onClick={openSubmitTemplateModal}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Submit Template
             </button>
           </div>
         </section>
@@ -677,6 +758,109 @@ function App() {
             }`}
           >
             {toast.text}
+          </div>
+        </div>
+      )}
+
+      {showSubmitTemplateModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 p-4">
+          <div className="w-full max-w-3xl rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wide text-slate-300">Submit Template</h3>
+              <button
+                type="button"
+                onClick={() => setShowSubmitTemplateModal(false)}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-slate-400"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <label className="text-xs text-slate-300">
+                Platform
+                <select
+                  value={submissionPlatform}
+                  onChange={(e) => setSubmissionPlatform(e.target.value as Platform)}
+                  className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                >
+                  {platforms.map((platformName) => (
+                    <option key={`submit-platform-${platformName}`} value={platformName}>
+                      {platformName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-xs text-slate-300">
+                Profile / Category
+                <input
+                  type="text"
+                  value={submissionProfileLabel}
+                  onChange={(e) => setSubmissionProfileLabel(e.target.value)}
+                  className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                  placeholder="Example: MIL-STD-2525D Drop"
+                />
+              </label>
+            </div>
+
+            <label className="mt-3 block text-xs text-slate-300">
+              Contact (optional)
+              <input
+                type="text"
+                value={submissionContact}
+                onChange={(e) => setSubmissionContact(e.target.value)}
+                className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                placeholder="Email, handle, or team"
+              />
+            </label>
+
+            <label className="mt-3 block text-xs text-slate-300">
+              Notes (optional)
+              <textarea
+                value={submissionNotes}
+                onChange={(e) => setSubmissionNotes(e.target.value)}
+                className="mt-1 h-20 w-full resize-none rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+                placeholder="Tell maintainers when/where this template succeeds or fails."
+              />
+            </label>
+
+            <label className="mt-3 block text-xs text-slate-300">
+              CoT XML
+              <textarea
+                value={submissionXml}
+                onChange={(e) => setSubmissionXml(e.target.value)}
+                className="mt-1 h-48 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+              />
+            </label>
+
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  void copySubmissionTemplateToClipboard()
+                }}
+                className="rounded border border-emerald-700/50 px-2 py-1 text-xs text-emerald-200 hover:border-emerald-500/80"
+              >
+                Copy Submission Payload
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void openGitHubIssueForSubmission()
+                }}
+                className="rounded border border-emerald-700/50 px-2 py-1 text-xs text-emerald-200 hover:border-emerald-500/80"
+              >
+                Open GitHub Issue
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSubmitTemplateModal(false)}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-slate-400"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}
