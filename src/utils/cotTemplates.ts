@@ -13,7 +13,7 @@ ${detailBody}
 const wearTakTemplate = (): string => `<event version="2.0" uid="WEAROS_demo_uid" type="a-f-G-U-C" time="${ISO_NOW}" start="${ISO_NOW}" stale="${ISO_STALE}" how="m-g" access="Undefined">
   <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
   <detail>
-    <remarks>ODIN-WEARTAK sending SA message</remarks>
+    <remarks></remarks>
     <contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />
     <__group name="Dark Green" role="K9" />
     <track speed="0.00000000" course="0.00000000" />

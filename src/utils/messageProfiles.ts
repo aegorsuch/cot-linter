@@ -18,7 +18,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     <link uid='WEAROS_ec3eecdeb3329263' production_time='2026-02-27T03:08:29.490Z' type='a-f-G-U-C' parent_callsign='ODIN-WEARTAK' relation='p-p'/>
     <color argb='-1'/>
     <usericon iconsetpath=''/>
-    <remarks>ODIN-WEARTAK dropping MIL-STD-2525D Point</remarks>
+    <remarks></remarks>
     <contact callsign='ODIN-WEARTAK_030829Z'/>
   </detail>
 </event>`,
@@ -40,7 +40,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     <link uid='WEAROS_ec3eecdeb3329263' production_time='2026-02-27T03:16:10.443Z' type='a-f-G-U-C' parent_callsign='ODIN-WEARTAK' relation='p-p'/>
     <color argb='-1'/>
     <usericon iconsetpath=''/>
-    <remarks>ODIN-WEARTAK clearing a MIL-STD-2525D Point</remarks>
+    <remarks></remarks>
     <contact callsign='ODIN-WEARTAK_031614Z'/>
   </detail>
 </event>`,
