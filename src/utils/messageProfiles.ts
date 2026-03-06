@@ -14,8 +14,8 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   <point lat='42.0' lon='-72.0' hae='9999999.0' ce='9999999.0' le='9999999.0' />
   <detail>
     <link uid='ANDROID-4eb92ff46e615c21' type='a-f-G-U-C' relation='p-p' />
-    <contact callsign='BARON-Alert' />
-    <emergency type='911 Alert'>BARON</emergency>
+    <contact callsign='ODIN-ATAK' />
+    <emergency type='911 Alert'>ODIN-ATAK</emergency>
   </detail>
 </event>`,
   },
@@ -31,7 +31,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
 <event version='2.0' uid='13155716143-9-1-1' type='b-a-o-can' time='2026-02-20T20:13:34.720Z' start='2026-02-20T20:13:34.720Z' stale='2026-02-20T20:13:44.720Z' how='h-e' access='Undefined'>
   <point lat='0.0' lon='0.0' hae='9999999.0' ce='9999999.0' le='9999999.0' />
   <detail>
-    <emergency cancel='true'>BARON</emergency>
+    <emergency cancel='true'>ODIN-ATAK</emergency>
   </detail>
 </event>`,
   },
@@ -49,7 +49,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   <detail>
     <status readiness='true'/>
     <archive/>
-    <link uid='ANDROID-589520ccfcd20f01' production_time='2020-12-16T19:50:57.629Z' type='a-f-G-U-C' parent_callsign='HOPE' relation='p-p'/>
+    <link uid='ANDROID-589520ccfcd20f01' production_time='2020-12-16T19:50:57.629Z' type='a-f-G-U-C' parent_callsign='ODIN-ATAK' relation='p-p'/>
     <contact callsign='U.16.135057'/>
     <remarks></remarks>
     <archive/>
