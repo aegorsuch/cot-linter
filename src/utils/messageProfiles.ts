@@ -11,7 +11,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['link', 'contact', 'emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='13155716143-9-1-1' type='b-a-o-tbl' time='2026-02-20T20:13:34.035Z' start='2026-02-20T20:13:34.035Z' stale='2026-02-20T20:13:44.035Z' how='h-e' access='Undefined'>
-  <point lat='42.0' lon='-72.0' hae='9999999.0' ce='9999999.0' le='9999999.0' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <link uid='ANDROID-4eb92ff46e615c21' type='a-f-G-U-C' relation='p-p' />
     <contact callsign='ODIN-ATAK' />
@@ -29,7 +29,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='13155716143-9-1-1' type='b-a-o-can' time='2026-02-20T20:13:34.720Z' start='2026-02-20T20:13:34.720Z' stale='2026-02-20T20:13:44.720Z' how='h-e' access='Undefined'>
-  <point lat='0.0' lon='0.0' hae='9999999.0' ce='9999999.0' le='9999999.0' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <emergency cancel='true'>ODIN-ATAK</emergency>
   </detail>
@@ -45,7 +45,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['status', 'archive', 'link', 'contact', 'remarks', 'color', 'precisionlocation', 'usericon'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='a0c524c6-0422-4382-9981-e39d1dc71730' type='a-u-G' time='2020-12-16T19:59:34.910Z' start='2020-12-16T19:59:34.910Z' stale='2021-01-02T20:40:03.838Z' how='h-g-i-g-o'>
-  <point lat='38.856650047254725' lon='-77.06364199776728' hae='9999999.0' ce='9999999.0' le='9999999.0' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <status readiness='true'/>
     <archive/>
@@ -88,7 +88,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['status', 'precisionlocation', 'link', 'color', 'usericon', 'remarks', 'contact'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='d62ca8a4-9489-45ce-9e5a-4e9eb78fb732' type='a-f-G' time='2026-02-27T03:08:28.000Z' start='2026-02-27T03:08:29.490Z' stale='2027-02-27T03:08:29.490Z' how='h-g-i-g-o' access='Undefined'>
-  <point lat='41.8799922' lon='-87.6411654' hae='178.1' ce='22.8' le='1.6' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <status readiness='true' battery='93'/>
     <precisionlocation altsrc='SRTM1'/>
@@ -110,7 +110,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['status', 'precisionlocation', 'link', 'color', 'usericon', 'remarks', 'contact'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='129c8ba2-4a50-444a-919f-ca3209eaf975' type='a-u-G' time='2026-02-27T03:16:13.000Z' start='2026-02-27T03:16:10.443Z' stale='2026-02-27T03:13:14.443Z' how='h-g-i-g-o' access='Undefined'>
-  <point lat='41.879986' lon='-87.6408946' hae='180.3' ce='15.5' le='1.6' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <status readiness='true' battery='91'/>
     <precisionlocation altsrc='SRTM1'/>
@@ -132,7 +132,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['link', 'emergency', 'usericon', 'color', 'contact'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='3ec08f24-bbb4-41e8-86e1-c990e1052c44' type='b-a-o' time='2026-02-27T03:02:21.000Z' start='2026-02-27T03:02:22.497Z' stale='2026-02-27T03:17:22.497Z' how='h-e' access='Undefined'>
-  <point lat='41.879986' lon='-87.6409504' hae='178.1' ce='15.0' le='1.7' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <link uid='WEAROS_ec3eecdeb3329263' type='a-f-G-U-C' relation='p-p'/>
     <emergency type='Manual Alert: Gunshot'>ODIN-WEARTAK</emergency>
@@ -152,7 +152,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='3ec08f24-bbb4-41e8-86e1-c990e1052c44' type='b-a-o-can' time='2026-02-27T03:02:23.000Z' start='2026-02-27T03:02:24.696Z' stale='2026-02-27T03:17:24.696Z' how='h-e' access='Undefined'>
-  <point lat='41.879986' lon='-87.6409504' hae='178.1' ce='15.0' le='1.7' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <emergency cancel='true'>ODIN-WEARTAK</emergency>
   </detail>
@@ -168,7 +168,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredDetailTags: ['__chat', 'link', 'remarks'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <event version='2.0' uid='GeoChat.WEAROS_ec3eecdeb3329263.S-1-5-21-2509009047-1201820514-1223561644-1001.7edbd135-0a00-452f-9a65-06e0859242d0' type='b-t-f' time='2026-02-27T18:35:49.00Z' start='2026-02-27T18:35:49.66Z' stale='2026-02-27T18:35:49.66Z' how='h-g-i-g-o' access='Undefined'>
-  <point lat='41.8800034' lon='-87.6417851' hae='180.4360486' ce='18.5' le='1.4' />
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
   <detail>
     <__chat parent='RootContactGroup' groupOwner='false' messageId='7edbd135-0a00-452f-9a65-06e0859242d0' chatroom='ODIN-WINTAK' id='S-1-5-21-2509009047-1201820514-1223561644-1001' senderCallsign='ODIN-WEARTAK'>
       <chatgrp uid0='WEAROS_ec3eecdeb3329263' uid1='S-1-5-21-2509009047-1201820514-1223561644-1001' id='S-1-5-21-2509009047-1201820514-1223561644-1001' />
