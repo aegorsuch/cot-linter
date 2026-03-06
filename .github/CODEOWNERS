@@ -1,0 +1,12 @@
+# Default fallback owner for repository changes.
+* @aegorsuch
+
+# Critical validation logic and message semantics.
+/src/utils/cotValidator.ts @aegorsuch
+/src/utils/cotTemplates.ts @aegorsuch
+/src/utils/messageProfiles.ts @aegorsuch
+
+# CI/CD and governance automation.
+/.github/workflows/ @aegorsuch
+/.github/dependabot.yml @aegorsuch
+/.github/release-drafter.yml @aegorsuch

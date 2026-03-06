@@ -1,0 +1,54 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+no-changes-template: '- No changes in this release.'
+
+version-resolver:
+  major:
+    labels:
+      - major
+  minor:
+    labels:
+      - feature
+      - enhancement
+  patch:
+    labels:
+      - fix
+      - bug
+      - dependencies
+  default: patch
+
+categories:
+  - title: 'Features'
+    labels:
+      - feature
+      - enhancement
+  - title: 'Fixes'
+    labels:
+      - fix
+      - bug
+  - title: 'Validation and Rules'
+    labels:
+      - validation
+      - rules
+  - title: 'Testing and Quality'
+    labels:
+      - test
+      - ci
+  - title: 'Dependencies'
+    labels:
+      - dependencies
+
+exclude-labels:
+  - skip-changelog
+
+template: |
+  ## Changes
+
+  $CHANGES
+
+  ## Verification
+
+  - CI checks required before merge: `docs-discipline`, `quality`, `e2e`
+  - Full local gate: `npm run verify:all`

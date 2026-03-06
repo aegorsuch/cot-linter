@@ -173,6 +173,24 @@ Additional automation:
 
 - Weekly Dependabot updates for npm and GitHub Actions (`.github/dependabot.yml`).
 - Weekly scheduled high-severity npm audit (`.github/workflows/security-audit.yml`).
+- Draft release notes automation via Release Drafter (`.github/workflows/release-drafter.yml`).
+
+## Branch Protection
+
+Set branch protection for `main` in GitHub repository settings and require these checks before merge:
+
+- `docs-discipline`
+- `quality`
+- `e2e`
+
+Also enable `Require branches to be up to date before merging`.
+
+Maintainer setup checklist: `docs/MAINTAINERS.md`.
+
+## Changelog and Releases
+
+- Project changelog is maintained in `CHANGELOG.md` using Keep a Changelog format.
+- Release Drafter composes draft release notes from merged pull requests and labels.
 
 ## Usage
 
