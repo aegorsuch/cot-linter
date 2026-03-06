@@ -48,7 +48,7 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
       '    <remarks>Initial report from mobile observer.</remarks>',
   ),
   TAKx: baseTemplate(
-    '    <takv device="Gateway" os="Linux" version="2.1" />\n' +
+    '    <takv device="Gateway" os="Linux" sversion="2.1" />\n' +
       '    <__group name="Interop" role="K9" />',
   ),
   WearTAK: wearTakTemplate(),
