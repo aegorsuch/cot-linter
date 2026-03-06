@@ -16,10 +16,7 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [toast, setToast] = useState<{ text: string; tone: 'success' | 'error' | 'info' } | null>(null)
-  const [lastInsertSnapshot, setLastInsertSnapshot] = useState<{
-    previousXml: string
-    description: string
-  } | null>(null)
+  const [insertHistory, setInsertHistory] = useState<Array<{ previousXml: string; description: string }>>([])
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -180,7 +177,7 @@ function App() {
       return
     }
 
-    setLastInsertSnapshot({ previousXml: xml, description: `inserted <${tag}>` })
+    setInsertHistory((current) => [...current, { previousXml: xml, description: `inserted <${tag}>` }])
     const updatedXml = result.updatedXml
     setXml(updatedXml)
     showToast(`Inserted <${tag}>.`, 'success')
@@ -220,23 +217,38 @@ function App() {
       return
     }
 
-    setLastInsertSnapshot({
-      previousXml: xml,
-      description: `bulk insert (${reportPlatform}: ${insertedTags.join(', ')})`,
-    })
+    setInsertHistory((current) => [
+      ...current,
+      {
+        previousXml: xml,
+        description: `bulk insert (${reportPlatform}: ${insertedTags.join(', ')})`,
+      },
+    ])
     setXml(workingXml)
     showToast(`Inserted ${insertedTags.length} tag(s) for ${reportPlatform}.`, 'success')
   }
 
   const undoLastInsert = () => {
-    if (!lastInsertSnapshot) {
+    if (insertHistory.length === 0) {
       showToast('Nothing to undo.', 'info')
       return
     }
 
-    setXml(lastInsertSnapshot.previousXml)
-    showToast(`Undid ${lastInsertSnapshot.description}.`, 'success')
-    setLastInsertSnapshot(null)
+    const previousInsert = insertHistory[insertHistory.length - 1]
+    setXml(previousInsert.previousXml)
+    showToast(`Undid ${previousInsert.description}.`, 'success')
+    setInsertHistory((current) => current.slice(0, -1))
+  }
+
+  const undoAllInserts = () => {
+    if (insertHistory.length === 0) {
+      showToast('Nothing to undo.', 'info')
+      return
+    }
+
+    setXml(insertHistory[0].previousXml)
+    showToast('Undid all insert actions.', 'success')
+    setInsertHistory([])
   }
 
   const jumpToMissingTagContext = (tag: string, key: string) => {
@@ -372,7 +384,12 @@ function App() {
             className="min-h-0 flex-1 w-full resize-none rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
             placeholder="Paste <event>...</event> here..."
             value={xml}
-            onChange={(e) => setXml(e.target.value)}
+            onChange={(e) => {
+              setXml(e.target.value)
+              if (insertHistory.length > 0) {
+                setInsertHistory([])
+              }
+            }}
           />
         </section>
 
@@ -469,10 +486,18 @@ function App() {
             <button
               type="button"
               onClick={undoLastInsert}
-              disabled={!lastInsertSnapshot}
+              disabled={insertHistory.length === 0}
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors enabled:hover:border-emerald-500 enabled:hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Undo Last Insert
+            </button>
+            <button
+              type="button"
+              onClick={undoAllInserts}
+              disabled={insertHistory.length === 0}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors enabled:hover:border-emerald-500 enabled:hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Undo All Inserts
             </button>
           </div>
         )}

@@ -74,5 +74,14 @@ describe('App platform and profile behavior', () => {
 
     await user.click(screen.getByRole('button', { name: /Undo Last Insert/i }))
     expect(inputTextarea.value).not.toContain('Maven Gateway')
+
+    await user.click(screen.getByRole('button', { name: /Bulk insert missing tags for Maven/i }))
+    await user.click(screen.getByRole('button', { name: /Bulk insert missing tags for Lattice/i }))
+    expect(inputTextarea.value).toContain('Maven Gateway')
+    expect(inputTextarea.value).toContain('Lattice correlation')
+
+    await user.click(screen.getByRole('button', { name: /Undo All Inserts/i }))
+    expect(inputTextarea.value).not.toContain('Maven Gateway')
+    expect(inputTextarea.value).not.toContain('Lattice correlation')
   })
 })
