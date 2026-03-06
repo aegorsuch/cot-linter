@@ -137,6 +137,127 @@ describe('validateCoT semantic field checks', () => {
 });
 
 describe('validateCoTWithProfile profile-specific field checks', () => {
+  it('accepts ATAK Manual Alert sample payload without profile field-shape errors', () => {
+    const atakManualAlertProfile = MESSAGE_PROFILES.find((profile) => profile.id === 'atak-manual-alert') ?? null;
+    expect(atakManualAlertProfile).not.toBeNull();
+
+    const result = validateCoTWithProfile(
+      atakManualAlertProfile?.sampleXml ?? '',
+      'ATAK',
+      atakManualAlertProfile,
+    );
+
+    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.isValid).toBe(true);
+  });
+
+  it('flags malformed ATAK Manual Alert field shapes beyond required tag checks', () => {
+    const atakManualAlertProfile = MESSAGE_PROFILES.find((profile) => profile.id === 'atak-manual-alert') ?? null;
+    expect(atakManualAlertProfile).not.toBeNull();
+
+    const xml = `<event version="2.0" uid="atak-alert-demo" type="b-a-o-tbl" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="h-e" access="Undefined">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <link />
+    <contact />
+    <emergency></emergency>
+  </detail>
+</event>`;
+
+    const result = validateCoTWithProfile(xml, 'ATAK', atakManualAlertProfile);
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'uid' on <link>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'type' on <link>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'relation' on <link>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'callsign' on <contact>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'type' on <emergency>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes('non-empty text inside <emergency>'))).toBe(true);
+  });
+
+  it('accepts ATAK Manual Alert Clear sample payload without profile field-shape errors', () => {
+    const atakManualAlertClearProfile =
+      MESSAGE_PROFILES.find((profile) => profile.id === 'atak-manual-alert-clear') ?? null;
+    expect(atakManualAlertClearProfile).not.toBeNull();
+
+    const result = validateCoTWithProfile(
+      atakManualAlertClearProfile?.sampleXml ?? '',
+      'ATAK',
+      atakManualAlertClearProfile,
+    );
+
+    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.isValid).toBe(true);
+  });
+
+  it('flags malformed ATAK Manual Alert Clear field shapes beyond required tag checks', () => {
+    const atakManualAlertClearProfile =
+      MESSAGE_PROFILES.find((profile) => profile.id === 'atak-manual-alert-clear') ?? null;
+    expect(atakManualAlertClearProfile).not.toBeNull();
+
+    const xml = `<event version="2.0" uid="atak-alert-clear-demo" type="b-a-o-can" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="h-e" access="Undefined">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <emergency cancel="false"></emergency>
+  </detail>
+</event>`;
+
+    const result = validateCoTWithProfile(xml, 'ATAK', atakManualAlertClearProfile);
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_VALUE_INVALID')).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("cancel='true'"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes('non-empty text inside <emergency>'))).toBe(true);
+  });
+
+  it('accepts ATAK MIL-STD-2525D Drop sample payload without profile field-shape errors', () => {
+    const atakMilStdDropProfile =
+      MESSAGE_PROFILES.find((profile) => profile.id === 'atak-milstd-2525d-drop') ?? null;
+    expect(atakMilStdDropProfile).not.toBeNull();
+
+    const result = validateCoTWithProfile(
+      atakMilStdDropProfile?.sampleXml ?? '',
+      'ATAK',
+      atakMilStdDropProfile,
+    );
+
+    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.isValid).toBe(true);
+  });
+
+  it('flags malformed ATAK MIL-STD-2525D Drop field attributes beyond required tag checks', () => {
+    const atakMilStdDropProfile =
+      MESSAGE_PROFILES.find((profile) => profile.id === 'atak-milstd-2525d-drop') ?? null;
+    expect(atakMilStdDropProfile).not.toBeNull();
+
+    const xml = `<event version="2.0" uid="atak-milstd-demo" type="a-u-G" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="h-g-i-g-o">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <status />
+    <archive />
+    <link uid="ANDROID-1" />
+    <contact />
+    <remarks></remarks>
+    <color />
+    <precisionlocation />
+    <usericon />
+  </detail>
+</event>`;
+
+    const result = validateCoTWithProfile(xml, 'ATAK', atakMilStdDropProfile);
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'readiness' on <status>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'production_time' on <link>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'parent_callsign' on <link>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'callsign' on <contact>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'argb' on <color>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'altsrc' on <precisionlocation>"))).toBe(true);
+    expect(result.errors.some((error) => error.text.includes("'iconsetpath' on <usericon>"))).toBe(true);
+  });
+
   it('accepts CloudTAK Alert sample payload without profile field-shape errors', () => {
     const cloudtakAlertProfile =
       MESSAGE_PROFILES.find((profile) => profile.id === 'cloudtak-manual-alert') ?? null;

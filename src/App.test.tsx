@@ -149,4 +149,30 @@ describe('App platform and profile behavior', () => {
 
   })
 
+  it('loads ATAK profile templates from template buttons', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
+
+    const templateTextarea = document.querySelector('textarea[readonly]') as HTMLTextAreaElement
+    expect(templateTextarea).not.toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /^Manual Alert$/i }))
+    expect(screen.getByRole('button', { name: /^Manual Alert$/i })).toHaveClass('border-emerald-500/60')
+    expect(templateTextarea.value).toContain("type='b-a-o-tbl'")
+    expect(templateTextarea.value).toContain("<emergency type='911 Alert'>ODIN-ATAK</emergency>")
+
+    await user.click(screen.getByRole('button', { name: /^Manual Alert Clear$/i }))
+    expect(screen.getByRole('button', { name: /^Manual Alert Clear$/i })).toHaveClass('border-emerald-500/60')
+    expect(templateTextarea.value).toContain("type='b-a-o-can'")
+    expect(templateTextarea.value).toContain("<emergency cancel='true'>ODIN-ATAK</emergency>")
+
+    await user.click(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }))
+    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i })).toHaveClass('border-emerald-500/60')
+    expect(templateTextarea.value).toContain("type='a-u-G'")
+    expect(templateTextarea.value).toContain("iconsetpath='COT_MAPPING_2525B/a-u/a-u-G'")
+  })
+
 })

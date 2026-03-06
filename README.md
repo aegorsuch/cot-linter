@@ -64,6 +64,7 @@ Selecting a profile updates validation requirements and can load a sample messag
 - Platform Rule Matrix selector for platform-specific behavior.
 - Starter template loader per platform.
 - Profile selector with sample payload loading.
+- UI regression tests cover ATAK profile template button-loading flows.
 - Template submission modal with a single `Submit GitHub Issue` action and auto-close on submit.
 - Diagnostic click-to-jump that focuses the input and highlights the relevant line.
 - Cross-platform missing-tag comparison cards.

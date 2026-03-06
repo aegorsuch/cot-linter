@@ -837,6 +837,146 @@ const validateProfileFieldShape = (
   detail: Record<string, unknown>,
   result: ValidationResult,
 ): void => {
+  if (profile.id === 'atak-manual-alert') {
+    const link = getFirstTagObject(detail, 'link');
+    const contact = getFirstTagObject(detail, 'contact');
+    const emergency = getFirstTagObject(detail, 'emergency');
+
+    if (hasDetailTag(detail, 'link')) {
+      for (const attr of ['uid', 'type', 'relation']) {
+        if (!hasXmlAttribute(link, attr)) {
+          pushError(
+            result,
+            'PROFILE_FIELD_ATTR_MISSING',
+            `Message profile '${profile.label}' requires attribute '${attr}' on <link>.`,
+            findAttributeLocation(xmlString, 'link', attr),
+            'high',
+            'high',
+            `<link ${attr}="..." />`,
+          );
+        }
+      }
+    }
+
+    if (hasDetailTag(detail, 'contact') && !hasXmlAttribute(contact, 'callsign')) {
+      pushError(
+        result,
+        'PROFILE_FIELD_ATTR_MISSING',
+        `Message profile '${profile.label}' requires attribute 'callsign' on <contact>.`,
+        findAttributeLocation(xmlString, 'contact', 'callsign'),
+        'high',
+        'high',
+        '<contact callsign="ODIN-ATAK" />',
+      );
+    }
+
+    if (hasDetailTag(detail, 'emergency')) {
+      if (!hasXmlAttribute(emergency, 'type')) {
+        pushError(
+          result,
+          'PROFILE_FIELD_ATTR_MISSING',
+          `Message profile '${profile.label}' requires attribute 'type' on <emergency>.`,
+          findAttributeLocation(xmlString, 'emergency', 'type'),
+          'high',
+          'high',
+          '<emergency type="911 Alert">ODIN-ATAK</emergency>',
+        );
+      }
+
+      const emergencyRaw = detail.emergency;
+      const emergencyText =
+        typeof emergencyRaw === 'string'
+          ? emergencyRaw
+          : ((emergency?.['#text'] as string | undefined) ?? '');
+      if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+          findTagLocation(xmlString, 'emergency'),
+          'high',
+          'high',
+          '<emergency type="911 Alert">ODIN-ATAK</emergency>',
+        );
+      }
+    }
+
+    return;
+  }
+
+  if (profile.id === 'atak-manual-alert-clear') {
+    const emergency = getFirstTagObject(detail, 'emergency');
+    if (!hasDetailTag(detail, 'emergency')) {
+      return;
+    }
+
+    const cancel = emergency?.[toAttr('cancel')];
+    if (cancel !== 'true') {
+      pushError(
+        result,
+        'PROFILE_FIELD_VALUE_INVALID',
+        `Message profile '${profile.label}' requires <emergency cancel='true'>.`,
+        findAttributeLocation(xmlString, 'emergency', 'cancel'),
+        'high',
+        'high',
+        "<emergency cancel='true'>ODIN-ATAK</emergency>",
+      );
+    }
+
+    const emergencyRaw = detail.emergency;
+    const emergencyText =
+      typeof emergencyRaw === 'string'
+        ? emergencyRaw
+        : ((emergency?.['#text'] as string | undefined) ?? '');
+    if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+      pushError(
+        result,
+        'PROFILE_FIELD_VALUE_INVALID',
+        `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+        findTagLocation(xmlString, 'emergency'),
+        'high',
+        'high',
+        '<emergency cancel="true">ODIN-ATAK</emergency>',
+      );
+    }
+
+    return;
+  }
+
+  if (profile.id === 'atak-milstd-2525d-drop') {
+    const attributeRuleSet: Array<{ tag: string; requiredAttributes: string[] }> = [
+      { tag: 'status', requiredAttributes: ['readiness'] },
+      { tag: 'link', requiredAttributes: ['uid', 'production_time', 'type', 'parent_callsign', 'relation'] },
+      { tag: 'contact', requiredAttributes: ['callsign'] },
+      { tag: 'color', requiredAttributes: ['argb'] },
+      { tag: 'precisionlocation', requiredAttributes: ['altsrc'] },
+      { tag: 'usericon', requiredAttributes: ['iconsetpath'] },
+    ];
+
+    for (const rule of attributeRuleSet) {
+      if (!hasDetailTag(detail, rule.tag)) {
+        continue;
+      }
+
+      const tagObject = getFirstTagObject(detail, rule.tag);
+      for (const attr of rule.requiredAttributes) {
+        if (!hasXmlAttribute(tagObject, attr)) {
+          pushError(
+            result,
+            'PROFILE_FIELD_ATTR_MISSING',
+            `Message profile '${profile.label}' requires attribute '${attr}' on <${rule.tag}>.`,
+            findAttributeLocation(xmlString, rule.tag, attr),
+            'high',
+            'high',
+            `<${rule.tag} ${attr}="..." />`,
+          );
+        }
+      }
+    }
+
+    return;
+  }
+
   if (profile.id === 'cloudtak-manual-alert') {
     const hasEmergencyTag = hasDetailTag(detail, 'emergency');
     const hasUsericonTag = hasDetailTag(detail, 'usericon');
