@@ -40,6 +40,7 @@ describe('App platform and profile behavior', () => {
     expect(screen.getByRole('option', { name: /^MIL-STD-2525D Clear$/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /^Manual Alert$/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /^Manual Alert Clear$/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /^Chat Send$/i })).toBeInTheDocument()
   })
 
   it('renders merged cross-platform compatibility details after XML is loaded', async () => {

@@ -81,6 +81,26 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   </detail>
 </event>`,
   },
+  {
+    id: 'weartak-chat-send',
+    platform: 'WearTAK',
+    label: 'Chat Send',
+    description: 'WearTAK geochat send payload with chat metadata and recipient-scoped remarks.',
+    expectedType: 'b-t-f',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['__chat', 'link', 'remarks'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='GeoChat.WEAROS_ec3eecdeb3329263.S-1-5-21-2509009047-1201820514-1223561644-1001.7edbd135-0a00-452f-9a65-06e0859242d0' type='b-t-f' time='2026-02-27T18:35:49.00Z' start='2026-02-27T18:35:49.66Z' stale='2026-02-27T18:35:49.66Z' how='h-g-i-g-o' access='Undefined'>
+  <point lat='41.8800034' lon='-87.6417851' hae='180.4360486' ce='18.5' le='1.4' />
+  <detail>
+    <__chat parent='RootContactGroup' groupOwner='false' messageId='7edbd135-0a00-452f-9a65-06e0859242d0' chatroom='ODIN-WINTAK' id='S-1-5-21-2509009047-1201820514-1223561644-1001' senderCallsign='ODIN-WEARTAK'>
+      <chatgrp uid0='WEAROS_ec3eecdeb3329263' uid1='S-1-5-21-2509009047-1201820514-1223561644-1001' id='S-1-5-21-2509009047-1201820514-1223561644-1001' />
+    </__chat>
+    <link uid='WEAROS_ec3eecdeb3329263' type='a-f-G-U-C' relation='p-p' />
+    <remarks source='WEAROS_ec3eecdeb3329263' to='S-1-5-21-2509009047-1201820514-1223561644-1001' time='2026-02-27T18:35:49.660Z'>Roger</remarks>
+  </detail>
+</event>`,
+  },
 ];
 
 export const getMessageProfilesForPlatform = (platform: Platform): MessageValidationProfile[] => {
