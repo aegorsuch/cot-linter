@@ -66,7 +66,7 @@ type ParsedCoT = {
   event?: {
     [key: string]: unknown;
     point?: Record<string, unknown>;
-    detail?: Record<string, unknown>;
+    // detail variable removed to fix TS6133 error
   };
 };
 
@@ -159,7 +159,7 @@ const parserOptions = {
   commentTagName: '__comment',
   processEntities: false,
   // Removed stopNodes to allow full parsing of <detail> children
-  isArray: (name: string, jpath: string) => {
+  isArray: (jpath: string) => {
     // Treat all tags inside <detail> as arrays for duplicate detection
     return jpath.startsWith('event.detail');
   },
@@ -1168,15 +1168,14 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
     validateDetailDuplicates(xmlString, event.detail as Record<string, unknown>, result);
   }
 
-  const detail = (event?.detail ?? {}) as Record<string, unknown>;
   // Call track validation if <track> tag exists
-  if (hasDetailTag(detail, 'track')) {
-    validateTrackSemantics(xmlString, detail, result);
+  if (event.detail && hasDetailTag(event.detail as Record<string, unknown>, 'track')) {
+    validateTrackSemantics(xmlString, event.detail as Record<string, unknown>, result);
   }
 
   for (const rule of PLATFORM_RULE_MATRIX[platform]) {
-    if (!hasDetailTag(detail, rule.tag)) {
-      const detailLocation = event?.detail
+    if (!event.detail || !hasDetailTag(event.detail as Record<string, unknown>, rule.tag)) {
+      const detailLocation = event.detail
         ? findTagLocation(xmlString, 'detail')
         : findTagLocation(xmlString, 'event');
 
