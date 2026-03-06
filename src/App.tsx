@@ -30,7 +30,7 @@ function App() {
 
   const selectedTemplateLabel = selectedProfile
     ? `${platform} ${selectedProfile.label} Template`
-    : `${platform} Starter Sample`
+    : `${platform} SA Template`
 
   const selectedTemplateXml = useMemo(() => {
     if (selectedProfile) {
@@ -267,10 +267,7 @@ function App() {
         </section>
 
         <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <h2 className="mb-2 text-xs uppercase text-slate-500">Sample CoT (Read-Only)</h2>
-          <p className="mb-3 text-[11px] text-slate-400">
-            Select a platform/profile context, then review or load the sample below.
-          </p>
+          <h2 className="mb-2 text-xs uppercase text-slate-500">Template CoT (Read-Only)</h2>
 
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <label htmlFor="platform-select" className="text-xs text-slate-400">
@@ -297,14 +294,14 @@ function App() {
             <button
               type="button"
               onClick={() => setSelectedProfileId('platform-default')}
-              title="Starter Sample"
+              title="SA Template"
               className={`rounded border px-2 py-1 text-xs transition-colors ${
                 selectedProfileId === 'platform-default'
                   ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                   : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
               } max-w-[15rem] truncate md:max-w-none`}
             >
-              Starter Sample
+              SA Template
             </button>
             {messageProfiles.map((profile) => (
               <button
@@ -323,30 +320,11 @@ function App() {
             ))}
           </div>
 
-          <p className="mb-2 text-[11px] text-slate-400">
-            Sample loaded from <span className="font-bold text-emerald-300">{selectedTemplateLabel}</span>
-          </p>
           <textarea
             readOnly
             value={selectedTemplateXml}
             className="h-[440px] w-full rounded border border-slate-700 bg-slate-950/70 p-4 font-mono text-sm text-slate-300"
           />
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setXml(selectedTemplateXml)}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-            >
-              Load into Left Pane
-            </button>
-            <button
-              type="button"
-              onClick={() => setXml('')}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-slate-400"
-            >
-              Clear Input
-            </button>
-          </div>
         </section>
       </main>
 
