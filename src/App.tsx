@@ -646,7 +646,7 @@ function App() {
       </header>
 
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="flex min-h-[480px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[560px] lg:min-h-[680px]">
+        <section className="flex min-h-[500px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[600px] lg:min-h-[760px]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs uppercase text-slate-500">Input CoT XML</h2>
             <div className="flex flex-wrap items-center gap-2">
@@ -687,7 +687,7 @@ function App() {
           />
         </section>
 
-        <section className="flex min-h-[480px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[560px] lg:min-h-[680px]">
+        <section className="flex min-h-[500px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[600px] lg:min-h-[760px]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xs uppercase text-slate-500">Template CoT (Read-Only)</h2>
             <div className="flex flex-wrap items-center gap-2">
