@@ -46,6 +46,7 @@ describe('App platform and profile behavior', () => {
     expect(screen.getByRole('heading', { name: /Platform Compatibility Matrix/i })).toBeInTheDocument()
     expect(screen.getAllByText(/Present:/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/expected tags/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /Copy missing tags for Maven/i })).toBeInTheDocument()
     expect(screen.queryByText(/Platform Rule Matrix/i)).not.toBeInTheDocument()
 
     const insertTakvButtons = screen.getAllByRole('button', { name: /Insert <takv>/i })

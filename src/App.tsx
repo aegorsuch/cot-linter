@@ -367,6 +367,27 @@ function App() {
     )
   }
 
+  const copyPlatformMissingTagsSnippets = async (
+    reportPlatform: Platform,
+    missingRules: Array<{ suggestionSnippet: string }>,
+  ) => {
+    if (missingRules.length === 0) {
+      showToast(`No missing tags for ${reportPlatform}.`, 'info')
+      return
+    }
+
+    const snippets = missingRules.map((rule) => `  ${rule.suggestionSnippet}`).join('\n')
+    const payload = `<detail>\n${snippets}\n</detail>`
+    const didCopy = await copyWithFallback(payload)
+
+    showToast(
+      didCopy
+        ? `Copied missing tag snippets for ${reportPlatform}.`
+        : `Unable to copy snippets for ${reportPlatform}.`,
+      didCopy ? 'success' : 'error',
+    )
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
       <header className="mb-8 border-b border-slate-700 pb-4">
@@ -563,6 +584,18 @@ function App() {
                           className="rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
                         >
                           Bulk Insert
+                        </button>
+                      )}
+                      {report.missingRules.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void copyPlatformMissingTagsSnippets(report.platform, report.missingRules)
+                          }}
+                          aria-label={`Copy missing tags for ${report.platform}`}
+                          className="rounded border border-slate-600 px-2 py-0.5 text-[11px] text-slate-200 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+                        >
+                          Copy Missing
                         </button>
                       )}
                     </div>
