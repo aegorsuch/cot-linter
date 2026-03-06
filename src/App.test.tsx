@@ -25,6 +25,21 @@ describe('App platform and profile behavior', () => {
     await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
 
     expect(screen.getByRole('button', { name: /^SA$/i })).toHaveClass('border-emerald-500/60')
+    expect(screen.getByRole('button', { name: /MIL-STD-2525D Drop \*/i })).toBeInTheDocument()
+  })
+
+  it('shows template names in submit dropdown including WearTAK profiles', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Submit Template/i }))
+
+    expect(screen.getByRole('option', { name: /^SA$/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /^MIL-STD-2525D Drop$/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /^MIL-STD-2525D Clear$/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /^Manual Alert$/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /^Manual Alert Clear$/i })).toBeInTheDocument()
   })
 
   it('renders merged cross-platform compatibility details after XML is loaded', async () => {

@@ -7,7 +7,7 @@ import {
   type Platform,
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
-import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
+import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 import { Activity } from 'lucide-react'
 
 const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
@@ -40,10 +40,36 @@ function App() {
 
   const platforms = Object.keys(PLATFORM_RULE_MATRIX) as Platform[]
   const messageProfiles = getMessageProfilesForPlatform(platform)
+  const templateLabels = useMemo(() => getAllTemplateLabels(), [])
   const selectedProfile: MessageValidationProfile | null =
     selectedProfileId === 'platform-default'
       ? null
       : messageProfiles.find((profile) => profile.id === selectedProfileId) ?? null
+
+  const templateButtons = useMemo(
+    () =>
+      templateLabels.map((label) => {
+        if (label === 'SA') {
+          return {
+            id: 'platform-default',
+            label,
+            isAvailable: true,
+            isSelected: selectedProfileId === 'platform-default',
+          }
+        }
+
+        const profile = messageProfiles.find((candidate) => candidate.label === label)
+        return {
+          id: profile?.id ?? `missing-${label}`,
+          label,
+          isAvailable: Boolean(profile),
+          isSelected: profile ? selectedProfileId === profile.id : false,
+        }
+      }),
+    [messageProfiles, selectedProfileId, templateLabels],
+  )
+
+  const submissionTemplateOptions = templateLabels
 
   const selectedTemplateLabel = selectedProfile
     ? `${platform} ${selectedProfile.label}`
@@ -510,35 +536,42 @@ function App() {
                   </option>
                 ))}
               </select>
+              <button
+                type="button"
+                onClick={openSubmitTemplateModal}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                Submit Template
+              </button>
             </div>
           </div>
 
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedProfileId('platform-default')}
-              title="SA"
-              className={`rounded border px-2 py-1 text-xs transition-colors ${
-                selectedProfileId === 'platform-default'
-                  ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
-                  : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
-              } max-w-[15rem] truncate md:max-w-none`}
-            >
-              SA
-            </button>
-            {messageProfiles.map((profile) => (
+            {templateButtons.map((templateProfile) => (
               <button
                 type="button"
-                key={profile.id}
-                onClick={() => setSelectedProfileId(profile.id)}
-                title={profile.label}
+                key={templateProfile.id}
+                onClick={() => {
+                  if (!templateProfile.isAvailable) {
+                    showToast(
+                      `Template "${templateProfile.label}" is missing for ${platform}. Please submit a template.`,
+                      'info',
+                    )
+                    return
+                  }
+
+                  setSelectedProfileId(templateProfile.id)
+                }}
+                title={templateProfile.isAvailable ? templateProfile.label : `${templateProfile.label} (missing)`}
                 className={`rounded border px-2 py-1 text-xs transition-colors ${
-                  selectedProfileId === profile.id
+                  templateProfile.isSelected
                     ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
-                    : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
+                    : templateProfile.isAvailable
+                      ? 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
+                      : 'border-dashed border-amber-700/60 bg-amber-950/30 text-amber-200 hover:border-amber-500/70'
                 } max-w-[15rem] truncate md:max-w-none`}
               >
-                {profile.label}
+                {templateProfile.isAvailable ? templateProfile.label : `${templateProfile.label} *`}
               </button>
             ))}
           </div>
@@ -559,13 +592,6 @@ function App() {
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
             >
               Copy into Input
-            </button>
-            <button
-              type="button"
-              onClick={openSubmitTemplateModal}
-              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-            >
-              Submit Template
             </button>
           </div>
         </section>
@@ -794,13 +820,17 @@ function App() {
 
               <label className="text-xs text-slate-300">
                 Profile / Category
-                <input
-                  type="text"
+                <select
                   value={submissionProfileLabel}
                   onChange={(e) => setSubmissionProfileLabel(e.target.value)}
                   className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
-                  placeholder="Example: MIL-STD-2525D Drop"
-                />
+                >
+                  {submissionTemplateOptions.map((templateName) => (
+                    <option key={`submission-template-option-${templateName}`} value={templateName}>
+                      {templateName}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
 

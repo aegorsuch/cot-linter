@@ -86,3 +86,15 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
 export const getMessageProfilesForPlatform = (platform: Platform): MessageValidationProfile[] => {
   return MESSAGE_PROFILES.filter((profile) => profile.platform === platform);
 };
+
+export const getAllTemplateLabels = (): string[] => {
+  const orderedUniqueLabels = MESSAGE_PROFILES.reduce<string[]>((labels, profile) => {
+    if (!labels.includes(profile.label)) {
+      labels.push(profile.label);
+    }
+
+    return labels;
+  }, []);
+
+  return ['SA', ...orderedUniqueLabels];
+};
