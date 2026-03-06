@@ -8,8 +8,44 @@ permissions:
   contents: read
 
 jobs:
+  docs-discipline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Enforce README discipline for user-facing changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "README discipline check skipped outside pull_request events."
+            exit 0
+          fi
+
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          if echo "$CHANGED_FILES" | grep -Eq '^(src/App.tsx|src/utils/cotTemplates.ts|src/utils/messageProfiles.ts|package.json|playwright.config.ts)$'; then
+            if ! echo "$CHANGED_FILES" | grep -Eq '^README.md$'; then
+              echo "README discipline check failed: user-facing files changed without README.md update."
+              echo "Please update README.md or split internal-only changes into a separate PR."
+              exit 1
+            fi
+          fi
+
+          echo "README discipline check passed."
+
   quality:
     runs-on: ubuntu-latest
+    needs: [docs-discipline]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,11 +62,36 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Unit tests
         run: npm test
 
+      - name: Coverage thresholds
+        run: npm run test:coverage
+
+      - name: Security audit (high+)
+        run: npm run security:audit
+
       - name: Build
         run: npm run build
+
+      - name: Production smoke test
+        run: |
+          set -euo pipefail
+          npm run preview -- --host 127.0.0.1 --port 4173 &
+          PREVIEW_PID=$!
+          trap "kill $PREVIEW_PID" EXIT
+
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:4173/ > /tmp/index.html; then
+              break
+            fi
+            sleep 1
+          done
+
+          grep -q "CoT" /tmp/index.html
 
   e2e:
     runs-on: ubuntu-latest

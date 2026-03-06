@@ -112,10 +112,22 @@ npm run preview
 npm run lint
 ```
 
+### Typecheck
+
+```bash
+npm run typecheck
+```
+
 ### Unit Tests
 
 ```bash
 npm test
+```
+
+### Unit Test Coverage
+
+```bash
+npm run test:coverage
 ```
 
 ### E2E Tests (Playwright)
@@ -130,14 +142,37 @@ Optional interactive UI mode:
 npm run test:e2e:ui
 ```
 
+### Full Verification Gate
+
+```bash
+npm run verify:all
+```
+
+This runs lint, typecheck, coverage-threshold tests, production build, Playwright E2E, and high-severity npm audit.
+
+### Security Audit
+
+```bash
+npm run security:audit
+```
+
 ## CI
 
 GitHub Actions runs quality gates on push and pull request:
 
+- README discipline check on pull requests for user-facing file changes.
 - `npm run lint`
+- `npm run typecheck`
 - `npm test`
+- `npm run test:coverage`
 - `npm run build`
+- Production preview smoke test
 - `npm run test:e2e` (Chromium via Playwright)
+
+Additional automation:
+
+- Weekly Dependabot updates for npm and GitHub Actions (`.github/dependabot.yml`).
+- Weekly scheduled high-severity npm audit (`.github/workflows/security-audit.yml`).
 
 ## Usage
 

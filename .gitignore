@@ -27,3 +27,6 @@ dist-ssr
 playwright-report/
 test-results/
 blob-report/
+
+# Test coverage artifacts
+coverage/
