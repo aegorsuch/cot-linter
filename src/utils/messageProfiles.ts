@@ -2,6 +2,64 @@ import type { MessageValidationProfile, Platform } from './cotValidator';
 
 export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   {
+    id: 'atak-manual-alert',
+    platform: 'ATAK',
+    label: 'Manual Alert',
+    description: 'ATAK emergency table alert payload with link, contact, and emergency metadata.',
+    expectedType: 'b-a-o-tbl',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['link', 'contact', 'emergency'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='13155716143-9-1-1' type='b-a-o-tbl' time='2026-02-20T20:13:34.035Z' start='2026-02-20T20:13:34.035Z' stale='2026-02-20T20:13:44.035Z' how='h-e' access='Undefined'>
+  <point lat='42.0' lon='-72.0' hae='9999999.0' ce='9999999.0' le='9999999.0' />
+  <detail>
+    <link uid='ANDROID-4eb92ff46e615c21' type='a-f-G-U-C' relation='p-p' />
+    <contact callsign='BARON-Alert' />
+    <emergency type='911 Alert'>BARON</emergency>
+  </detail>
+</event>`,
+  },
+  {
+    id: 'atak-manual-alert-clear',
+    platform: 'ATAK',
+    label: 'Manual Alert Clear',
+    description: 'ATAK emergency cancel payload for clearing a manual alert.',
+    expectedType: 'b-a-o-can',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['emergency'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='13155716143-9-1-1' type='b-a-o-can' time='2026-02-20T20:13:34.720Z' start='2026-02-20T20:13:34.720Z' stale='2026-02-20T20:13:44.720Z' how='h-e' access='Undefined'>
+  <point lat='0.0' lon='0.0' hae='9999999.0' ce='9999999.0' le='9999999.0' />
+  <detail>
+    <emergency cancel='true'>BARON</emergency>
+  </detail>
+</event>`,
+  },
+  {
+    id: 'atak-milstd-2525d-drop',
+    platform: 'ATAK',
+    label: 'MIL-STD-2525D Drop',
+    description: 'ATAK MIL-STD-2525D point drop payload with status, link, and icon metadata.',
+    expectedType: 'a-u-G',
+    requiredEventAttributes: ['version'],
+    requiredDetailTags: ['status', 'archive', 'link', 'contact', 'remarks', 'color', 'precisionlocation', 'usericon'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='a0c524c6-0422-4382-9981-e39d1dc71730' type='a-u-G' time='2020-12-16T19:59:34.910Z' start='2020-12-16T19:59:34.910Z' stale='2021-01-02T20:40:03.838Z' how='h-g-i-g-o'>
+  <point lat='38.856650047254725' lon='-77.06364199776728' hae='9999999.0' ce='9999999.0' le='9999999.0' />
+  <detail>
+    <status readiness='true'/>
+    <archive/>
+    <link uid='ANDROID-589520ccfcd20f01' production_time='2020-12-16T19:50:57.629Z' type='a-f-G-U-C' parent_callsign='HOPE' relation='p-p'/>
+    <contact callsign='U.16.135057'/>
+    <remarks></remarks>
+    <archive/>
+    <color argb='-1'/>
+    <precisionlocation altsrc='???'/>
+    <usericon iconsetpath='COT_MAPPING_2525B/a-u/a-u-G'/>
+  </detail>
+</event>`,
+  },
+  {
     id: 'cloudtak-manual-alert',
     platform: 'CloudTAK',
     label: 'Manual Alert',

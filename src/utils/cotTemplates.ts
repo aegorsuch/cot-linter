@@ -4,7 +4,7 @@ const ISO_NOW = '2026-03-05T12:00:00Z';
 const ISO_STALE = '2026-03-05T12:05:00Z';
 
 const baseTemplate = (detailBody: string): string => `<event uid="demo-uid" type="a-f-G-U-C" time="${ISO_NOW}" start="${ISO_NOW}" stale="${ISO_STALE}" how="m-g">
-  <point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" />
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
   <detail>
 ${detailBody}
   </detail>
@@ -20,16 +20,21 @@ const wearTakTemplate = (): string => `<event version="2.0" uid="WEAROS_demo_uid
   </detail>
 </event>`;
 
+const cloudTakTemplate = (): string => `<event version="2.0" uid="CLOUDTAK_demo_uid" type="a-f-G-U-C" time="${ISO_NOW}" start="${ISO_NOW}" stale="${ISO_STALE}" how="m-g" access="Undefined">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <contact callsign="ODIN-CLOUDTAK" />
+    <takv device="Android" os="Android 14" version="5.0" />
+    <usericon iconsetpath="COT_MAPPING_2525C/a-f-G-U-C.png" />
+  </detail>
+</event>`;
+
 export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   ATAK: baseTemplate(
     '    <contact callsign="ODIN-ATAK" />\n' +
       '    <__group name="Dark Green" role="K9" />',
   ),
-  CloudTAK: baseTemplate(
-    '    <contact callsign="ODIN-CLOUDTAK" />\n' +
-      '    <takv device="Android" os="Android 14" version="5.0" />\n' +
-      '    <usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
-  ),
+  CloudTAK: cloudTakTemplate(),
   Lattice: baseTemplate(
     '    <contact callsign="ODIN-LATTICE" />\n' +
       '    <track speed="0.00000000" course="0.00000000" />\n' +

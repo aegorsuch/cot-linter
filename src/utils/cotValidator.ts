@@ -124,7 +124,7 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     {
       tag: 'usericon',
       description: 'Icon rendering path for CloudTAK event presentation.',
-      suggestionSnippet: '<usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
+      suggestionSnippet: '<usericon iconsetpath="COT_MAPPING_2525C/a-f-G-U-C.png" />',
     },
   ],
   Lattice: [
@@ -239,6 +239,10 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     },
   ],
 };
+
+const ALL_PLATFORMS_SORTED: Platform[] = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).sort(
+  (a, b) => a.localeCompare(b),
+);
 
 const PLATFORM_SCHEMA_FRAGMENTS: Record<Platform, string> = {
   ATAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
@@ -1212,7 +1216,7 @@ export const validateCoTWithProfile = (
 };
 
 export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformMissingTagsResult => {
-  const emptyReports = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).map((platform) => ({
+  const emptyReports = ALL_PLATFORMS_SORTED.map((platform) => ({
     platform,
     missingRules: [],
   }));
@@ -1227,9 +1231,9 @@ export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformM
   }
 
   const detail = (parsed.event?.detail ?? {}) as Record<string, unknown>;
-  const reports = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).map((platform) => {
+  const reports = ALL_PLATFORMS_SORTED.map((platform) => {
     const rules = PLATFORM_RULE_MATRIX[platform];
-    const missingRules = rules.filter((rule) => !detail[rule.tag]);
+    const missingRules = rules.filter((rule) => !hasDetailTag(detail, rule.tag));
     return { platform, missingRules };
   });
 

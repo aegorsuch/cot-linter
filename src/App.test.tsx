@@ -25,7 +25,7 @@ describe('App platform and profile behavior', () => {
     await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
 
     expect(screen.getByRole('button', { name: /^SA$/i })).toHaveClass('border-emerald-500/60')
-    expect(screen.getByRole('button', { name: /MIL-STD-2525D Drop \*/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i })).toBeInTheDocument()
   })
 
   it('uses ordered submit profile options with Chat Send default and simplified actions', async () => {
@@ -143,4 +143,5 @@ describe('App platform and profile behavior', () => {
     expect(inputTextarea.value).not.toMatch(/\n{3,}/)
 
   })
+
 })
