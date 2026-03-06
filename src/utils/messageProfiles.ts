@@ -2,6 +2,25 @@ import type { MessageValidationProfile, Platform } from './cotValidator';
 
 export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   {
+    id: 'cloudtak-alert',
+    platform: 'CloudTAK',
+    label: 'CloudTAK Alert',
+    description: 'CloudTAK alert payload with emergency metadata and icon rendering path.',
+    expectedType: 'b-a-o',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['emergency', 'usericon', 'contact', 'takv'],
+    sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<event version='2.0' uid='CLOUDTAK_alert_demo_uid' type='b-a-o' time='2026-03-05T12:00:00Z' start='2026-03-05T12:00:00Z' stale='2026-03-05T12:15:00Z' how='h-e' access='Undefined'>
+  <point lat='41.880025' lon='-87.641793' hae='180.1' ce='13.0' le='1.0' />
+  <detail>
+    <emergency type='Manual Alert: Gunshot'>ODIN-CLOUDTAK</emergency>
+    <usericon iconsetpath='COT_MAPPING_2525C/b-a-o.png' />
+    <contact callsign='ODIN-CLOUDTAK' />
+    <takv device='Android' os='Android 14' version='5.0' />
+  </detail>
+</event>`,
+  },
+  {
     id: 'weartak-milstd-point',
     platform: 'WearTAK',
     label: 'MIL-STD-2525D Drop',

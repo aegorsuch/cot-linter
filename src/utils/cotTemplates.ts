@@ -27,7 +27,8 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   ),
   CloudTAK: baseTemplate(
     '    <contact callsign="ODIN-CLOUDTAK" />\n' +
-      '    <takv device="Android" os="Android 14" version="5.0" />',
+      '    <takv device="Android" os="Android 14" version="5.0" />\n' +
+      '    <usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
   ),
   Lattice: baseTemplate(
     '    <contact callsign="ODIN-LATTICE" />\n' +

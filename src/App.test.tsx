@@ -40,6 +40,7 @@ describe('App platform and profile behavior', () => {
 
     expect(optionOrder).toEqual([
       'Chat Send',
+      'CloudTAK Alert',
       'Manual Alert',
       'Manual Alert Clear',
       'MIL-STD-2525D Clear',

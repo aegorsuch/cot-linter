@@ -121,6 +121,11 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
       description: 'Client/version context for interoperability.',
       suggestionSnippet: '<takv device="Android" os="Android 14" version="5.0" />',
     },
+    {
+      tag: 'usericon',
+      description: 'Icon rendering path for CloudTAK event presentation.',
+      suggestionSnippet: '<usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
+    },
   ],
   Lattice: [
     {
@@ -238,7 +243,7 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
 const PLATFORM_SCHEMA_FRAGMENTS: Record<Platform, string> = {
   ATAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
   CloudTAK:
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
+    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="takv" minOccurs="1" /><xsd:element name="usericon" minOccurs="1" />',
   Lattice:
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="track" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',
   Maven:
@@ -529,6 +534,529 @@ const validateTimestampSanity = (
   }
 };
 
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as Record<string, unknown>;
+};
+
+const getFirstTagObject = (
+  detail: Record<string, unknown>,
+  tag: string,
+): Record<string, unknown> | null => {
+  const rawValue = detail[tag];
+  if (!rawValue) {
+    return null;
+  }
+
+  if (Array.isArray(rawValue)) {
+    return toRecord(rawValue[0]);
+  }
+
+  return toRecord(rawValue);
+};
+
+const parseFiniteNumber = (value: unknown): number | null => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const hasXmlAttribute = (tagObject: Record<string, unknown> | null, attribute: string): boolean => {
+  if (!tagObject) {
+    return false;
+  }
+
+  return Object.prototype.hasOwnProperty.call(tagObject, toAttr(attribute));
+};
+
+const hasDetailTag = (detail: Record<string, unknown>, tag: string): boolean => {
+  return Object.prototype.hasOwnProperty.call(detail, tag);
+};
+
+const validatePointSemantics = (
+  xmlString: string,
+  event: ParsedCoT['event'],
+  result: ValidationResult,
+): void => {
+  const point = event?.point;
+  if (!point || typeof point !== 'object') {
+    return;
+  }
+
+  const lat = parseFiniteNumber(point[toAttr('lat')]);
+  const lon = parseFiniteNumber(point[toAttr('lon')]);
+  const hae = parseFiniteNumber(point[toAttr('hae')]);
+  const ce = parseFiniteNumber(point[toAttr('ce')]);
+  const le = parseFiniteNumber(point[toAttr('le')]);
+
+  if (lat === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
+      "Semantic warning: <point> attribute 'lat' should be numeric.",
+      findAttributeLocation(xmlString, 'point', 'lat'),
+      'high',
+      'high',
+      '<point lat="41.880025" ... />',
+    );
+  } else if (lat < -90 || lat > 90) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_RANGE_WARNING',
+      `Semantic warning: latitude '${lat}' is outside valid range [-90, 90].`,
+      findAttributeLocation(xmlString, 'point', 'lat'),
+      'high',
+      'high',
+      'Use a latitude value between -90 and 90.',
+    );
+  }
+
+  if (lon === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
+      "Semantic warning: <point> attribute 'lon' should be numeric.",
+      findAttributeLocation(xmlString, 'point', 'lon'),
+      'high',
+      'high',
+      '<point lon="-87.641793" ... />',
+    );
+  } else if (lon < -180 || lon > 180) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_RANGE_WARNING',
+      `Semantic warning: longitude '${lon}' is outside valid range [-180, 180].`,
+      findAttributeLocation(xmlString, 'point', 'lon'),
+      'high',
+      'high',
+      'Use a longitude value between -180 and 180.',
+    );
+  }
+
+  if (hae === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
+      "Semantic warning: <point> attribute 'hae' should be numeric.",
+      findAttributeLocation(xmlString, 'point', 'hae'),
+      'medium',
+      'high',
+      '<point hae="180.1" ... />',
+    );
+  } else if (hae < -1000 || hae > 100000) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_RANGE_WARNING',
+      `Semantic warning: hae '${hae}' is outside expected bounds [-1000, 100000].`,
+      findAttributeLocation(xmlString, 'point', 'hae'),
+      'medium',
+      'medium',
+      'Confirm height-above-ellipsoid (hae) is realistic for the reported location.',
+    );
+  }
+
+  if (ce === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
+      "Semantic warning: <point> attribute 'ce' should be numeric.",
+      findAttributeLocation(xmlString, 'point', 'ce'),
+      'medium',
+      'high',
+      '<point ce="13.0" ... />',
+    );
+  } else if (ce < 0 || ce > 100000) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_RANGE_WARNING',
+      `Semantic warning: ce '${ce}' is outside expected bounds [0, 100000].`,
+      findAttributeLocation(xmlString, 'point', 'ce'),
+      'medium',
+      'medium',
+      'Use circular error (ce) as a non-negative, realistic sensor uncertainty.',
+    );
+  }
+
+  if (le === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
+      "Semantic warning: <point> attribute 'le' should be numeric.",
+      findAttributeLocation(xmlString, 'point', 'le'),
+      'medium',
+      'high',
+      '<point le="1.0" ... />',
+    );
+  } else if (le < 0 || le > 100000) {
+    pushWarning(
+      result,
+      'SEMANTIC_POINT_RANGE_WARNING',
+      `Semantic warning: le '${le}' is outside expected bounds [0, 100000].`,
+      findAttributeLocation(xmlString, 'point', 'le'),
+      'medium',
+      'medium',
+      'Use linear error (le) as a non-negative, realistic sensor uncertainty.',
+    );
+  }
+};
+
+const validateTrackSemantics = (
+  xmlString: string,
+  detail: Record<string, unknown>,
+  result: ValidationResult,
+): void => {
+  const track = getFirstTagObject(detail, 'track');
+  if (!track) {
+    return;
+  }
+
+  const speedRaw = track[toAttr('speed')];
+  const courseRaw = track[toAttr('course')];
+  const speed = parseFiniteNumber(speedRaw);
+  const course = parseFiniteNumber(courseRaw);
+
+  if (speedRaw === undefined) {
+    pushWarning(
+      result,
+      'SEMANTIC_TRACK_ATTR_MISSING',
+      "Semantic warning: <track> is missing required attribute 'speed'.",
+      findTagLocation(xmlString, 'track'),
+      'medium',
+      'high',
+      '<track speed="0.00000000" course="0.00000000" />',
+    );
+  } else if (speed === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_TRACK_ATTR_NOT_NUMERIC',
+      "Semantic warning: <track> attribute 'speed' should be numeric.",
+      findAttributeLocation(xmlString, 'track', 'speed'),
+      'medium',
+      'high',
+      '<track speed="0.00000000" ... />',
+    );
+  } else if (speed < 0 || speed > 5000) {
+    pushWarning(
+      result,
+      'SEMANTIC_TRACK_RANGE_WARNING',
+      `Semantic warning: speed '${speed}' is outside expected bounds [0, 5000].`,
+      findAttributeLocation(xmlString, 'track', 'speed'),
+      'medium',
+      'medium',
+      'Use a non-negative speed value in platform-expected units.',
+    );
+  }
+
+  if (courseRaw === undefined) {
+    pushWarning(
+      result,
+      'SEMANTIC_TRACK_ATTR_MISSING',
+      "Semantic warning: <track> is missing required attribute 'course'.",
+      findTagLocation(xmlString, 'track'),
+      'medium',
+      'high',
+      '<track speed="0.00000000" course="0.00000000" />',
+    );
+  } else if (course === null) {
+    pushWarning(
+      result,
+      'SEMANTIC_TRACK_ATTR_NOT_NUMERIC',
+      "Semantic warning: <track> attribute 'course' should be numeric.",
+      findAttributeLocation(xmlString, 'track', 'course'),
+      'medium',
+      'high',
+      '<track ... course="0.00000000" />',
+    );
+  } else if (course < 0 || course > 360) {
+    pushWarning(
+      result,
+      'SEMANTIC_TRACK_RANGE_WARNING',
+      `Semantic warning: course '${course}' is outside valid range [0, 360].`,
+      findAttributeLocation(xmlString, 'track', 'course'),
+      'medium',
+      'high',
+      'Use a course value from 0 to 360 degrees.',
+    );
+  }
+};
+
+const validateProfileFieldShape = (
+  xmlString: string,
+  profile: MessageValidationProfile,
+  detail: Record<string, unknown>,
+  result: ValidationResult,
+): void => {
+  if (profile.id === 'cloudtak-alert') {
+    const hasEmergencyTag = hasDetailTag(detail, 'emergency');
+    const hasUsericonTag = hasDetailTag(detail, 'usericon');
+    const hasContactTag = hasDetailTag(detail, 'contact');
+    const hasTakvTag = hasDetailTag(detail, 'takv');
+
+    const emergency = getFirstTagObject(detail, 'emergency');
+    const usericon = getFirstTagObject(detail, 'usericon');
+    const contact = getFirstTagObject(detail, 'contact');
+    const takv = getFirstTagObject(detail, 'takv');
+
+    if (hasEmergencyTag) {
+      if (!hasXmlAttribute(emergency, 'type')) {
+        pushError(
+          result,
+          'PROFILE_FIELD_ATTR_MISSING',
+          `Message profile '${profile.label}' requires attribute 'type' on <emergency>.`,
+          findAttributeLocation(xmlString, 'emergency', 'type'),
+          'high',
+          'high',
+          '<emergency type="Manual Alert: Gunshot">...</emergency>',
+        );
+      }
+
+      const emergencyRaw = detail.emergency;
+      const emergencyText =
+        typeof emergencyRaw === 'string'
+          ? emergencyRaw
+          : ((emergency?.['#text'] as string | undefined) ?? '');
+      if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+          findTagLocation(xmlString, 'emergency'),
+          'high',
+          'high',
+          '<emergency type="Manual Alert: Gunshot">ODIN-CLOUDTAK</emergency>',
+        );
+      }
+    }
+
+    if (hasUsericonTag && !hasXmlAttribute(usericon, 'iconsetpath')) {
+      pushError(
+        result,
+        'PROFILE_FIELD_ATTR_MISSING',
+        `Message profile '${profile.label}' requires attribute 'iconsetpath' on <usericon>.`,
+        findAttributeLocation(xmlString, 'usericon', 'iconsetpath'),
+        'high',
+        'high',
+        '<usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
+      );
+    }
+
+    if (hasContactTag && !hasXmlAttribute(contact, 'callsign')) {
+      pushError(
+        result,
+        'PROFILE_FIELD_ATTR_MISSING',
+        `Message profile '${profile.label}' requires attribute 'callsign' on <contact>.`,
+        findAttributeLocation(xmlString, 'contact', 'callsign'),
+        'high',
+        'high',
+        '<contact callsign="ODIN-CLOUDTAK" />',
+      );
+    }
+
+    if (hasTakvTag) {
+      for (const attr of ['device', 'os', 'version']) {
+        if (!hasXmlAttribute(takv, attr)) {
+          pushError(
+            result,
+            'PROFILE_FIELD_ATTR_MISSING',
+            `Message profile '${profile.label}' requires attribute '${attr}' on <takv>.`,
+            findAttributeLocation(xmlString, 'takv', attr),
+            'high',
+            'high',
+            `<takv ${attr}="..." />`,
+          );
+        }
+      }
+    }
+
+    return;
+  }
+
+  if (profile.id === 'weartak-milstd-point' || profile.id === 'weartak-milstd-point-clear') {
+    const attributeRuleSet: Array<{ tag: string; requiredAttributes: string[] }> = [
+      { tag: 'status', requiredAttributes: ['readiness', 'battery'] },
+      { tag: 'precisionlocation', requiredAttributes: ['altsrc'] },
+      { tag: 'link', requiredAttributes: ['uid', 'production_time', 'type', 'parent_callsign', 'relation'] },
+      { tag: 'color', requiredAttributes: ['argb'] },
+      { tag: 'usericon', requiredAttributes: ['iconsetpath'] },
+      { tag: 'contact', requiredAttributes: ['callsign'] },
+    ];
+
+    for (const rule of attributeRuleSet) {
+      const hasTag = Object.prototype.hasOwnProperty.call(detail, rule.tag);
+      if (!hasTag) {
+        continue;
+      }
+
+      const tagObject = getFirstTagObject(detail, rule.tag);
+
+      for (const attr of rule.requiredAttributes) {
+        if (!hasXmlAttribute(tagObject, attr)) {
+          pushError(
+            result,
+            'PROFILE_FIELD_ATTR_MISSING',
+            `Message profile '${profile.label}' requires attribute '${attr}' on <${rule.tag}>.`,
+            findAttributeLocation(xmlString, rule.tag, attr),
+            'high',
+            'high',
+            `<${rule.tag} ${attr}="..." />`,
+          );
+        }
+      }
+    }
+
+    return;
+  }
+
+  if (profile.id === 'weartak-chat-send') {
+    const chat = getFirstTagObject(detail, '__chat');
+    const remarks = getFirstTagObject(detail, 'remarks');
+    const hasRemarksTag = Boolean(detail.remarks);
+
+    if (chat) {
+      const requiredChatAttributes = ['parent', 'groupOwner', 'messageId', 'chatroom', 'id', 'senderCallsign'];
+      for (const attr of requiredChatAttributes) {
+        if (!hasXmlAttribute(chat, attr)) {
+          pushError(
+            result,
+            'PROFILE_FIELD_ATTR_MISSING',
+            `Message profile '${profile.label}' requires attribute '${attr}' on <__chat>.`,
+            findAttributeLocation(xmlString, '__chat', attr),
+            'high',
+            'high',
+            `<__chat ${attr}="...">`,
+          );
+        }
+      }
+
+      const chatgrpRaw = chat.chatgrp;
+      const chatgrp = Array.isArray(chatgrpRaw)
+        ? toRecord(chatgrpRaw[0])
+        : toRecord(chatgrpRaw);
+
+      if (!chatgrp) {
+        pushError(
+          result,
+          'PROFILE_FIELD_TAG_MISSING',
+          `Message profile '${profile.label}' requires <chatgrp> inside <__chat>.`,
+          findTagLocation(xmlString, '__chat'),
+          'high',
+          'high',
+          '<chatgrp uid0="..." uid1="..." id="..." />',
+        );
+      } else {
+        for (const attr of ['uid0', 'uid1', 'id']) {
+          if (!hasXmlAttribute(chatgrp, attr)) {
+            pushError(
+              result,
+              'PROFILE_FIELD_ATTR_MISSING',
+              `Message profile '${profile.label}' requires attribute '${attr}' on <chatgrp>.`,
+              findAttributeLocation(xmlString, 'chatgrp', attr),
+              'high',
+              'high',
+              `<chatgrp ${attr}="..." />`,
+            );
+          }
+        }
+      }
+    }
+
+    if (hasRemarksTag) {
+      for (const attr of ['source', 'to', 'time']) {
+        if (!hasXmlAttribute(remarks, attr)) {
+          pushError(
+            result,
+            'PROFILE_FIELD_ATTR_MISSING',
+            `Message profile '${profile.label}' requires attribute '${attr}' on <remarks>.`,
+            findAttributeLocation(xmlString, 'remarks', attr),
+            'high',
+            'high',
+            `<remarks ${attr}="...">...</remarks>`,
+          );
+        }
+      }
+    }
+
+    return;
+  }
+
+  if (profile.id === 'weartak-manual-alert-gunshot') {
+    const emergency = getFirstTagObject(detail, 'emergency');
+    if (!emergency) {
+      return;
+    }
+
+    if (!hasXmlAttribute(emergency, 'type')) {
+      pushError(
+        result,
+        'PROFILE_FIELD_ATTR_MISSING',
+        `Message profile '${profile.label}' requires attribute 'type' on <emergency>.`,
+        findAttributeLocation(xmlString, 'emergency', 'type'),
+        'high',
+        'high',
+        '<emergency type="Manual Alert: ...">...</emergency>',
+      );
+    }
+
+    const emergencyText = emergency['#text'];
+    if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+      pushError(
+        result,
+        'PROFILE_FIELD_VALUE_INVALID',
+        `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+        findTagLocation(xmlString, 'emergency'),
+        'high',
+        'high',
+        '<emergency type="Manual Alert: Gunshot">ODIN-WEARTAK</emergency>',
+      );
+    }
+
+    return;
+  }
+
+  if (profile.id === 'weartak-manual-alert-clear') {
+    const emergency = getFirstTagObject(detail, 'emergency');
+    if (!emergency) {
+      return;
+    }
+
+    const cancel = emergency[toAttr('cancel')];
+    if (cancel !== 'true') {
+      pushError(
+        result,
+        'PROFILE_FIELD_VALUE_INVALID',
+        `Message profile '${profile.label}' requires <emergency cancel='true'>.`,
+        findAttributeLocation(xmlString, 'emergency', 'cancel'),
+        'high',
+        'high',
+        "<emergency cancel='true'>ODIN-WEARTAK</emergency>",
+      );
+    }
+
+    const emergencyText = emergency['#text'];
+    if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+      pushError(
+        result,
+        'PROFILE_FIELD_VALUE_INVALID',
+        `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+        findTagLocation(xmlString, 'emergency'),
+        'high',
+        'high',
+        '<emergency cancel="true">ODIN-WEARTAK</emergency>',
+      );
+    }
+  }
+};
+
 export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
   const result: ValidationResult = { isValid: true, errors: [], warnings: [] };
 
@@ -557,8 +1085,10 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
 
     validateSchemaBackedStructure(xmlString, event, result);
     validateTimestampSanity(xmlString, event, result);
+    validatePointSemantics(xmlString, event, result);
 
     const detail = (event?.detail ?? {}) as Record<string, unknown>;
+    validateTrackSemantics(xmlString, detail, result);
     const rules = PLATFORM_RULE_MATRIX[platform];
 
     // Platform schema fragments model per-platform detail requirements.
@@ -566,7 +1096,7 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
     void _schemaFragment;
 
     for (const rule of rules) {
-      if (!detail[rule.tag]) {
+      if (!hasDetailTag(detail, rule.tag)) {
         const detailLocation = event?.detail
           ? findTagLocation(xmlString, 'detail')
           : findTagLocation(xmlString, 'event');
@@ -652,7 +1182,7 @@ export const validateCoTWithProfile = (
     }
 
     for (const tag of profile.requiredDetailTags) {
-      if (!detail[tag]) {
+      if (!hasDetailTag(detail, tag)) {
         const detailLocation = event?.detail
           ? findTagLocation(xmlString, 'detail')
           : findTagLocation(xmlString, 'event');
@@ -668,6 +1198,8 @@ export const validateCoTWithProfile = (
         );
       }
     }
+
+    validateProfileFieldShape(xmlString, profile, detail, result);
 
     if (result.errors.length > 0) {
       result.isValid = false;
