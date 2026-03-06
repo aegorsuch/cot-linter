@@ -50,6 +50,38 @@ describe('validateCoT timestamp sanity checks', () => {
 });
 
 describe('validateCoT semantic field checks', () => {
+  it('warns on duplicate singleton tags within detail', () => {
+    const xml = `<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <contact callsign="ODIN-ATAK" />
+    <__group name="Dark Green" role="K9" />
+    <archive />
+    <archive />
+  </detail>
+</event>`;
+
+    const result = validateCoT(xml, 'ATAK');
+
+    expect(result.warnings.some((warning) => warning.code === 'DUPLICATE_DETAIL_TAG')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('<archive> appears 2 times'))).toBe(true);
+  });
+
+  it('returns duplicate-attribute parse error code for malformed XML with repeated attributes', () => {
+    const xml = `<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <contact callsign="ODIN-ATAK" callsign="ODIN-ATAK" />
+    <__group name="Dark Green" role="K9" />
+  </detail>
+</event>`;
+
+    const result = validateCoT(xml, 'ATAK');
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors.some((error) => error.code === 'XML_DUPLICATE_ATTRIBUTE')).toBe(true);
+  });
+
   it('warns when CloudTAK payload is missing usericon', () => {
     const xml = `<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g">
   <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />

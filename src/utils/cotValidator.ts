@@ -78,6 +78,7 @@ type SchemaFragment = {
 };
 
 const ROOT_LOCATION: SourceLocation = { line: 1, column: 1 };
+const ALLOWED_REPEATABLE_DETAIL_TAGS = new Set<string>(['link']);
 
 const BASE_SCHEMA_FRAGMENT: SchemaFragment = {
   xsd: `<xsd:complexType name="eventType">
@@ -337,15 +338,25 @@ const parseXmlForValidation = (
 ): { parsed: ParsedCoT | null; parseError: ValidationMessage | null } => {
   const parserValidation = XMLValidator.validate(xmlString);
   if (parserValidation !== true) {
+    const parseMessage = String(parserValidation.err.msg ?? 'Unknown parse error');
+    const parseMessageLower = parseMessage.toLowerCase();
+    const isDuplicateAttributeError =
+      parseMessageLower.includes('attribute') &&
+      (parseMessageLower.includes('duplicate') ||
+        parseMessageLower.includes('repeated') ||
+        parseMessageLower.includes('already'));
+
     return {
       parsed: null,
       parseError: {
-        code: 'XML_PARSE_ERROR',
-        text: `Invalid XML format: ${parserValidation.err.msg}`,
+        code: isDuplicateAttributeError ? 'XML_DUPLICATE_ATTRIBUTE' : 'XML_PARSE_ERROR',
+        text: `Invalid XML format: ${parseMessage}`,
         location: { line: parserValidation.err.line, column: parserValidation.err.col },
         severity: 'critical',
         confidence: 'high',
-        suggestion: 'Check unclosed/mismatched tags at the reported location.',
+        suggestion: isDuplicateAttributeError
+          ? 'Remove duplicate attributes from the same XML element.'
+          : 'Check unclosed/mismatched tags at the reported location.',
       },
     };
   }
@@ -794,6 +805,32 @@ const validateTrackSemantics = (
   }
 };
 
+const validateDuplicateDetailTags = (
+  xmlString: string,
+  detail: Record<string, unknown>,
+  result: ValidationResult,
+): void => {
+  for (const [tag, value] of Object.entries(detail)) {
+    if (!Array.isArray(value)) {
+      continue;
+    }
+
+    if (value.length < 2 || ALLOWED_REPEATABLE_DETAIL_TAGS.has(tag)) {
+      continue;
+    }
+
+    pushWarning(
+      result,
+      'DUPLICATE_DETAIL_TAG',
+      `Duplicate detail tag warning: <${tag}> appears ${value.length} times in <detail>.`,
+      findTagLocation(xmlString, tag),
+      'low',
+      'high',
+      `Keep a single <${tag}> in <detail> unless repeated tags are intentional.`,
+    );
+  }
+};
+
 const validateProfileFieldShape = (
   xmlString: string,
   profile: MessageValidationProfile,
@@ -1093,6 +1130,7 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
 
     const detail = (event?.detail ?? {}) as Record<string, unknown>;
     validateTrackSemantics(xmlString, detail, result);
+    validateDuplicateDetailTags(xmlString, detail, result);
     const rules = PLATFORM_RULE_MATRIX[platform];
 
     // Platform schema fragments model per-platform detail requirements.
