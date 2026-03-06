@@ -2,17 +2,21 @@
 // Requires: npm install node-expat
 
 import expat from 'node-expat';
-import { validateCoT } from './cotValidator';
+import { validateCoT, type ValidationResult } from './cotValidator';
 import type { Platform } from '../types/shared';
 
-type Platform = 'ATAK' | 'WinTAK' | 'Other';
+// The imported Platform type already covers the supported platforms
 
-export function streamParseCoT(xmlStream: NodeJS.ReadableStream, platform: string, onEvent: (result: any) => void) {
+export function streamParseCoT(
+  xmlStream: NodeJS.ReadableStream,
+  platform: Platform | string,
+  onEvent: (result: ValidationResult | { error: Error }) => void,
+) {
   const parser = new expat.Parser('UTF-8');
   let eventXml = '';
   let insideEvent = false;
 
-  parser.on('startElement', (name: string, attrs: any) => {
+  parser.on('startElement', (name: string, attrs: Record<string, string>) => {
     if (name === 'event') {
       insideEvent = true;
       eventXml = '<event';

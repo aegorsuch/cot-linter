@@ -1219,7 +1219,7 @@ export const validateCoTWithProfile = (
     const parsed = parsedForProfile.parsed;
     const event = parsed.event;
     // Normalize detail: if array, use first object
-    let detailRaw = event?.detail ?? {};
+    const detailRaw = event?.detail ?? {};
     let detail: Record<string, unknown>;
     if (Array.isArray(detailRaw)) {
       detail = detailRaw[0] ?? {};
