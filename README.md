@@ -1,4 +1,5 @@
 # CoT-Linter
+![Codecov Coverage](https://codecov.io/gh/CoT-Linter/CoT-Linter/branch/main/graph/badge.svg)
 
 A web-based Cursor-on-Target (CoT) XML linter for fast schema checks, platform compatibility checks, and profile-specific validation.
 

@@ -71,6 +71,14 @@ jobs:
       - name: Coverage thresholds
         run: npm run test:coverage
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: 6e7255cc-6003-44dc-99dd-5d6214bf9ab1
+          files: ./coverage/*.json
+          flags: unittests
+          fail_ci_if_error: true
+
       - name: Security audit (high+)
         run: npm run security:audit
 
