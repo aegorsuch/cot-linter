@@ -453,6 +453,19 @@ function App() {
             value={selectedTemplateXml}
             className="min-h-0 flex-1 w-full resize-none rounded border border-slate-700 bg-slate-950/70 p-4 font-mono text-sm text-slate-300"
           />
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setXml(selectedTemplateXml)
+                setInsertHistory([])
+                showToast('Copied template into input.', 'success')
+              }}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+            >
+              Copy into Input
+            </button>
+          </div>
         </section>
       </main>
 
