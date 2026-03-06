@@ -431,3 +431,83 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     expect(result.errors.some((error) => error.text.includes("cancel='true'"))).toBe(true);
   });
 });
+
+describe('XML edge cases', () => {
+  it('flags malformed namespace XML', () => {
+    const xml = '<event xmlns:bad="http://bad" uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN" /></detail></event>';
+    const result = validateCoT(xml, 'ATAK');
+    expect(result.errors.some((error) => error.code === 'XML_NAMESPACE_ERROR')).toBe(true);
+  });
+
+  it('flags CDATA sections in detail', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><![CDATA[<contact callsign="ODIN" />]]></detail></event>';
+    const result = validateCoT(xml, 'ATAK');
+    expect(result.errors.some((error) => error.code === 'XML_CDATA_ERROR')).toBe(true);
+  });
+
+  it('flags XML comments in detail', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><!-- comment --><contact callsign="ODIN" /></detail></event>';
+    const result = validateCoT(xml, 'ATAK');
+    expect(result.errors.some((error) => error.code === 'XML_COMMENT_ERROR')).toBe(true);
+  });
+
+  it('flags DTD injection', () => {
+    const xml = '<!DOCTYPE event [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN" /></detail></event>';
+    const result = validateCoT(xml, 'ATAK');
+    expect(result.errors.some((error) => error.code === 'XML_DTD_ERROR')).toBe(true);
+  });
+
+  it('flags extremely deep nesting', () => {
+    let xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail>';
+    for (let i = 0; i < 100; i++) xml += `<nest${i}>`;
+    xml += '<contact callsign="ODIN" />';
+    for (let i = 99; i >= 0; i--) xml += `</nest${i}>`;
+    xml += '</detail></event>';
+    const result = validateCoT(xml, 'ATAK');
+    expect(result.errors.some((error) => error.code === 'XML_NESTING_ERROR')).toBe(true);
+  });
+});
+
+describe('Platform rule negative cases', () => {
+  it('warns when WinTAK payload is missing remarks', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN-WINTAK" /></detail></event>';
+    const result = validateCoT(xml, 'WinTAK');
+    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('WinTAK: Missing <remarks> tag'))).toBe(true);
+  });
+
+  it('warns when Maven payload is missing takv', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN-MAVEN" /><track speed="0.00000000" course="0.00000000" /></detail></event>';
+    const result = validateCoT(xml, 'Maven');
+    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('Maven: Missing <takv> tag'))).toBe(true);
+  });
+
+  it('warns when Lattice payload is missing track', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN-LATTICE" /><remarks>Auto-ingested for Lattice correlation.</remarks></detail></event>';
+    const result = validateCoT(xml, 'Lattice');
+    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('Lattice: Missing <track> tag'))).toBe(true);
+  });
+
+  it('warns when TAKx payload is missing __group', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><takv device="Gateway" os="Linux" version="2.1" /></detail></event>';
+    const result = validateCoT(xml, 'TAKx');
+    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('TAKx: Missing <__group> tag'))).toBe(true);
+  });
+
+  it('warns when WearTAK payload is missing track', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" /><__group name="Dark Green" role="K9" /></detail></event>';
+    const result = validateCoT(xml, 'WearTAK');
+    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('WearTAK: Missing <track> tag'))).toBe(true);
+  });
+
+  it('warns when WebTAK payload is missing contact', () => {
+    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail></detail></event>';
+    const result = validateCoT(xml, 'WebTAK');
+    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning) => warning.text.includes('WebTAK: Missing <contact> tag'))).toBe(true);
+  });
+});

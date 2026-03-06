@@ -205,6 +205,37 @@ Maintainer setup checklist: `docs/MAINTAINERS.md`.
 7. Copy a missing-tags report in JSON or Markdown format for sharing.
 8. Use `Submit Template` to open the submission modal, enter metadata and XML, then click `Submit GitHub Issue` (the modal auto-closes after launch).
 
+## Usage Examples
+
+### Basic ATAK XML
+```xml
+<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g">
+  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />
+  <detail>
+    <contact callsign="ODIN-ATAK" />
+    <__group name="Dark Green" role="K9" />
+  </detail>
+</event>
+```
+
+### Platform Validation Scenarios
+- **CloudTAK:** Requires `<usericon>` and `<takv>` tags in `<detail>`.
+- **Lattice:** Requires `<track>` and `<remarks>` tags.
+- **Maven:** Requires `<takv>` and `<track>` tags.
+- **WearTAK:** Requires `<track>` and `<__group>` tags.
+- **TAKx:** Requires `<takv>` and `<__group>` tags.
+- **WebTAK:** Requires `<contact>` tag.
+
+If a required tag is missing, the linter will show a compatibility warning with a suggestion snippet.
+
+## Troubleshooting
+
+- **Malformed XML:** Check for unclosed tags, duplicate attributes, or invalid namespaces.
+- **Missing Platform Tags:** Review platform rule matrix and ensure all recommended tags are present.
+- **Deep Nesting/DTD:** Avoid extremely deep XML nesting or DTD injection, which will trigger errors.
+- **Clipboard Issues:** If copy buttons fail, try manual copy or check browser permissions.
+- **Validation Fails:** Use the diagnostic panel to jump to the exact XML location of errors.
+
 ## Project Structure
 
 ```text

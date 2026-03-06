@@ -333,6 +333,20 @@ const pushWarning = (
   result.warnings.push({ code, text, location, severity, confidence, suggestion });
 };
 
+const parserOptions = {
+  ignoreAttributes: false,
+  preserveOrder: false,
+  allowBooleanAttributes: true,
+  parseTagValue: true,
+  parseAttributeValue: true,
+  trimValues: true,
+  cdataTagName: '__cdata',
+  commentTagName: '__comment',
+  processEntities: false,
+  stopNodes: ['event.detail'], // Prevent deep recursion in detail
+  isArray: (name: string) => ['link', 'track'].includes(name),
+};
+
 const parseXmlForValidation = (
   xmlString: string,
 ): { parsed: ParsedCoT | null; parseError: ValidationMessage | null } => {
@@ -362,7 +376,7 @@ const parseXmlForValidation = (
   }
 
   try {
-    const parser = new XMLParser({ ignoreAttributes: false });
+    const parser = new XMLParser(parserOptions);
     return { parsed: parser.parse(xmlString) as ParsedCoT, parseError: null };
   } catch {
     return {
@@ -406,8 +420,8 @@ const validateSchemaBackedStructure = (
         'SCHEMA_EVENT_ATTR_MISSING',
         `Schema violation: <event> is missing required attribute '${attribute}'.`,
         findAttributeLocation(xmlString, 'event', attribute),
-          'high',
-          'high',
+        'high',
+        'high',
         `<event ${attribute}="...">`,
       );
     }
