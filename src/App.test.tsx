@@ -36,7 +36,7 @@ describe('App platform and profile behavior', () => {
     await user.selectOptions(platformSelect, 'WearTAK')
     expect(platformSelect).toHaveValue('WearTAK')
 
-    await user.click(screen.getByRole('button', { name: /Load Sample Into Input/i }))
+    await user.click(screen.getByRole('button', { name: /Load into Left Pane/i }))
 
     expect(screen.getByRole('heading', { name: /Validation Matrix/i })).toBeInTheDocument()
     expect(screen.getAllByText(/Present:/i).length).toBeGreaterThan(0)

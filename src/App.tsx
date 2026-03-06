@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   getMissingTagsForAllPlatforms,
   PLATFORM_RULE_MATRIX,
@@ -12,19 +12,12 @@ import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 import { Activity } from 'lucide-react'
 
-const GUIDE_VISIBILITY_STORAGE_KEY = 'cot-linter-show-guide'
-
 function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
-  const [showGuide, setShowGuide] = useState(() => {
-    const saved = localStorage.getItem(GUIDE_VISIBILITY_STORAGE_KEY)
-    if (saved === null) return true
-    return saved === 'true'
-  })
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -71,10 +64,6 @@ function App() {
 
     return map
   }, [result])
-
-  useEffect(() => {
-    localStorage.setItem(GUIDE_VISIBILITY_STORAGE_KEY, String(showGuide))
-  }, [showGuide])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -265,49 +254,25 @@ function App() {
         </h1>
       </header>
 
-      <section className="mb-6 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h2 className="text-xs uppercase tracking-widest text-slate-400">Inspector Quick Guide</h2>
-          <button
-            type="button"
-            onClick={() => setShowGuide((current) => !current)}
-            className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-          >
-            {showGuide ? 'Hide Help' : 'Show Help'}
-          </button>
-        </div>
+      <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section>
+          <h2 className="mb-2 text-xs uppercase text-slate-500">Input CoT XML</h2>
+          <textarea
+            ref={textareaRef}
+            className="h-[500px] w-full rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
+            placeholder="Paste <event>...</event> here..."
+            value={xml}
+            onChange={(e) => setXml(e.target.value)}
+          />
+        </section>
 
-        {showGuide && (
-          <>
-            <p className="mb-3 text-sm text-slate-300">
-              This inspector validates CoT XML for core schema correctness, platform compatibility,
-              and optional message-profile requirements before deploy.
-            </p>
-            <div className="grid grid-cols-1 gap-2 text-xs text-slate-300 md:grid-cols-3">
-              <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                1. Choose platform/profile context and review the sample template.
-              </p>
-              <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                2. Paste XML on the left or load the sample from the right panel.
-              </p>
-              <p className="rounded border border-slate-700 bg-slate-900/50 p-2">
-                3. Use the validation matrix below for diagnostics, missing tags, and jump-to-line actions.
-              </p>
-            </div>
-          </>
-        )}
-      </section>
+        <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+          <h2 className="mb-2 text-xs uppercase text-slate-500">Sample CoT (Read-Only)</h2>
+          <p className="mb-3 text-[11px] text-slate-400">
+            Select a platform/profile context, then review or load the sample below.
+          </p>
 
-      <section className="mb-6 rounded-lg border border-slate-700 bg-slate-800/40 p-4">
-        <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="text-xs uppercase tracking-widest text-slate-400">Validation Context</h2>
-            <p className="mt-1 text-xs text-slate-400">
-              Select a platform/profile context, then enter CoT on the left or load a sample on the right.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
             <label htmlFor="platform-select" className="text-xs text-slate-400">
               Platform
             </label>
@@ -327,53 +292,37 @@ function App() {
               ))}
             </select>
           </div>
-        </div>
 
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setSelectedProfileId('platform-default')}
-            title="Starter Sample"
-            className={`rounded border px-2 py-1 text-xs transition-colors ${
-              selectedProfileId === 'platform-default'
-                ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
-                : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
-            } max-w-[15rem] truncate md:max-w-none`}
-          >
-            Starter Sample
-          </button>
-          {messageProfiles.map((profile) => (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              key={profile.id}
-              onClick={() => setSelectedProfileId(profile.id)}
-              title={`${platform} ${profile.label} Template`}
+              onClick={() => setSelectedProfileId('platform-default')}
+              title="Starter Sample"
               className={`rounded border px-2 py-1 text-xs transition-colors ${
-                selectedProfileId === profile.id
+                selectedProfileId === 'platform-default'
                   ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                   : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
               } max-w-[15rem] truncate md:max-w-none`}
             >
-              {`${platform} ${profile.label} Template`}
+              Starter Sample
             </button>
-          ))}
-        </div>
-      </section>
+            {messageProfiles.map((profile) => (
+              <button
+                type="button"
+                key={profile.id}
+                onClick={() => setSelectedProfileId(profile.id)}
+                title={`${platform} ${profile.label} Template`}
+                className={`rounded border px-2 py-1 text-xs transition-colors ${
+                  selectedProfileId === profile.id
+                    ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
+                    : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
+                } max-w-[15rem] truncate md:max-w-none`}
+              >
+                {`${platform} ${profile.label} Template`}
+              </button>
+            ))}
+          </div>
 
-      <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section>
-          <h2 className="mb-2 text-xs uppercase text-slate-500">Input CoT XML</h2>
-          <textarea
-            ref={textareaRef}
-            className="h-[500px] w-full rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
-            placeholder="Paste <event>...</event> here..."
-            value={xml}
-            onChange={(e) => setXml(e.target.value)}
-          />
-        </section>
-
-        <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <h2 className="mb-2 text-xs uppercase text-slate-500">Sample CoT (Read-Only)</h2>
           <p className="mb-2 text-[11px] text-slate-400">
             Sample loaded from <span className="font-bold text-emerald-300">{selectedTemplateLabel}</span>
           </p>
@@ -388,7 +337,7 @@ function App() {
               onClick={() => setXml(selectedTemplateXml)}
               className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
             >
-              Load Sample Into Input
+              Load into Left Pane
             </button>
             <button
               type="button"
@@ -402,13 +351,10 @@ function App() {
       </main>
 
       <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-        <h2 className="mb-4 text-xs uppercase text-slate-500">Validation Matrix (Cross-Platform Compatibility)</h2>
-        <p className="mb-4 text-[11px] text-slate-400">
-          Diagnostics and per-platform tag coverage are shown together for faster triage.
-        </p>
+        <h2 className="mb-4 text-xs uppercase text-slate-500">Validation Matrix</h2>
 
         {!result && (
-          <p className="mb-4 italic text-slate-500">Paste or load XML to generate diagnostics and matrix output.</p>
+          <p className="mb-4 italic text-slate-500">Paste or load CoT XML to run validation.</p>
         )}
 
         {result && (
@@ -537,8 +483,6 @@ function App() {
           </div>
         )}
 
-        {!crossPlatformMissing && <p className="italic text-slate-500">Paste XML to compare platforms.</p>}
-
         {crossPlatformMissing?.parseError && (
           <div className="rounded border border-red-500/40 bg-red-900/20 p-3 text-sm text-red-200">
             <p>
@@ -605,8 +549,6 @@ function App() {
                               {isMissing ? 'missing' : 'present'}
                             </span>
                           </p>
-                          <p className="mt-1 text-[11px] text-slate-300">{rule.description}</p>
-
                           {isMissing && (
                             <>
                               <p className="mt-1 text-[11px] text-amber-100">
