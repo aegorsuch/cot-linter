@@ -45,7 +45,7 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   ),
   'TAK Aware': baseTemplate(
     '    <contact callsign="ODIN-TAKAWARE" />\n' +
-      '    <remarks>Initial report from mobile observer.</remarks>',
+      '    <remarks></remarks>',
   ),
   TAKx: baseTemplate(
     '    <takv device="Gateway" os="Linux" sversion="2.1" />\n' +

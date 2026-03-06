@@ -177,7 +177,7 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
     {
       tag: 'remarks',
       description: 'Additional event context text.',
-      suggestionSnippet: '<remarks>Initial report from mobile observer.</remarks>',
+      suggestionSnippet: '<remarks></remarks>',
     },
   ],
   TAKx: [
