@@ -3,6 +3,8 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 export type Platform =
   | 'ATAK'
   | 'CloudTAK'
+  | 'Lattice'
+  | 'Maven'
   | 'iTAK'
   | 'TAK Aware'
   | 'TAKx'
@@ -120,6 +122,40 @@ export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
       suggestionSnippet: '<takv device="Android" os="Android 14" version="5.0" />',
     },
   ],
+  Lattice: [
+    {
+      tag: 'contact',
+      description: 'Entity/operator naming for track presentation.',
+      suggestionSnippet: '<contact callsign="ODIN-LATTICE" />',
+    },
+    {
+      tag: 'track',
+      description: 'Kinematic context for moving track updates.',
+      suggestionSnippet: '<track speed="0.00000000" course="0.00000000" />',
+    },
+    {
+      tag: 'remarks',
+      description: 'Operator-readable context for correlation workflows.',
+      suggestionSnippet: '<remarks>Auto-ingested for Lattice correlation.</remarks>',
+    },
+  ],
+  Maven: [
+    {
+      tag: 'contact',
+      description: 'Track identity/callsign visibility in operator views.',
+      suggestionSnippet: '<contact callsign="ODIN-MAVEN" />',
+    },
+    {
+      tag: 'track',
+      description: 'Motion/heading context for pattern tracking.',
+      suggestionSnippet: '<track speed="0.00000000" course="0.00000000" />',
+    },
+    {
+      tag: 'takv',
+      description: 'Producer/version metadata for source attribution.',
+      suggestionSnippet: '<takv device="Maven Gateway" os="Linux" version="1.0" />',
+    },
+  ],
   iTAK: [
     {
       tag: 'contact',
@@ -203,6 +239,10 @@ const PLATFORM_SCHEMA_FRAGMENTS: Record<Platform, string> = {
   ATAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
   CloudTAK:
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
+  Lattice:
+    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="track" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',
+  Maven:
+    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="track" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
   iTAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
   'TAK Aware':
     '<xsd:element name="contact" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',

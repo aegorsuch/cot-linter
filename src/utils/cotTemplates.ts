@@ -29,6 +29,16 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
     '    <contact callsign="ODIN-CLOUDTAK" />\n' +
       '    <takv device="Android" os="Android 14" version="5.0" />',
   ),
+  Lattice: baseTemplate(
+    '    <contact callsign="ODIN-LATTICE" />\n' +
+      '    <track speed="0.00000000" course="0.00000000" />\n' +
+      '    <remarks>Auto-ingested for Lattice correlation.</remarks>',
+  ),
+  Maven: baseTemplate(
+    '    <contact callsign="ODIN-MAVEN" />\n' +
+      '    <track speed="0.00000000" course="0.00000000" />\n' +
+      '    <takv device="Maven Gateway" os="Linux" version="1.0" />',
+  ),
   iTAK: baseTemplate(
     '    <contact callsign="ODIN-ITAK" />\n' +
       '    <__group name="Rescue" role="K9" />',
