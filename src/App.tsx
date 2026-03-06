@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   getMissingTagsForAllPlatforms,
   PLATFORM_RULE_MATRIX,
@@ -15,10 +15,23 @@ function App() {
   const [platform, setPlatform] = useState<Platform>('ATAK')
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
-  const [copyStatus, setCopyStatus] = useState<string | null>(null)
-  const [insertStatus, setInsertStatus] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ text: string; tone: 'success' | 'error' | 'info' } | null>(null)
+  const [lastInsertSnapshot, setLastInsertSnapshot] = useState<{
+    previousXml: string
+    description: string
+  } | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), 2600)
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  const showToast = (text: string, tone: 'success' | 'error' | 'info' = 'info') => {
+    setToast({ text, tone })
+  }
 
   const platforms = Object.keys(PLATFORM_RULE_MATRIX) as Platform[]
   const messageProfiles = getMessageProfilesForPlatform(platform)
@@ -115,41 +128,115 @@ function App() {
 
   const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-  const insertSuggestedTag = (tag: string, snippet: string, key: string) => {
-    if (!xml.trim()) {
-      setInsertStatus('No XML content available to insert into.')
-      return
-    }
-
-    const tagRegex = new RegExp(`<\\s*${escapeRegExp(tag)}(\\s|>|/)`, 'i')
-    if (tagRegex.test(xml)) {
-      setInsertStatus(`Skipped insert: <${tag}> already exists.`)
-      return
-    }
-
+  const findDetailCloseInsertion = (text: string): { index: number; childIndent: string } | null => {
     const detailCloseRegex = /<\/\s*detail\s*>/i
-    const detailCloseMatch = detailCloseRegex.exec(xml)
+    const detailCloseMatch = detailCloseRegex.exec(text)
     if (!detailCloseMatch || detailCloseMatch.index < 0) {
-      setInsertStatus('Could not find </detail>. Add a <detail> section first.')
-      return
+      return null
     }
 
     const insertionIndex = detailCloseMatch.index
-    const lineStart = xml.lastIndexOf('\n', insertionIndex - 1) + 1
-    const closingLine = xml.slice(lineStart, insertionIndex)
+    const lineStart = text.lastIndexOf('\n', insertionIndex - 1) + 1
+    const closingLine = text.slice(lineStart, insertionIndex)
     const indent = (closingLine.match(/^\s*/) ?? [''])[0]
     const childIndent = `${indent}  `
 
-    const needsLeadingNewline = insertionIndex > 0 && xml[insertionIndex - 1] !== '\n'
-    const insertText = `${needsLeadingNewline ? '\n' : ''}${childIndent}${snippet}\n`
+    return { index: insertionIndex, childIndent }
+  }
 
-    const updatedXml = `${xml.slice(0, insertionIndex)}${insertText}${xml.slice(insertionIndex)}`
+  const insertTagIntoXml = (
+    sourceXml: string,
+    tag: string,
+    snippet: string,
+  ):
+    | { ok: true; updatedXml: string; insertedOffset: number }
+    | { ok: false; reason: string } => {
+    if (!sourceXml.trim()) {
+      return { ok: false, reason: 'No XML content available to insert into.' }
+    }
+
+    const tagRegex = new RegExp(`<\\s*${escapeRegExp(tag)}(\\s|>|/)`, 'i')
+    if (tagRegex.test(sourceXml)) {
+      return { ok: false, reason: `Skipped insert: <${tag}> already exists.` }
+    }
+
+    const insertion = findDetailCloseInsertion(sourceXml)
+    if (!insertion) {
+      return { ok: false, reason: 'Could not find </detail>. Add a <detail> section first.' }
+    }
+
+    const needsLeadingNewline = insertion.index > 0 && sourceXml[insertion.index - 1] !== '\n'
+    const insertText = `${needsLeadingNewline ? '\n' : ''}${insertion.childIndent}${snippet}\n`
+    const updatedXml = `${sourceXml.slice(0, insertion.index)}${insertText}${sourceXml.slice(insertion.index)}`
+    const insertedOffset = insertion.index + (needsLeadingNewline ? 1 : 0) + insertion.childIndent.length
+
+    return { ok: true, updatedXml, insertedOffset }
+  }
+
+  const insertSuggestedTag = (tag: string, snippet: string, key: string) => {
+    const result = insertTagIntoXml(xml, tag, snippet)
+    if (!result.ok) {
+      showToast(result.reason, 'error')
+      return
+    }
+
+    setLastInsertSnapshot({ previousXml: xml, description: `inserted <${tag}>` })
+    const updatedXml = result.updatedXml
     setXml(updatedXml)
-    setInsertStatus(`Inserted <${tag}>.`)
+    showToast(`Inserted <${tag}>.`, 'success')
 
-    const insertedTagOffset = insertionIndex + (needsLeadingNewline ? 1 : 0) + childIndent.length
-    const insertedTagLocation = toLineColFromOffset(updatedXml, insertedTagOffset)
+    const insertedTagLocation = toLineColFromOffset(updatedXml, result.insertedOffset)
     jumpToLocation(insertedTagLocation.line, insertedTagLocation.column, key)
+  }
+
+  const bulkInsertMissingTags = (reportPlatform: Platform, missingRules: Array<{ tag: string; suggestionSnippet: string }>) => {
+    if (!xml.trim()) {
+      showToast('No XML content available to insert into.', 'error')
+      return
+    }
+
+    if (missingRules.length === 0) {
+      showToast(`No missing tags for ${reportPlatform}.`, 'info')
+      return
+    }
+
+    let workingXml = xml
+    const insertedTags: string[] = []
+    let failureReason: string | null = null
+
+    for (const rule of missingRules) {
+      const result = insertTagIntoXml(workingXml, rule.tag, rule.suggestionSnippet)
+      if (!result.ok) {
+        failureReason = result.reason
+        continue
+      }
+
+      workingXml = result.updatedXml
+      insertedTags.push(rule.tag)
+    }
+
+    if (insertedTags.length === 0) {
+      showToast(failureReason ?? `No tags inserted for ${reportPlatform}.`, 'error')
+      return
+    }
+
+    setLastInsertSnapshot({
+      previousXml: xml,
+      description: `bulk insert (${reportPlatform}: ${insertedTags.join(', ')})`,
+    })
+    setXml(workingXml)
+    showToast(`Inserted ${insertedTags.length} tag(s) for ${reportPlatform}.`, 'success')
+  }
+
+  const undoLastInsert = () => {
+    if (!lastInsertSnapshot) {
+      showToast('Nothing to undo.', 'info')
+      return
+    }
+
+    setXml(lastInsertSnapshot.previousXml)
+    showToast(`Undid ${lastInsertSnapshot.description}.`, 'success')
+    setLastInsertSnapshot(null)
   }
 
   const jumpToMissingTagContext = (tag: string, key: string) => {
@@ -257,12 +344,15 @@ function App() {
       format === 'json' ? getMissingTagsJsonReport() : getMissingTagsMarkdownReport()
 
     if (!report) {
-      setCopyStatus('No cross-platform report available to copy.')
+      showToast('No cross-platform report available to copy.', 'error')
       return
     }
 
     const didCopy = await copyWithFallback(report)
-    setCopyStatus(didCopy ? `Copied ${format.toUpperCase()} report.` : `Unable to copy ${format} report.`)
+    showToast(
+      didCopy ? `Copied ${format.toUpperCase()} report.` : `Unable to copy ${format} report.`,
+      didCopy ? 'success' : 'error',
+    )
   }
 
   return (
@@ -275,7 +365,7 @@ function App() {
       </header>
 
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="flex h-[420px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+        <section className="flex h-[320px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:h-[380px] lg:h-[420px]">
           <h2 className="mb-3 text-xs uppercase text-slate-500">Input CoT XML</h2>
           <textarea
             ref={textareaRef}
@@ -286,7 +376,7 @@ function App() {
           />
         </section>
 
-        <section className="flex h-[420px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+        <section className="flex h-[320px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:h-[380px] lg:h-[420px]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xs uppercase text-slate-500">Template CoT (Read-Only)</h2>
             <div className="flex flex-wrap items-center gap-2">
@@ -376,8 +466,14 @@ function App() {
             >
               Copy Missing Tags Markdown
             </button>
-            {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
-            {insertStatus && <span className="text-xs text-slate-400">{insertStatus}</span>}
+            <button
+              type="button"
+              onClick={undoLastInsert}
+              disabled={!lastInsertSnapshot}
+              className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors enabled:hover:border-emerald-500 enabled:hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Undo Last Insert
+            </button>
           </div>
         )}
 
@@ -411,15 +507,27 @@ function App() {
                 >
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
-                    <span
-                      className={`rounded px-2 py-0.5 text-[11px] font-bold ${
-                        report.missingRules.length === 0
-                          ? 'bg-emerald-900/40 text-emerald-200'
-                          : 'bg-amber-900/40 text-amber-200'
-                      }`}
-                    >
-                      Missing: {report.missingRules.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                          report.missingRules.length === 0
+                            ? 'bg-emerald-900/40 text-emerald-200'
+                            : 'bg-amber-900/40 text-amber-200'
+                        }`}
+                      >
+                        Missing: {report.missingRules.length}
+                      </span>
+                      {report.missingRules.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => bulkInsertMissingTags(report.platform, report.missingRules)}
+                          aria-label={`Bulk insert missing tags for ${report.platform}`}
+                          className="rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
+                        >
+                          Bulk Insert
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <p className="mb-2 text-[11px] text-slate-400">
@@ -485,6 +593,22 @@ function App() {
           </div>
         )}
       </section>
+
+      {toast && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm">
+          <div
+            className={`rounded border px-3 py-2 text-xs shadow-lg ${
+              toast.tone === 'success'
+                ? 'border-emerald-500/50 bg-emerald-900/85 text-emerald-100'
+                : toast.tone === 'error'
+                  ? 'border-red-500/50 bg-red-900/85 text-red-100'
+                  : 'border-slate-500/50 bg-slate-800/90 text-slate-100'
+            }`}
+          >
+            {toast.text}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

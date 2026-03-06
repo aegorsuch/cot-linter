@@ -54,4 +54,25 @@ describe('App platform and profile behavior', () => {
     const inputTextarea = screen.getByPlaceholderText(/Paste <event>...<\/event> here/i) as HTMLTextAreaElement
     expect(inputTextarea.value).toContain('<takv')
   })
+
+  it('supports bulk insert and undo last insert', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    fireEvent.change(screen.getByPlaceholderText(/Paste <event>...<\/event> here/i), {
+      target: {
+        value:
+          '<event uid="demo" type="a-f-G-U-C" time="2026-01-01T00:00:00Z" start="2026-01-01T00:00:00Z" stale="2026-01-01T01:00:00Z" how="m-g"><point lat="34.0" lon="-117.0" hae="0" ce="9999999.0" le="9999999.0"/><detail><contact callsign="ODIN"/><track speed="0.0" course="0.0"/></detail></event>',
+      },
+    })
+
+    await user.click(screen.getByRole('button', { name: /Bulk insert missing tags for Maven/i }))
+
+    const inputTextarea = screen.getByPlaceholderText(/Paste <event>...<\/event> here/i) as HTMLTextAreaElement
+    expect(inputTextarea.value).toContain('Maven Gateway')
+
+    await user.click(screen.getByRole('button', { name: /Undo Last Insert/i }))
+    expect(inputTextarea.value).not.toContain('Maven Gateway')
+  })
 })
