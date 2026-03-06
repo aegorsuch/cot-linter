@@ -110,9 +110,11 @@ function App() {
     return { line: 1, column: 1 }
   }
 
+  const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])
+
   const jumpToMissingTagContext = (tag: string, key: string) => {
     void tag
-    const location = getDetailOrEventLocation(xml)
+    const location = insertionLocation
     jumpToLocation(location.line, location.column, key)
   }
 
@@ -421,7 +423,7 @@ function App() {
                                     : 'border-amber-700/50 text-amber-200 hover:border-amber-500/80'
                                 }`}
                               >
-                                Go to insertion point
+                                {`Go to insertion point (line ${insertionLocation.line}, col ${insertionLocation.column})`}
                               </button>
                             </>
                           )}
