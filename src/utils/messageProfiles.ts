@@ -1,4 +1,5 @@
-import type { MessageValidationProfile, Platform } from './cotValidator';
+import type { MessageValidationProfile } from './cotValidator';
+import type { Platform } from '../types/shared';
 
 export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   {

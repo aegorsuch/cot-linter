@@ -8,6 +8,7 @@ import {
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
+import type { Platform } from './types/shared'
 
 const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
 

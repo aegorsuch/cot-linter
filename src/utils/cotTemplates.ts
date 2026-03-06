@@ -1,4 +1,4 @@
-import type { Platform } from './cotValidator';
+import type { Platform } from '../types/shared';
 
 const ISO_NOW = '2026-03-05T12:00:00Z';
 const ISO_STALE = '2026-03-05T12:05:00Z';
@@ -65,6 +65,10 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
   WinTAK: baseTemplate(
     '    <usericon iconsetpath="COT_MAPPING_2525C/a-f-G-U-C.png" />\n' +
       '    <takv device="WinTAK" os="Windows 11" version="4.9" />',
+  ),
+  Other: baseTemplate(
+    '    <contact callsign="ODIN-OTHER" />\n' +
+      '    <remarks></remarks>',
   ),
 };
 

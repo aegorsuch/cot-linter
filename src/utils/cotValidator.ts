@@ -1,7 +1,11 @@
+import type { Platform, SourceLocation } from '../types/shared';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import rulesData from './cotValidationRules.json';
 
-export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = rulesData.platforms;
+export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
+  ...rulesData.platforms,
+  Other: [], // Add missing 'Other' property
+};
 
 const BASE_SCHEMA_FRAGMENT: SchemaFragment = {
   xsd: '', // XSD not used in JSON spec
@@ -12,23 +16,6 @@ const BASE_SCHEMA_FRAGMENT: SchemaFragment = {
 
 const ROOT_LOCATION: SourceLocation = { line: 1, column: 1 };
 const ALLOWED_REPEATABLE_DETAIL_TAGS = new Set<string>(['link']);
-
-export type Platform =
-  | 'ATAK'
-  | 'CloudTAK'
-  | 'Lattice'
-  | 'Maven'
-  | 'iTAK'
-  | 'TAK Aware'
-  | 'TAKx'
-  | 'WearTAK'
-  | 'WebTAK'
-  | 'WinTAK';
-
-export interface SourceLocation {
-  line: number;
-  column: number;
-}
 
 export type SeverityLevel = 'critical' | 'high' | 'medium' | 'low';
 export type ConfidenceLevel = 'high' | 'medium' | 'low';
@@ -402,25 +389,6 @@ const toRecord = (value: unknown): Record<string, unknown> | null => {
   return value as Record<string, unknown>;
 };
 
-const getFirstTagObject = (
-  detail: Record<string, unknown>,
-  tag: string,
-): Record<string, unknown> | null => {
-  const rawValue = detail[tag];
-  if (!rawValue) {
-    return null;
-  }
-  // If array, return first non-null object
-  if (Array.isArray(rawValue)) {
-    for (const item of rawValue) {
-      const obj = toRecord(item);
-      if (obj) return obj;
-    }
-    return null;
-  }
-  return toRecord(rawValue);
-};
-
 const parseFiniteNumber = (value: unknown): number | null => {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : null;
@@ -670,32 +638,6 @@ const validateTrackSemantics = (
         'Use a course value from 0 to 360 degrees.',
       );
     }
-  }
-};
-
-const validateDuplicateDetailTags = (
-  xmlString: string,
-  detail: Record<string, unknown>,
-  result: ValidationResult,
-): void => {
-  for (const [tag, value] of Object.entries(detail)) {
-    if (!Array.isArray(value)) {
-      continue;
-    }
-
-    if (value.length < 2 || ALLOWED_REPEATABLE_DETAIL_TAGS.has(tag)) {
-      continue;
-    }
-
-    pushWarning(
-      result,
-      'DUPLICATE_DETAIL_TAG',
-      `Duplicate detail tag warning: <${tag}> appears ${value.length} times in <detail>.`,
-      findTagLocation(xmlString, tag),
-      'low',
-      'high',
-      `Keep a single <${tag}> in <detail> unless repeated tags are intentional.`,
-    );
   }
 };
 

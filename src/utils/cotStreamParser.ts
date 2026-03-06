@@ -3,6 +3,9 @@
 
 import expat from 'node-expat';
 import { validateCoT } from './cotValidator';
+import type { Platform } from '../types/shared';
+
+type Platform = 'ATAK' | 'WinTAK' | 'Other';
 
 export function streamParseCoT(xmlStream: NodeJS.ReadableStream, platform: string, onEvent: (result: any) => void) {
   const parser = new expat.Parser('UTF-8');
@@ -32,7 +35,7 @@ export function streamParseCoT(xmlStream: NodeJS.ReadableStream, platform: strin
       if (name === 'event') {
         insideEvent = false;
         // Validate the event XML
-        const result = validateCoT(eventXml, platform);
+        const result = validateCoT(eventXml, platform as Platform);
         onEvent(result);
         eventXml = '';
       }
