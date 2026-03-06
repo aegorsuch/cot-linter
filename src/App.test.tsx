@@ -47,5 +47,11 @@ describe('App platform and profile behavior', () => {
     expect(screen.getAllByText(/Present:/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/expected tags/i).length).toBeGreaterThan(0)
     expect(screen.queryByText(/Platform Rule Matrix/i)).not.toBeInTheDocument()
+
+    const insertTakvButtons = screen.getAllByRole('button', { name: /Insert <takv>/i })
+    await user.click(insertTakvButtons[0])
+
+    const inputTextarea = screen.getByPlaceholderText(/Paste <event>...<\/event> here/i) as HTMLTextAreaElement
+    expect(inputTextarea.value).toContain('<takv')
   })
 })

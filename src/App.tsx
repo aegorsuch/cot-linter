@@ -16,6 +16,7 @@ function App() {
   const [selectedProfileId, setSelectedProfileId] = useState('platform-default')
   const [activeDiagnosticKey, setActiveDiagnosticKey] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
+  const [insertStatus, setInsertStatus] = useState<string | null>(null)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -111,6 +112,45 @@ function App() {
   }
 
   const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])
+
+  const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  const insertSuggestedTag = (tag: string, snippet: string, key: string) => {
+    if (!xml.trim()) {
+      setInsertStatus('No XML content available to insert into.')
+      return
+    }
+
+    const tagRegex = new RegExp(`<\\s*${escapeRegExp(tag)}(\\s|>|/)`, 'i')
+    if (tagRegex.test(xml)) {
+      setInsertStatus(`Skipped insert: <${tag}> already exists.`)
+      return
+    }
+
+    const detailCloseRegex = /<\/\s*detail\s*>/i
+    const detailCloseMatch = detailCloseRegex.exec(xml)
+    if (!detailCloseMatch || detailCloseMatch.index < 0) {
+      setInsertStatus('Could not find </detail>. Add a <detail> section first.')
+      return
+    }
+
+    const insertionIndex = detailCloseMatch.index
+    const lineStart = xml.lastIndexOf('\n', insertionIndex - 1) + 1
+    const closingLine = xml.slice(lineStart, insertionIndex)
+    const indent = (closingLine.match(/^\s*/) ?? [''])[0]
+    const childIndent = `${indent}  `
+
+    const needsLeadingNewline = insertionIndex > 0 && xml[insertionIndex - 1] !== '\n'
+    const insertText = `${needsLeadingNewline ? '\n' : ''}${childIndent}${snippet}\n`
+
+    const updatedXml = `${xml.slice(0, insertionIndex)}${insertText}${xml.slice(insertionIndex)}`
+    setXml(updatedXml)
+    setInsertStatus(`Inserted <${tag}>.`)
+
+    const insertedTagOffset = insertionIndex + (needsLeadingNewline ? 1 : 0) + childIndent.length
+    const insertedTagLocation = toLineColFromOffset(updatedXml, insertedTagOffset)
+    jumpToLocation(insertedTagLocation.line, insertedTagLocation.column, key)
+  }
 
   const jumpToMissingTagContext = (tag: string, key: string) => {
     void tag
@@ -337,6 +377,7 @@ function App() {
               Copy Missing Tags Markdown
             </button>
             {copyStatus && <span className="text-xs text-slate-400">{copyStatus}</span>}
+            {insertStatus && <span className="text-xs text-slate-400">{insertStatus}</span>}
           </div>
         )}
 
@@ -424,6 +465,13 @@ function App() {
                                 }`}
                               >
                                 {`Go to insertion point (line ${insertionLocation.line}, col ${insertionLocation.column})`}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => insertSuggestedTag(rule.tag, rule.suggestionSnippet, diagnosticKey)}
+                                className="mt-2 ml-2 rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
+                              >
+                                {`Insert <${rule.tag}>`}
                               </button>
                             </>
                           )}
