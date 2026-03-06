@@ -1,4 +1,17 @@
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import rulesData from './cotValidationRules.json';
+
+export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = rulesData.platforms;
+
+const BASE_SCHEMA_FRAGMENT: SchemaFragment = {
+  xsd: '', // XSD not used in JSON spec
+  requiredEventAttributes: rulesData.coreSchema.requiredEventAttributes,
+  requiredEventChildren: rulesData.coreSchema.requiredEventChildren,
+  requiredPointAttributes: rulesData.coreSchema.requiredPointAttributes,
+};
+
+const ROOT_LOCATION: SourceLocation = { line: 1, column: 1 };
+const ALLOWED_REPEATABLE_DETAIL_TAGS = new Set<string>(['link']);
 
 export type Platform =
   | 'ATAK'
@@ -77,192 +90,6 @@ type SchemaFragment = {
   requiredPointAttributes: string[];
 };
 
-const ROOT_LOCATION: SourceLocation = { line: 1, column: 1 };
-const ALLOWED_REPEATABLE_DETAIL_TAGS = new Set<string>(['link']);
-
-const BASE_SCHEMA_FRAGMENT: SchemaFragment = {
-  xsd: `<xsd:complexType name="eventType">
-  <xsd:sequence>
-    <xsd:element name="point" minOccurs="1" maxOccurs="1" />
-    <xsd:element name="detail" minOccurs="1" maxOccurs="1" />
-  </xsd:sequence>
-  <xsd:attribute name="uid" use="required" />
-  <xsd:attribute name="type" use="required" />
-  <xsd:attribute name="time" use="required" />
-  <xsd:attribute name="start" use="required" />
-  <xsd:attribute name="stale" use="required" />
-  <xsd:attribute name="how" use="required" />
-</xsd:complexType>`,
-  requiredEventAttributes: ['uid', 'type', 'time', 'start', 'stale', 'how'],
-  requiredEventChildren: ['point', 'detail'],
-  requiredPointAttributes: ['lat', 'lon', 'hae', 'ce', 'le'],
-};
-
-export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
-  ATAK: [
-    {
-      tag: 'contact',
-      description: 'Callsign/label rendering in map views.',
-      suggestionSnippet: '<contact callsign="ODIN-ATAK" />',
-    },
-    {
-      tag: '__group',
-      description: 'Team and role grouping behavior.',
-      suggestionSnippet: '<__group name="Dark Green" role="K9" />',
-    },
-  ],
-  CloudTAK: [
-    {
-      tag: 'contact',
-      description: 'Entity labeling in feed/event listings.',
-      suggestionSnippet: '<contact callsign="ODIN-CLOUDTAK" />',
-    },
-    {
-      tag: 'takv',
-      description: 'Client/version context for interoperability.',
-      suggestionSnippet: '<takv device="Android" os="Android 14" version="5.0" />',
-    },
-    {
-      tag: 'usericon',
-      description: 'Icon rendering path for CloudTAK event presentation.',
-      suggestionSnippet: '<usericon iconsetpath="COT_MAPPING_2525C/a-f-G-U-C.png" />',
-    },
-  ],
-  Lattice: [
-    {
-      tag: 'contact',
-      description: 'Entity/operator naming for track presentation.',
-      suggestionSnippet: '<contact callsign="ODIN-LATTICE" />',
-    },
-    {
-      tag: 'track',
-      description: 'Kinematic context for moving track updates.',
-      suggestionSnippet: '<track speed="0.00000000" course="0.00000000" />',
-    },
-    {
-      tag: 'remarks',
-      description: 'Operator-readable context for correlation workflows.',
-      suggestionSnippet: '<remarks>Auto-ingested for Lattice correlation.</remarks>',
-    },
-  ],
-  Maven: [
-    {
-      tag: 'contact',
-      description: 'Track identity/callsign visibility in operator views.',
-      suggestionSnippet: '<contact callsign="ODIN-MAVEN" />',
-    },
-    {
-      tag: 'track',
-      description: 'Motion/heading context for pattern tracking.',
-      suggestionSnippet: '<track speed="0.00000000" course="0.00000000" />',
-    },
-    {
-      tag: 'takv',
-      description: 'Producer/version metadata for source attribution.',
-      suggestionSnippet: '<takv device="Maven Gateway" os="Linux" version="1.0" />',
-    },
-  ],
-  iTAK: [
-    {
-      tag: 'contact',
-      description: 'Callsign display on mobile maps.',
-      suggestionSnippet: '<contact callsign="ODIN-ITAK" />',
-    },
-    {
-      tag: '__group',
-      description: 'Team presentation consistency.',
-      suggestionSnippet: '<__group name="Rescue" role="K9" />',
-    },
-  ],
-  'TAK Aware': [
-    {
-      tag: 'contact',
-      description: 'User-friendly labeling in shared views.',
-      suggestionSnippet: '<contact callsign="ODIN-TAKAWARE" />',
-    },
-    {
-      tag: 'remarks',
-      description: 'Additional event context text.',
-      suggestionSnippet: '<remarks></remarks>',
-    },
-  ],
-  TAKx: [
-    {
-      tag: 'takv',
-      description: 'Producer metadata for routing/interop.',
-      suggestionSnippet: '<takv device="Gateway" os="Linux" version="2.1" />',
-    },
-    {
-      tag: '__group',
-      description: 'Downstream grouping behavior.',
-      suggestionSnippet: '<__group name="Interop" role="K9" />',
-    },
-  ],
-  WearTAK: [
-    {
-      tag: 'contact',
-      description: 'Short-form callsign display in wearable UI.',
-      suggestionSnippet: '<contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />',
-    },
-    {
-      tag: '__group',
-      description: 'Team and role context in constrained layouts.',
-      suggestionSnippet: '<__group name="Dark Green" role="K9" />',
-    },
-    {
-      tag: 'track',
-      description: 'Device movement context for wearable SA updates.',
-      suggestionSnippet: '<track speed="0.00000000" course="0.00000000" />',
-    },
-  ],
-  WebTAK: [
-    {
-      tag: 'contact',
-      description: 'Map label readability in browser UI.',
-      suggestionSnippet: '<contact callsign="ODIN-WEBTAK" />',
-    },
-    {
-      tag: '__group',
-      description: 'Team affiliation visibility in UI panes.',
-      suggestionSnippet: '<__group name="Ops" role="K9" />',
-    },
-  ],
-  WinTAK: [
-    {
-      tag: 'usericon',
-      description: 'Expected icon/symbol rendering.',
-      suggestionSnippet: '<usericon iconsetpath="COT_MAPPING_2525C/a-f-G-U-C.png" />',
-    },
-    {
-      tag: 'takv',
-      description: 'Client metadata for diagnostics.',
-      suggestionSnippet: '<takv device="WinTAK" os="Windows 11" version="4.9" />',
-    },
-  ],
-};
-
-const ALL_PLATFORMS_SORTED: Platform[] = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).sort(
-  (a, b) => a.localeCompare(b),
-);
-
-const PLATFORM_SCHEMA_FRAGMENTS: Record<Platform, string> = {
-  ATAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
-  CloudTAK:
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="takv" minOccurs="1" /><xsd:element name="usericon" minOccurs="1" />',
-  Lattice:
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="track" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',
-  Maven:
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="track" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
-  iTAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
-  'TAK Aware':
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="remarks" minOccurs="1" />',
-  TAKx: '<xsd:element name="takv" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
-  WearTAK:
-    '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" /><xsd:element name="track" minOccurs="1" />',
-  WebTAK: '<xsd:element name="contact" minOccurs="1" /><xsd:element name="__group" minOccurs="1" />',
-  WinTAK: '<xsd:element name="usericon" minOccurs="1" /><xsd:element name="takv" minOccurs="1" />',
-};
-
 const toLineCol = (source: string, index: number): SourceLocation => {
   if (index < 0) {
     return ROOT_LOCATION;
@@ -335,7 +162,8 @@ const pushWarning = (
 
 const parserOptions = {
   ignoreAttributes: false,
-  preserveOrder: false,
+  attributeNamePrefix: '@_',
+  // Removed preserveOrder to improve attribute mapping
   allowBooleanAttributes: true,
   parseTagValue: true,
   parseAttributeValue: true,
@@ -343,8 +171,11 @@ const parserOptions = {
   cdataTagName: '__cdata',
   commentTagName: '__comment',
   processEntities: false,
-  stopNodes: ['event.detail'], // Prevent deep recursion in detail
-  isArray: (name: string) => ['link', 'track'].includes(name),
+  // Removed stopNodes to allow full parsing of <detail> children
+  isArray: (name: string, jpath: string) => {
+    // Treat all tags inside <detail> as arrays for duplicate detection
+    return jpath.startsWith('event.detail');
+  },
 };
 
 const parseXmlForValidation = (
@@ -579,11 +410,14 @@ const getFirstTagObject = (
   if (!rawValue) {
     return null;
   }
-
+  // If array, return first non-null object
   if (Array.isArray(rawValue)) {
-    return toRecord(rawValue[0]);
+    for (const item of rawValue) {
+      const obj = toRecord(item);
+      if (obj) return obj;
+    }
+    return null;
   }
-
   return toRecord(rawValue);
 };
 
@@ -604,8 +438,20 @@ const hasXmlAttribute = (tagObject: Record<string, unknown> | null, attribute: s
   if (!tagObject) {
     return false;
   }
-
-  return Object.prototype.hasOwnProperty.call(tagObject, toAttr(attribute));
+  // Debug output for attribute detection
+  // eslint-disable-next-line no-console
+  console.log('DEBUG hasXmlAttribute:', { tagObject, attribute, keys: Object.keys(tagObject) });
+  // Accept attribute if key exists and value is not null/undefined (array or string)
+  const attrKey = toAttr(attribute);
+  if (Object.prototype.hasOwnProperty.call(tagObject, attrKey)) {
+    const val = tagObject[attrKey];
+    return val !== undefined && val !== null && (Array.isArray(val) ? val.length > 0 : true);
+  }
+  if (Object.prototype.hasOwnProperty.call(tagObject, attribute)) {
+    const val = tagObject[attribute];
+    return val !== undefined && val !== null && (Array.isArray(val) ? val.length > 0 : true);
+  }
+  return false;
 };
 
 const hasDetailTag = (detail: Record<string, unknown>, tag: string): boolean => {
@@ -638,15 +484,15 @@ const validatePointSemantics = (
       'high',
       '<point lat="41.880025" ... />',
     );
-  } else if (lat < -90 || lat > 90) {
+  } else if (lat < semanticBounds.lat.min || lat > semanticBounds.lat.max) {
     pushWarning(
       result,
       'SEMANTIC_POINT_RANGE_WARNING',
-      `Semantic warning: latitude '${lat}' is outside valid range [-90, 90].`,
+      `Semantic warning: latitude '${lat}' is outside valid range [${semanticBounds.lat.min}, ${semanticBounds.lat.max}].`,
       findAttributeLocation(xmlString, 'point', 'lat'),
       'high',
       'high',
-      'Use a latitude value between -90 and 90.',
+      `Use a latitude value between ${semanticBounds.lat.min} and ${semanticBounds.lat.max}.`,
     );
   }
 
@@ -660,15 +506,15 @@ const validatePointSemantics = (
       'high',
       '<point lon="-87.641793" ... />',
     );
-  } else if (lon < -180 || lon > 180) {
+  } else if (lon < semanticBounds.lon.min || lon > semanticBounds.lon.max) {
     pushWarning(
       result,
       'SEMANTIC_POINT_RANGE_WARNING',
-      `Semantic warning: longitude '${lon}' is outside valid range [-180, 180].`,
+      `Semantic warning: longitude '${lon}' is outside valid range [${semanticBounds.lon.min}, ${semanticBounds.lon.max}].`,
       findAttributeLocation(xmlString, 'point', 'lon'),
       'high',
       'high',
-      'Use a longitude value between -180 and 180.',
+      `Use a longitude value between ${semanticBounds.lon.min} and ${semanticBounds.lon.max}.`,
     );
   }
 
@@ -678,19 +524,19 @@ const validatePointSemantics = (
       'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
       "Semantic warning: <point> attribute 'hae' should be numeric.",
       findAttributeLocation(xmlString, 'point', 'hae'),
-      'medium',
+      'high',
       'high',
       '<point hae="180.1" ... />',
     );
-  } else if (hae < -1000 || hae > 100000) {
+  } else if (hae < semanticBounds.hae.min || hae > semanticBounds.hae.max) {
     pushWarning(
       result,
       'SEMANTIC_POINT_RANGE_WARNING',
-      `Semantic warning: hae '${hae}' is outside expected bounds [-1000, 100000].`,
+      `Semantic warning: hae '${hae}' is outside valid range [${semanticBounds.hae.min}, ${semanticBounds.hae.max}].`,
       findAttributeLocation(xmlString, 'point', 'hae'),
-      'medium',
-      'medium',
-      'Confirm height-above-ellipsoid (hae) is realistic for the reported location.',
+      'high',
+      'high',
+      `Use a hae value between ${semanticBounds.hae.min} and ${semanticBounds.hae.max}.`,
     );
   }
 
@@ -700,19 +546,19 @@ const validatePointSemantics = (
       'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
       "Semantic warning: <point> attribute 'ce' should be numeric.",
       findAttributeLocation(xmlString, 'point', 'ce'),
-      'medium',
+      'high',
       'high',
       '<point ce="13.0" ... />',
     );
-  } else if (ce < 0 || ce > 100000) {
+  } else if (ce < semanticBounds.ce.min || ce > semanticBounds.ce.max) {
     pushWarning(
       result,
       'SEMANTIC_POINT_RANGE_WARNING',
-      `Semantic warning: ce '${ce}' is outside expected bounds [0, 100000].`,
+      `Semantic warning: ce '${ce}' is outside valid range [${semanticBounds.ce.min}, ${semanticBounds.ce.max}].`,
       findAttributeLocation(xmlString, 'point', 'ce'),
-      'medium',
-      'medium',
-      'Use circular error (ce) as a non-negative, realistic sensor uncertainty.',
+      'high',
+      'high',
+      `Use a ce value between ${semanticBounds.ce.min} and ${semanticBounds.ce.max}.`,
     );
   }
 
@@ -722,19 +568,19 @@ const validatePointSemantics = (
       'SEMANTIC_POINT_ATTR_NOT_NUMERIC',
       "Semantic warning: <point> attribute 'le' should be numeric.",
       findAttributeLocation(xmlString, 'point', 'le'),
-      'medium',
+      'high',
       'high',
       '<point le="1.0" ... />',
     );
-  } else if (le < 0 || le > 100000) {
+  } else if (le < semanticBounds.le.min || le > semanticBounds.le.max) {
     pushWarning(
       result,
       'SEMANTIC_POINT_RANGE_WARNING',
-      `Semantic warning: le '${le}' is outside expected bounds [0, 100000].`,
+      `Semantic warning: le '${le}' is outside valid range [${semanticBounds.le.min}, ${semanticBounds.le.max}].`,
       findAttributeLocation(xmlString, 'point', 'le'),
-      'medium',
-      'medium',
-      'Use linear error (le) as a non-negative, realistic sensor uncertainty.',
+      'high',
+      'high',
+      `Use a le value between ${semanticBounds.le.min} and ${semanticBounds.le.max}.`,
     );
   }
 };
@@ -744,78 +590,86 @@ const validateTrackSemantics = (
   detail: Record<string, unknown>,
   result: ValidationResult,
 ): void => {
-  const track = getFirstTagObject(detail, 'track');
-  if (!track) {
+  const tracks = detail.track;
+  if (!tracks) {
     return;
   }
-
-  const speedRaw = track[toAttr('speed')];
-  const courseRaw = track[toAttr('course')];
-  const speed = parseFiniteNumber(speedRaw);
-  const course = parseFiniteNumber(courseRaw);
-
-  if (speedRaw === undefined) {
-    pushWarning(
-      result,
-      'SEMANTIC_TRACK_ATTR_MISSING',
-      "Semantic warning: <track> is missing required attribute 'speed'.",
-      findTagLocation(xmlString, 'track'),
-      'medium',
-      'high',
-      '<track speed="0.00000000" course="0.00000000" />',
-    );
-  } else if (speed === null) {
-    pushWarning(
-      result,
-      'SEMANTIC_TRACK_ATTR_NOT_NUMERIC',
-      "Semantic warning: <track> attribute 'speed' should be numeric.",
-      findAttributeLocation(xmlString, 'track', 'speed'),
-      'medium',
-      'high',
-      '<track speed="0.00000000" ... />',
-    );
-  } else if (speed < 0 || speed > 5000) {
-    pushWarning(
-      result,
-      'SEMANTIC_TRACK_RANGE_WARNING',
-      `Semantic warning: speed '${speed}' is outside expected bounds [0, 5000].`,
-      findAttributeLocation(xmlString, 'track', 'speed'),
-      'medium',
-      'medium',
-      'Use a non-negative speed value in platform-expected units.',
-    );
-  }
-
-  if (courseRaw === undefined) {
-    pushWarning(
-      result,
-      'SEMANTIC_TRACK_ATTR_MISSING',
-      "Semantic warning: <track> is missing required attribute 'course'.",
-      findTagLocation(xmlString, 'track'),
-      'medium',
-      'high',
-      '<track speed="0.00000000" course="0.00000000" />',
-    );
-  } else if (course === null) {
-    pushWarning(
-      result,
-      'SEMANTIC_TRACK_ATTR_NOT_NUMERIC',
-      "Semantic warning: <track> attribute 'course' should be numeric.",
-      findAttributeLocation(xmlString, 'track', 'course'),
-      'medium',
-      'high',
-      '<track ... course="0.00000000" />',
-    );
-  } else if (course < 0 || course > 360) {
-    pushWarning(
-      result,
-      'SEMANTIC_TRACK_RANGE_WARNING',
-      `Semantic warning: course '${course}' is outside valid range [0, 360].`,
-      findAttributeLocation(xmlString, 'track', 'course'),
-      'medium',
-      'high',
-      'Use a course value from 0 to 360 degrees.',
-    );
+  const trackArray = Array.isArray(tracks) ? tracks : [tracks];
+  for (const trackObj of trackArray) {
+    const track = toRecord(trackObj);
+    if (!track) continue;
+    const speedRaw = track[toAttr('speed')];
+    const courseRaw = track[toAttr('course')];
+    const speed = parseFiniteNumber(speedRaw);
+    const course = parseFiniteNumber(courseRaw);
+    // Only emit warnings for track speed/course issues, never errors
+    // All track validation issues below only push warnings
+    if (speedRaw === undefined) {
+      pushWarning(
+        result,
+        'SEMANTIC_TRACK_ATTR_MISSING',
+        "Semantic warning: <track> is missing required attribute 'speed'.",
+        findTagLocation(xmlString, 'track'),
+        'medium',
+        'high',
+        '<track speed="0.00000000" course="0.00000000" />',
+      );
+    }
+    if (speed === null) {
+      pushWarning(
+        result,
+        'SEMANTIC_TRACK_ATTR_NOT_NUMERIC',
+        "Semantic warning: <track> attribute 'speed' should be numeric.",
+        findAttributeLocation(xmlString, 'track', 'speed'),
+        'medium',
+        'high',
+        '<track speed="0.00000000" ... />',
+      );
+    }
+    if (speed !== null && (speed < 0 || speed > 5000)) {
+      pushWarning(
+        result,
+        'SEMANTIC_TRACK_RANGE_WARNING',
+        `Semantic warning: speed '${speed}' is outside expected bounds [0, 5000].`,
+        findAttributeLocation(xmlString, 'track', 'speed'),
+        'medium',
+        'medium',
+        'Use a non-negative speed value in platform-expected units.',
+      );
+    }
+    if (courseRaw === undefined) {
+      pushWarning(
+        result,
+        'SEMANTIC_TRACK_ATTR_MISSING',
+        "Semantic warning: <track> is missing required attribute 'course'.",
+        findTagLocation(xmlString, 'track'),
+        'medium',
+        'high',
+        '<track speed="0.00000000" course="0.00000000" />',
+      );
+    }
+    if (course === null) {
+      pushWarning(
+        result,
+        'SEMANTIC_TRACK_ATTR_NOT_NUMERIC',
+        "Semantic warning: <track> attribute 'course' should be numeric.",
+        findAttributeLocation(xmlString, 'track', 'course'),
+        'medium',
+        'high',
+        '<track ... course="0.00000000" />',
+      );
+    }
+    if (course !== null && (course < 0 || course > 360)) {
+      pushWarning(
+        result,
+        'SEMANTIC_TRACK_RANGE_WARNING',
+        `Semantic warning: course '${course}' is outside valid range [0, 360].`,
+        findAttributeLocation(xmlString, 'track', 'course'),
+        'medium',
+        'high',
+        'Use a course value from 0 to 360 degrees.',
+      );
+    }
   }
 };
 
@@ -845,6 +699,47 @@ const validateDuplicateDetailTags = (
   }
 };
 
+const validateDetailDuplicates = (
+  xmlString: string,
+  detail: Record<string, unknown>,
+  result: ValidationResult,
+): void => {
+  // Flexible regex for <detail> extraction and duplicate tag detection
+  const detailTagRegex = /\s*<detail[\s\S]*?<\/detail>/i;
+  const detailMatch = detailTagRegex.exec(xmlString);
+  if (detailMatch) {
+    // Extract content between <detail> and </detail>
+    const detailContent = detailMatch[0].replace(/^\s*<detail\b[^>]*>/i, '').replace(/<\/detail>\s*$/i, '');
+    // Remove comments, CDATA, and normalize whitespace
+    const cleanedDetail = detailContent.replace(/<!--.*?-->/gs, '').replace(/<!\[CDATA\[.*?\]\]>/gs, '').replace(/\s+/g, ' ');
+    const tagCount: Record<string, number> = {};
+    const tagRegex = /<([a-zA-Z0-9_]+)(\s|>|\/)/g;
+    let match;
+    while ((match = tagRegex.exec(cleanedDetail)) !== null) {
+      const tag = match[1];
+      if (!ALLOWED_REPEATABLE_DETAIL_TAGS.has(tag)) {
+        tagCount[tag] = (tagCount[tag] || 0) + 1;
+      }
+    }
+    // Debug output
+    // eslint-disable-next-line no-console
+    console.log('DEBUG validator tagCount:', tagCount);
+    for (const tag in tagCount) {
+      if (tagCount[tag] > 1) {
+        pushWarning(
+          result,
+          'DUPLICATE_DETAIL_TAG',
+          `<${tag}> appears ${tagCount[tag]} times in <detail>.`,
+          findTagLocation(xmlString, tag),
+          'medium',
+          'medium',
+          `<${tag}> appears ${tagCount[tag]} times in <detail>.`,
+        );
+      }
+    }
+  }
+};
+
 const validateProfileFieldShape = (
   xmlString: string,
   profile: MessageValidationProfile,
@@ -852,12 +747,35 @@ const validateProfileFieldShape = (
   result: ValidationResult,
 ): void => {
   if (profile.id === 'atak-manual-alert') {
-    const link = getFirstTagObject(detail, 'link');
-    const contact = getFirstTagObject(detail, 'contact');
-    const emergency = getFirstTagObject(detail, 'emergency');
-
-    if (hasDetailTag(detail, 'link')) {
+    // Print parsed detail structure and child tag objects
+    // eslint-disable-next-line no-console
+    console.log('DEBUG profile parsed detail:', detail);
+    for (const tag of Object.keys(detail)) {
+      const tagValue = detail[tag];
+      if (Array.isArray(tagValue)) {
+        for (const obj of tagValue) {
+          // eslint-disable-next-line no-console
+          console.log(`DEBUG profile detail tag '${tag}' object:`, obj);
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.log(`DEBUG profile detail tag '${tag}' object:`, tagValue);
+      }
+    }
+    // Validate all <link> tags
+    const links = detail.link ? (Array.isArray(detail.link) ? detail.link : [detail.link]) : [];
+    for (const linkObj of links) {
+      const link = toRecord(linkObj);
+      // Debug output for link tag
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile link:', link);
+      if (!link) continue;
+      // Print all keys in link object
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile link keys:', Object.keys(link));
       for (const attr of ['uid', 'type', 'relation']) {
+        // eslint-disable-next-line no-console
+        console.log('DEBUG profile link attr:', attr, 'present:', hasXmlAttribute(link, attr), 'link:', link);
         if (!hasXmlAttribute(link, attr)) {
           pushError(
             result,
@@ -871,20 +789,36 @@ const validateProfileFieldShape = (
         }
       }
     }
-
-    if (hasDetailTag(detail, 'contact') && !hasXmlAttribute(contact, 'callsign')) {
-      pushError(
-        result,
-        'PROFILE_FIELD_ATTR_MISSING',
-        `Message profile '${profile.label}' requires attribute 'callsign' on <contact>.`,
-        findAttributeLocation(xmlString, 'contact', 'callsign'),
-        'high',
-        'high',
-        '<contact callsign="ODIN-ATAK" />',
-      );
+    // Validate all <contact> tags
+    const contacts = detail.contact ? (Array.isArray(detail.contact) ? detail.contact : [detail.contact]) : [];
+    for (const contactObj of contacts) {
+      const contact = toRecord(contactObj);
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile contact:', contact);
+      if (!contact) continue;
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile contact attr:', 'callsign', 'present:', hasXmlAttribute(contact, 'callsign'), 'contact:', contact);
+      if (!hasXmlAttribute(contact, 'callsign')) {
+        pushError(
+          result,
+          'PROFILE_FIELD_ATTR_MISSING',
+          `Message profile '${profile.label}' requires attribute 'callsign' on <contact>.`,
+          findAttributeLocation(xmlString, 'contact', 'callsign'),
+          'high',
+          'high',
+          '<contact callsign="ODIN-ATAK" />',
+        );
+      }
     }
-
-    if (hasDetailTag(detail, 'emergency')) {
+    // Validate all <emergency> tags
+    const emergencies = detail.emergency ? (Array.isArray(detail.emergency) ? detail.emergency : [detail.emergency]) : [];
+    for (const emergencyObj of emergencies) {
+      const emergency = toRecord(emergencyObj);
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile emergency:', emergency);
+      if (!emergency) continue;
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile emergency attr:', 'type', 'present:', hasXmlAttribute(emergency, 'type'), 'emergency:', emergency);
       if (!hasXmlAttribute(emergency, 'type')) {
         pushError(
           result,
@@ -896,12 +830,13 @@ const validateProfileFieldShape = (
           '<emergency type="911 Alert">ODIN-ATAK</emergency>',
         );
       }
-
-      const emergencyRaw = detail.emergency;
+      const emergencyRaw = emergencyObj;
       const emergencyText =
         typeof emergencyRaw === 'string'
           ? emergencyRaw
           : ((emergency?.['#text'] as string | undefined) ?? '');
+      // eslint-disable-next-line no-console
+      console.log('DEBUG profile emergency text:', emergencyText);
       if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
         pushError(
           result,
@@ -914,46 +849,43 @@ const validateProfileFieldShape = (
         );
       }
     }
-
     return;
   }
 
   if (profile.id === 'atak-manual-alert-clear') {
-    const emergency = getFirstTagObject(detail, 'emergency');
-    if (!hasDetailTag(detail, 'emergency')) {
-      return;
+    const emergencies = detail.emergency ? (Array.isArray(detail.emergency) ? detail.emergency : [detail.emergency]) : [];
+    for (const emergencyObj of emergencies) {
+      const emergency = toRecord(emergencyObj);
+      if (!emergency) continue;
+      const cancel = emergency[toAttr('cancel')];
+      if (cancel !== 'true') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' requires <emergency cancel='true'>.`,
+          findAttributeLocation(xmlString, 'emergency', 'cancel'),
+          'high',
+          'high',
+          "<emergency cancel='true'>ODIN-ATAK</emergency>",
+        );
+      }
+      const emergencyRaw = emergencyObj;
+      const emergencyText =
+        typeof emergencyRaw === 'string'
+          ? emergencyRaw
+          : ((emergency?.['#text'] as string | undefined) ?? '');
+      if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+          findTagLocation(xmlString, 'emergency'),
+          'high',
+          'high',
+          "<emergency cancel='true'>ODIN-ATAK</emergency>",
+        );
+      }
     }
-
-    const cancel = emergency?.[toAttr('cancel')];
-    if (cancel !== 'true') {
-      pushError(
-        result,
-        'PROFILE_FIELD_VALUE_INVALID',
-        `Message profile '${profile.label}' requires <emergency cancel='true'>.`,
-        findAttributeLocation(xmlString, 'emergency', 'cancel'),
-        'high',
-        'high',
-        "<emergency cancel='true'>ODIN-ATAK</emergency>",
-      );
-    }
-
-    const emergencyRaw = detail.emergency;
-    const emergencyText =
-      typeof emergencyRaw === 'string'
-        ? emergencyRaw
-        : ((emergency?.['#text'] as string | undefined) ?? '');
-    if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
-      pushError(
-        result,
-        'PROFILE_FIELD_VALUE_INVALID',
-        `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
-        findTagLocation(xmlString, 'emergency'),
-        'high',
-        'high',
-        '<emergency cancel="true">ODIN-ATAK</emergency>',
-      );
-    }
-
     return;
   }
 
@@ -966,43 +898,38 @@ const validateProfileFieldShape = (
       { tag: 'precisionlocation', requiredAttributes: ['altsrc'] },
       { tag: 'usericon', requiredAttributes: ['iconsetpath'] },
     ];
-
     for (const rule of attributeRuleSet) {
       if (!hasDetailTag(detail, rule.tag)) {
         continue;
       }
-
-      const tagObject = getFirstTagObject(detail, rule.tag);
-      for (const attr of rule.requiredAttributes) {
-        if (!hasXmlAttribute(tagObject, attr)) {
-          pushError(
-            result,
-            'PROFILE_FIELD_ATTR_MISSING',
-            `Message profile '${profile.label}' requires attribute '${attr}' on <${rule.tag}>.`,
-            findAttributeLocation(xmlString, rule.tag, attr),
-            'high',
-            'high',
-            `<${rule.tag} ${attr}="..." />`,
-          );
+      const tagValues = detail[rule.tag];
+      const tagArray = Array.isArray(tagValues) ? tagValues : [tagValues];
+      for (const tagObj of tagArray) {
+        const tagObject = toRecord(tagObj);
+        if (!tagObject) continue;
+        for (const attr of rule.requiredAttributes) {
+          if (!hasXmlAttribute(tagObject, attr)) {
+            pushError(
+              result,
+              'PROFILE_FIELD_ATTR_MISSING',
+              `Message profile '${profile.label}' requires attribute '${attr}' on <${rule.tag}>.`,
+              findAttributeLocation(xmlString, rule.tag, attr),
+              'high',
+              'high',
+              `<${rule.tag} ${attr}="..." />`,
+            );
+          }
         }
       }
     }
-
     return;
   }
 
   if (profile.id === 'cloudtak-manual-alert') {
-    const hasEmergencyTag = hasDetailTag(detail, 'emergency');
-    const hasUsericonTag = hasDetailTag(detail, 'usericon');
-    const hasContactTag = hasDetailTag(detail, 'contact');
-    const hasTakvTag = hasDetailTag(detail, 'takv');
-
-    const emergency = getFirstTagObject(detail, 'emergency');
-    const usericon = getFirstTagObject(detail, 'usericon');
-    const contact = getFirstTagObject(detail, 'contact');
-    const takv = getFirstTagObject(detail, 'takv');
-
-    if (hasEmergencyTag) {
+    const emergencies = detail.emergency ? (Array.isArray(detail.emergency) ? detail.emergency : [detail.emergency]) : [];
+    for (const emergencyObj of emergencies) {
+      const emergency = toRecord(emergencyObj);
+      if (!emergency) continue;
       if (!hasXmlAttribute(emergency, 'type')) {
         pushError(
           result,
@@ -1014,8 +941,7 @@ const validateProfileFieldShape = (
           '<emergency type="Manual Alert: Gunshot">...</emergency>',
         );
       }
-
-      const emergencyRaw = detail.emergency;
+      const emergencyRaw = emergencyObj;
       const emergencyText =
         typeof emergencyRaw === 'string'
           ? emergencyRaw
@@ -1032,32 +958,42 @@ const validateProfileFieldShape = (
         );
       }
     }
-
-    if (hasUsericonTag && !hasXmlAttribute(usericon, 'iconsetpath')) {
-      pushError(
-        result,
-        'PROFILE_FIELD_ATTR_MISSING',
-        `Message profile '${profile.label}' requires attribute 'iconsetpath' on <usericon>.`,
-        findAttributeLocation(xmlString, 'usericon', 'iconsetpath'),
-        'high',
-        'high',
-        '<usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
-      );
+    const usericons = detail.usericon ? (Array.isArray(detail.usericon) ? detail.usericon : [detail.usericon]) : [];
+    for (const usericonObj of usericons) {
+      const usericon = toRecord(usericonObj);
+      if (!usericon) continue;
+      if (!hasXmlAttribute(usericon, 'iconsetpath')) {
+        pushError(
+          result,
+          'PROFILE_FIELD_ATTR_MISSING',
+          `Message profile '${profile.label}' requires attribute 'iconsetpath' on <usericon>.`,
+          findAttributeLocation(xmlString, 'usericon', 'iconsetpath'),
+          'high',
+          'high',
+          '<usericon iconsetpath="COT_MAPPING_2525C/b-a-o.png" />',
+        );
+      }
     }
-
-    if (hasContactTag && !hasXmlAttribute(contact, 'callsign')) {
-      pushError(
-        result,
-        'PROFILE_FIELD_ATTR_MISSING',
-        `Message profile '${profile.label}' requires attribute 'callsign' on <contact>.`,
-        findAttributeLocation(xmlString, 'contact', 'callsign'),
-        'high',
-        'high',
-        '<contact callsign="ODIN-CLOUDTAK" />',
-      );
+    const contacts = detail.contact ? (Array.isArray(detail.contact) ? detail.contact : [detail.contact]) : [];
+    for (const contactObj of contacts) {
+      const contact = toRecord(contactObj);
+      if (!contact) continue;
+      if (!hasXmlAttribute(contact, 'callsign')) {
+        pushError(
+          result,
+          'PROFILE_FIELD_ATTR_MISSING',
+          `Message profile '${profile.label}' requires attribute 'callsign' on <contact>.`,
+          findAttributeLocation(xmlString, 'contact', 'callsign'),
+          'high',
+          'high',
+          '<contact callsign="ODIN-CLOUDTAK" />',
+        );
+      }
     }
-
-    if (hasTakvTag) {
+    const takvs = detail.takv ? (Array.isArray(detail.takv) ? detail.takv : [detail.takv]) : [];
+    for (const takvObj of takvs) {
+      const takv = toRecord(takvObj);
+      if (!takv) continue;
       for (const attr of ['device', 'os', 'version']) {
         if (!hasXmlAttribute(takv, attr)) {
           pushError(
@@ -1072,7 +1008,6 @@ const validateProfileFieldShape = (
         }
       }
     }
-
     return;
   }
 
@@ -1085,39 +1020,39 @@ const validateProfileFieldShape = (
       { tag: 'usericon', requiredAttributes: ['iconsetpath'] },
       { tag: 'contact', requiredAttributes: ['callsign'] },
     ];
-
     for (const rule of attributeRuleSet) {
       const hasTag = Object.prototype.hasOwnProperty.call(detail, rule.tag);
       if (!hasTag) {
         continue;
       }
-
-      const tagObject = getFirstTagObject(detail, rule.tag);
-
-      for (const attr of rule.requiredAttributes) {
-        if (!hasXmlAttribute(tagObject, attr)) {
-          pushError(
-            result,
-            'PROFILE_FIELD_ATTR_MISSING',
-            `Message profile '${profile.label}' requires attribute '${attr}' on <${rule.tag}>.`,
-            findAttributeLocation(xmlString, rule.tag, attr),
-            'high',
-            'high',
-            `<${rule.tag} ${attr}="..." />`,
-          );
+      const tagValues = detail[rule.tag];
+      const tagArray = Array.isArray(tagValues) ? tagValues : [tagValues];
+      for (const tagObj of tagArray) {
+        const tagObject = toRecord(tagObj);
+        if (!tagObject) continue;
+        for (const attr of rule.requiredAttributes) {
+          if (!hasXmlAttribute(tagObject, attr)) {
+            pushError(
+              result,
+              'PROFILE_FIELD_ATTR_MISSING',
+              `Message profile '${profile.label}' requires attribute '${attr}' on <${rule.tag}>.`,
+              findAttributeLocation(xmlString, rule.tag, attr),
+              'high',
+              'high',
+              `<${rule.tag} ${attr}="..." />`,
+            );
+          }
         }
       }
     }
-
     return;
   }
 
   if (profile.id === 'weartak-chat-send') {
-    const chat = getFirstTagObject(detail, '__chat');
-    const remarks = getFirstTagObject(detail, 'remarks');
-    const hasRemarksTag = Boolean(detail.remarks);
-
-    if (chat) {
+    const chats = detail.__chat ? (Array.isArray(detail.__chat) ? detail.__chat : [detail.__chat]) : [];
+    for (const chatObj of chats) {
+      const chat = toRecord(chatObj);
+      if (!chat) continue;
       const requiredChatAttributes = ['parent', 'groupOwner', 'messageId', 'chatroom', 'id', 'senderCallsign'];
       for (const attr of requiredChatAttributes) {
         if (!hasXmlAttribute(chat, attr)) {
@@ -1132,23 +1067,13 @@ const validateProfileFieldShape = (
           );
         }
       }
-
       const chatgrpRaw = chat.chatgrp;
-      const chatgrp = Array.isArray(chatgrpRaw)
-        ? toRecord(chatgrpRaw[0])
-        : toRecord(chatgrpRaw);
-
-      if (!chatgrp) {
-        pushError(
-          result,
-          'PROFILE_FIELD_TAG_MISSING',
-          `Message profile '${profile.label}' requires <chatgrp> inside <__chat>.`,
-          findTagLocation(xmlString, '__chat'),
-          'high',
-          'high',
-          '<chatgrp uid0="..." uid1="..." id="..." />',
-        );
-      } else {
+      const chatgrpArray = Array.isArray(chatgrpRaw) ? chatgrpRaw : [chatgrpRaw];
+      let chatgrpFound = false;
+      for (const chatgrpObj of chatgrpArray) {
+        const chatgrp = toRecord(chatgrpObj);
+        if (!chatgrp) continue;
+        chatgrpFound = true;
         for (const attr of ['uid0', 'uid1', 'id']) {
           if (!hasXmlAttribute(chatgrp, attr)) {
             pushError(
@@ -1163,9 +1088,22 @@ const validateProfileFieldShape = (
           }
         }
       }
+      if (!chatgrpFound) {
+        pushError(
+          result,
+          'PROFILE_FIELD_TAG_MISSING',
+          `Message profile '${profile.label}' requires <chatgrp> inside <__chat>.`,
+          findTagLocation(xmlString, '__chat'),
+          'high',
+          'high',
+          '<chatgrp uid0="..." uid1="..." id="..." />',
+        );
+      }
     }
-
-    if (hasRemarksTag) {
+    const remarksArr = detail.remarks ? (Array.isArray(detail.remarks) ? detail.remarks : [detail.remarks]) : [];
+    for (const remarksObj of remarksArr) {
+      const remarks = toRecord(remarksObj);
+      if (!remarks) continue;
       for (const attr of ['source', 'to', 'time']) {
         if (!hasXmlAttribute(remarks, attr)) {
           pushError(
@@ -1180,153 +1118,143 @@ const validateProfileFieldShape = (
         }
       }
     }
-
     return;
   }
 
   if (profile.id === 'weartak-manual-alert-gunshot') {
-    const emergency = getFirstTagObject(detail, 'emergency');
-    if (!emergency) {
-      return;
+    const emergencies = detail.emergency ? (Array.isArray(detail.emergency) ? detail.emergency : [detail.emergency]) : [];
+    for (const emergencyObj of emergencies) {
+      const emergency = toRecord(emergencyObj);
+      if (!emergency) continue;
+      if (!hasXmlAttribute(emergency, 'type')) {
+        pushError(
+          result,
+          'PROFILE_FIELD_ATTR_MISSING',
+          `Message profile '${profile.label}' requires attribute 'type' on <emergency>.`,
+          findAttributeLocation(xmlString, 'emergency', 'type'),
+          'high',
+          'high',
+          '<emergency type="Manual Alert: ...">...</emergency>',
+        );
+      }
+      const emergencyText =
+        typeof emergencyObj === 'string'
+          ? emergencyObj
+          : ((emergency?.['#text'] as string | undefined) ?? '');
+      if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+          findTagLocation(xmlString, 'emergency'),
+          'high',
+          'high',
+          '<emergency type="Manual Alert: Gunshot">ODIN-WEARTAK</emergency>',
+        );
+      }
     }
-
-    if (!hasXmlAttribute(emergency, 'type')) {
-      pushError(
-        result,
-        'PROFILE_FIELD_ATTR_MISSING',
-        `Message profile '${profile.label}' requires attribute 'type' on <emergency>.`,
-        findAttributeLocation(xmlString, 'emergency', 'type'),
-        'high',
-        'high',
-        '<emergency type="Manual Alert: ...">...</emergency>',
-      );
-    }
-
-    const emergencyText = emergency['#text'];
-    if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
-      pushError(
-        result,
-        'PROFILE_FIELD_VALUE_INVALID',
-        `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
-        findTagLocation(xmlString, 'emergency'),
-        'high',
-        'high',
-        '<emergency type="Manual Alert: Gunshot">ODIN-WEARTAK</emergency>',
-      );
-    }
-
     return;
   }
 
   if (profile.id === 'weartak-manual-alert-clear') {
-    const emergency = getFirstTagObject(detail, 'emergency');
-    if (!emergency) {
-      return;
-    }
-
-    const cancel = emergency[toAttr('cancel')];
-    if (cancel !== 'true') {
-      pushError(
-        result,
-        'PROFILE_FIELD_VALUE_INVALID',
-        `Message profile '${profile.label}' requires <emergency cancel='true'>.`,
-        findAttributeLocation(xmlString, 'emergency', 'cancel'),
-        'high',
-        'high',
-        "<emergency cancel='true'>ODIN-WEARTAK</emergency>",
-      );
-    }
-
-    const emergencyText = emergency['#text'];
-    if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
-      pushError(
-        result,
-        'PROFILE_FIELD_VALUE_INVALID',
-        `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
-        findTagLocation(xmlString, 'emergency'),
-        'high',
-        'high',
-        '<emergency cancel="true">ODIN-WEARTAK</emergency>',
-      );
+    const emergencies = detail.emergency ? (Array.isArray(detail.emergency) ? detail.emergency : [detail.emergency]) : [];
+    for (const emergencyObj of emergencies) {
+      const emergency = toRecord(emergencyObj);
+      if (!emergency) continue;
+      const cancel = emergency[toAttr('cancel')];
+      if (cancel !== 'true') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' requires <emergency cancel='true'>.`,
+          findAttributeLocation(xmlString, 'emergency', 'cancel'),
+          'high',
+          'high',
+          "<emergency cancel='true'>ODIN-WEARTAK</emergency>",
+        );
+      }
+      const emergencyText =
+        typeof emergencyObj === 'string'
+          ? emergencyObj
+          : ((emergency?.['#text'] as string | undefined) ?? '');
+      if (typeof emergencyText !== 'string' || emergencyText.trim() === '') {
+        pushError(
+          result,
+          'PROFILE_FIELD_VALUE_INVALID',
+          `Message profile '${profile.label}' expects non-empty text inside <emergency>.`,
+          findTagLocation(xmlString, 'emergency'),
+          'high',
+          'high',
+          '<emergency cancel="true">ODIN-WEARTAK</emergency>',
+        );
+      }
     }
   }
 };
 
 export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
+  const { parsed, parseError } = parseXmlForValidation(xmlString);
   const result: ValidationResult = { isValid: true, errors: [], warnings: [] };
 
-  const { parsed, parseError } = parseXmlForValidation(xmlString);
   if (parseError) {
-    pushError(
-      result,
-      parseError.code,
-      parseError.text,
-      parseError.location,
-      parseError.severity,
-      parseError.confidence,
-      parseError.suggestion,
-    );
+    result.errors.push(parseError);
     result.isValid = false;
     return result;
   }
 
-  try {
-    if (!parsed) {
-      result.isValid = false;
-      return result;
-    }
-
-    const event = parsed.event;
-
-    validateSchemaBackedStructure(xmlString, event, result);
-    validateTimestampSanity(xmlString, event, result);
-    validatePointSemantics(xmlString, event, result);
-
-    const detail = (event?.detail ?? {}) as Record<string, unknown>;
-    validateTrackSemantics(xmlString, detail, result);
-    validateDuplicateDetailTags(xmlString, detail, result);
-    const rules = PLATFORM_RULE_MATRIX[platform];
-
-    // Platform schema fragments model per-platform detail requirements.
-    const _schemaFragment = PLATFORM_SCHEMA_FRAGMENTS[platform];
-    void _schemaFragment;
-
-    for (const rule of rules) {
-      if (!hasDetailTag(detail, rule.tag)) {
-        const detailLocation = event?.detail
-          ? findTagLocation(xmlString, 'detail')
-          : findTagLocation(xmlString, 'event');
-
-        pushWarning(
-          result,
-          'PLATFORM_TAG_MISSING',
-          `${platform}: Missing <${rule.tag}> tag. ${rule.description}`,
-          detailLocation,
-          'medium',
-          'medium',
-          rule.suggestionSnippet,
-        );
-      }
-    }
-
-    if (result.errors.length > 0) {
-      result.isValid = false;
-    }
-
-    return result;
-  } catch {
+  const event = parsed?.event;
+  if (!event) {
     pushError(
       result,
-      'XML_PARSE_EXCEPTION',
-      'Invalid XML format: parser failed to process document.',
+      'SCHEMA_ROOT_EVENT_MISSING',
+      'Schema violation: missing root <event> element.',
       ROOT_LOCATION,
       'critical',
-      'medium',
-      'Confirm the XML is well-formed and retry.',
+      'high',
+      '<event uid="demo-uid" type="a-f-G-U-C" time="..." start="..." stale="..." how="m-g">...</event>',
     );
     result.isValid = false;
     return result;
   }
+
+  validateSchemaBackedStructure(xmlString, event, result);
+  validateTimestampSanity(xmlString, event, result);
+  validatePointSemantics(xmlString, event, result);
+
+  // Duplicate tag check
+  if (event.detail && typeof event.detail === 'object') {
+    validateDetailDuplicates(xmlString, event.detail as Record<string, unknown>, result);
+  }
+
+  const detail = (event?.detail ?? {}) as Record<string, unknown>;
+  // Call track validation if <track> tag exists
+  if (hasDetailTag(detail, 'track')) {
+    validateTrackSemantics(xmlString, detail, result);
+  }
+
+  for (const rule of PLATFORM_RULE_MATRIX[platform]) {
+    if (!hasDetailTag(detail, rule.tag)) {
+      const detailLocation = event?.detail
+        ? findTagLocation(xmlString, 'detail')
+        : findTagLocation(xmlString, 'event');
+
+      // Always emit warning, never error, for missing platform tags
+      pushWarning(
+        result,
+        'PLATFORM_TAG_MISSING',
+        `${platform}: Missing <${rule.tag}> tag. ${rule.description}`,
+        detailLocation,
+        'medium',
+        'medium',
+        rule.suggestionSnippet,
+      );
+    }
+  }
+
+    // Set isValid to true if there are no errors after all validation steps (warnings do not invalidate)
+    result.isValid = result.errors.length === 0;
+
+  return result;
 };
 
 export const validateCoTWithProfile = (
@@ -1348,7 +1276,14 @@ export const validateCoTWithProfile = (
   try {
     const parsed = parsedForProfile.parsed;
     const event = parsed.event;
-    const detail = (event?.detail ?? {}) as Record<string, unknown>;
+    // Normalize detail: if array, use first object
+    let detailRaw = event?.detail ?? {};
+    let detail: Record<string, unknown>;
+    if (Array.isArray(detailRaw)) {
+      detail = detailRaw[0] ?? {};
+    } else {
+      detail = detailRaw as Record<string, unknown>;
+    }
     const eventType = String(event?.['@_type'] ?? '');
 
     if (profile.expectedType && eventType !== profile.expectedType) {
@@ -1396,11 +1331,8 @@ export const validateCoTWithProfile = (
     }
 
     validateProfileFieldShape(xmlString, profile, detail, result);
-
-    if (result.errors.length > 0) {
-      result.isValid = false;
-    }
-
+    // Only set isValid to false if errors are present, never for warnings
+    result.isValid = result.errors.length === 0;
     return result;
   } catch {
     return result;
@@ -1431,3 +1363,7 @@ export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformM
 
   return { parseError: null, reports };
 };
+
+const ALL_PLATFORMS_SORTED: Platform[] = Object.keys(PLATFORM_RULE_MATRIX).sort((a, b) => a.localeCompare(b)) as Platform[];
+
+const semanticBounds = rulesData.semanticBounds;

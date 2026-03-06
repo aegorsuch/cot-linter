@@ -1,0 +1,60 @@
+{
+  "platforms": {
+    "ATAK": [
+      {"tag": "contact", "description": "Callsign/label rendering in map views.", "suggestionSnippet": "<contact callsign=\"ODIN-ATAK\" />"},
+      {"tag": "__group", "description": "Team and role grouping behavior.", "suggestionSnippet": "<__group name=\"Dark Green\" role=\"K9\" />"}
+    ],
+    "CloudTAK": [
+      {"tag": "contact", "description": "Entity labeling in feed/event listings.", "suggestionSnippet": "<contact callsign=\"ODIN-CLOUDTAK\" />"},
+      {"tag": "takv", "description": "Client/version context for interoperability.", "suggestionSnippet": "<takv device=\"Android\" os=\"Android 14\" version=\"5.0\" />"},
+      {"tag": "usericon", "description": "Icon rendering path for CloudTAK event presentation.", "suggestionSnippet": "<usericon iconsetpath=\"COT_MAPPING_2525C/a-f-G-U-C.png\" />"}
+    ],
+    "Lattice": [
+      {"tag": "contact", "description": "Entity/operator naming for track presentation.", "suggestionSnippet": "<contact callsign=\"ODIN-LATTICE\" />"},
+      {"tag": "track", "description": "Kinematic context for moving track updates.", "suggestionSnippet": "<track speed=\"0.00000000\" course=\"0.00000000\" />"},
+      {"tag": "remarks", "description": "Operator-readable context for correlation workflows.", "suggestionSnippet": "<remarks>Auto-ingested for Lattice correlation.</remarks>"}
+    ],
+    "Maven": [
+      {"tag": "contact", "description": "Track identity/callsign visibility in operator views.", "suggestionSnippet": "<contact callsign=\"ODIN-MAVEN\" />"},
+      {"tag": "track", "description": "Motion/heading context for pattern tracking.", "suggestionSnippet": "<track speed=\"0.00000000\" course=\"0.00000000\" />"},
+      {"tag": "takv", "description": "Producer/version metadata for source attribution.", "suggestionSnippet": "<takv device=\"Maven Gateway\" os=\"Linux\" version=\"1.0\" />"}
+    ],
+    "iTAK": [
+      {"tag": "contact", "description": "Callsign display on mobile maps.", "suggestionSnippet": "<contact callsign=\"ODIN-ITAK\" />"},
+      {"tag": "__group", "description": "Team presentation consistency.", "suggestionSnippet": "<__group name=\"Rescue\" role=\"K9\" />"}
+    ],
+    "TAK Aware": [
+      {"tag": "contact", "description": "User-friendly labeling in shared views.", "suggestionSnippet": "<contact callsign=\"ODIN-TAKAWARE\" />"},
+      {"tag": "remarks", "description": "Additional event context text.", "suggestionSnippet": "<remarks></remarks>"}
+    ],
+    "TAKx": [
+      {"tag": "takv", "description": "Producer metadata for routing/interop.", "suggestionSnippet": "<takv device=\"Gateway\" os=\"Linux\" version=\"2.1\" />"},
+      {"tag": "__group", "description": "Downstream grouping behavior.", "suggestionSnippet": "<__group name=\"Interop\" role=\"K9\" />"}
+    ],
+    "WearTAK": [
+      {"tag": "contact", "description": "Short-form callsign display in wearable UI.", "suggestionSnippet": "<contact endpoint=\"*:-1:stcp\" callsign=\"ODIN-WEARTAK\" />"},
+      {"tag": "__group", "description": "Team and role context in constrained layouts.", "suggestionSnippet": "<__group name=\"Dark Green\" role=\"K9\" />"},
+      {"tag": "track", "description": "Device movement context for wearable SA updates.", "suggestionSnippet": "<track speed=\"0.00000000\" course=\"0.00000000\" />"}
+    ],
+    "WebTAK": [
+      {"tag": "contact", "description": "Map label readability in browser UI.", "suggestionSnippet": "<contact callsign=\"ODIN-WEBTAK\" />"},
+      {"tag": "__group", "description": "Team affiliation visibility in UI panes.", "suggestionSnippet": "<__group name=\"Ops\" role=\"K9\" />"}
+    ],
+    "WinTAK": [
+      {"tag": "usericon", "description": "Expected icon/symbol rendering.", "suggestionSnippet": "<usericon iconsetpath=\"COT_MAPPING_2525C/a-f-G-U-C.png\" />"},
+      {"tag": "takv", "description": "Client metadata for diagnostics.", "suggestionSnippet": "<takv device=\"WinTAK\" os=\"Windows 11\" version=\"4.9\" />"}
+    ]
+  },
+  "coreSchema": {
+    "requiredEventAttributes": ["uid", "type", "time", "start", "stale", "how"],
+    "requiredEventChildren": ["point", "detail"],
+    "requiredPointAttributes": ["lat", "lon", "hae", "ce", "le"]
+  },
+  "semanticBounds": {
+    "lat": {"min": -90, "max": 90},
+    "lon": {"min": -180, "max": 180},
+    "hae": {"min": -1000, "max": 100000},
+    "ce": {"min": 0, "max": 100000},
+    "le": {"min": 0, "max": 100000}
+  }
+}

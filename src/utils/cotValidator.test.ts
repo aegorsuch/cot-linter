@@ -61,7 +61,32 @@ describe('validateCoT semantic field checks', () => {
   </detail>
 </event>`;
 
+    // Extract <detail> content and tag counts for troubleshooting
+    const detailTagRegex = /\s*<detail[\s\S]*?<\/detail>/i;
+    const detailMatch = detailTagRegex.exec(xml);
+    let detailContent = '';
+    let tagCount: { [key: string]: number } = {};
+    if (detailMatch) {
+      detailContent = detailMatch[0].replace(/^\s*<detail\b[^>]*>/i, '').replace(/<\/detail>\s*$/i, '');
+      const cleanedDetail = detailContent.replace(/<!--.*?-->/gs, '').replace(/<!\[CDATA\[.*?\]\]>/gs, '').replace(/\s+/g, ' ');
+      tagCount = {};
+      const tagRegex = /<([a-zA-Z0-9_]+)(\s|>|\/)/g;
+      let match;
+      while ((match = tagRegex.exec(cleanedDetail)) !== null) {
+        const tag = match[1];
+        if (!['link', 'track'].includes(tag)) {
+          tagCount[tag] = (tagCount[tag] || 0) + 1;
+        }
+      }
+    }
+    // eslint-disable-next-line no-console
+    console.log('TEST DEBUG <detail> content:', detailContent);
+    // eslint-disable-next-line no-console
+    console.log('TEST DEBUG tag counts:', tagCount);
+
     const result = validateCoT(xml, 'ATAK');
+    // eslint-disable-next-line no-console
+    console.log('DEBUG duplicate detail:', result);
 
     expect(result.warnings.some((warning) => warning.code === 'DUPLICATE_DETAIL_TAG')).toBe(true);
     expect(result.warnings.some((warning) => warning.text.includes('<archive> appears 2 times'))).toBe(true);
@@ -129,7 +154,10 @@ describe('validateCoT semantic field checks', () => {
 </event>`;
 
     const result = validateCoT(xml, 'ATAK');
-
+    // Print errors for debug
+    if (result.errors.length > 0) {
+      console.log('TEST DEBUG track speed/course errors:', result.errors);
+    }
     expect(result.isValid).toBe(true);
     expect(result.warnings.some((warning) => warning.code === 'SEMANTIC_TRACK_ATTR_NOT_NUMERIC')).toBe(true);
     expect(result.warnings.some((warning) => warning.code === 'SEMANTIC_TRACK_RANGE_WARNING')).toBe(true);
