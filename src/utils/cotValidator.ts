@@ -426,6 +426,109 @@ const validateSchemaBackedStructure = (
   }
 };
 
+const parseTimestamp = (value: unknown): Date | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+
+  return new Date(timestamp);
+};
+
+const validateTimestampSanity = (
+  xmlString: string,
+  event: ParsedCoT['event'],
+  result: ValidationResult,
+): void => {
+  if (!event) {
+    return;
+  }
+
+  const rawTime = event[toAttr('time')];
+  const rawStart = event[toAttr('start')];
+  const rawStale = event[toAttr('stale')];
+
+  const parsedTime = parseTimestamp(rawTime);
+  const parsedStart = parseTimestamp(rawStart);
+  const parsedStale = parseTimestamp(rawStale);
+
+  if (rawTime && !parsedTime) {
+    pushWarning(
+      result,
+      'TIMESTAMP_PARSE_WARNING',
+      "Timestamp warning: <event> attribute 'time' is not a valid ISO timestamp.",
+      findAttributeLocation(xmlString, 'event', 'time'),
+      'medium',
+      'high',
+      '<event time="2026-03-05T12:00:00Z">',
+    );
+  }
+
+  if (rawStart && !parsedStart) {
+    pushWarning(
+      result,
+      'TIMESTAMP_PARSE_WARNING',
+      "Timestamp warning: <event> attribute 'start' is not a valid ISO timestamp.",
+      findAttributeLocation(xmlString, 'event', 'start'),
+      'medium',
+      'high',
+      '<event start="2026-03-05T12:00:00Z">',
+    );
+  }
+
+  if (rawStale && !parsedStale) {
+    pushWarning(
+      result,
+      'TIMESTAMP_PARSE_WARNING',
+      "Timestamp warning: <event> attribute 'stale' is not a valid ISO timestamp.",
+      findAttributeLocation(xmlString, 'event', 'stale'),
+      'medium',
+      'high',
+      '<event stale="2026-03-05T12:05:00Z">',
+    );
+  }
+
+  if (parsedTime && parsedStale && parsedTime.getTime() > parsedStale.getTime()) {
+    pushWarning(
+      result,
+      'TIMESTAMP_ORDER_WARNING',
+      "Timestamp warning: 'time' should be earlier than or equal to 'stale'.",
+      findAttributeLocation(xmlString, 'event', 'time'),
+      'medium',
+      'high',
+      'Set stale >= time for valid event freshness windows.',
+    );
+  }
+
+  if (parsedStart && parsedStale && parsedStart.getTime() > parsedStale.getTime()) {
+    pushWarning(
+      result,
+      'TIMESTAMP_ORDER_WARNING',
+      "Timestamp warning: 'start' should be earlier than or equal to 'stale'.",
+      findAttributeLocation(xmlString, 'event', 'start'),
+      'medium',
+      'high',
+      'Set stale >= start for valid event freshness windows.',
+    );
+  }
+
+  if (parsedStale && parsedStale.getTime() < Date.now()) {
+    pushWarning(
+      result,
+      'TIMESTAMP_STALE_IN_PAST',
+      "Timestamp warning: 'stale' is already in the past.",
+      findAttributeLocation(xmlString, 'event', 'stale'),
+      'low',
+      'high',
+      'Set stale to a future time relative to event publication.',
+    );
+  }
+};
+
 export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
   const result: ValidationResult = { isValid: true, errors: [], warnings: [] };
 
@@ -453,6 +556,7 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
     const event = parsed.event;
 
     validateSchemaBackedStructure(xmlString, event, result);
+    validateTimestampSanity(xmlString, event, result);
 
     const detail = (event?.detail ?? {}) as Record<string, unknown>;
     const rules = PLATFORM_RULE_MATRIX[platform];

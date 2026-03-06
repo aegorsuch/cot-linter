@@ -28,19 +28,33 @@ describe('App platform and profile behavior', () => {
     expect(screen.getByRole('button', { name: /MIL-STD-2525D Drop \*/i })).toBeInTheDocument()
   })
 
-  it('shows template names in submit dropdown including WearTAK profiles', async () => {
+  it('uses ordered submit profile options with Chat Send default and simplified actions', async () => {
     const user = userEvent.setup()
 
     render(<App />)
 
     await user.click(screen.getByRole('button', { name: /Submit Template/i }))
 
-    expect(screen.getByRole('option', { name: /^SA$/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /^MIL-STD-2525D Drop$/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /^MIL-STD-2525D Clear$/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /^Manual Alert$/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /^Manual Alert Clear$/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /^Chat Send$/i })).toBeInTheDocument()
+    const profileSelect = screen.getByLabelText(/^Profile \/ Category$/i) as HTMLSelectElement
+    const optionOrder = Array.from(profileSelect.options).map((option) => option.text)
+
+    expect(optionOrder).toEqual([
+      'Chat Send',
+      'Manual Alert',
+      'Manual Alert Clear',
+      'MIL-STD-2525D Clear',
+      'MIL-STD-2525D Drop',
+      'SA',
+    ])
+
+    expect(profileSelect).toHaveValue('Chat Send')
+
+    const submissionXml = screen.getByLabelText(/^CoT XML$/i) as HTMLTextAreaElement
+    expect(submissionXml.value).toBe('')
+
+    expect(screen.getByRole('button', { name: /Submit GitHub Issue/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Copy Submission Payload/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Done$/i })).not.toBeInTheDocument()
   })
 
   it('renders merged cross-platform compatibility details after XML is loaded', async () => {
@@ -100,5 +114,36 @@ describe('App platform and profile behavior', () => {
     await user.click(screen.getByRole('button', { name: /Undo All Inserts/i }))
     expect(inputTextarea.value).not.toContain('Maven Gateway')
     expect(inputTextarea.value).not.toContain('Lattice correlation')
+  })
+
+  it('shows template diff preview and supports one-click XML normalizers', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Copy into Input/i }))
+    expect(screen.getByText(/No differences between input and selected template/i)).toBeInTheDocument()
+
+    const inputTextarea = screen.getByPlaceholderText(/Paste <event>...<\/event> here/i) as HTMLTextAreaElement
+
+    fireEvent.change(inputTextarea, {
+      target: {
+        value:
+          '<event uid="demo" type="a-f-G-U-C" time="2099-01-01T00:00:00Z" start="2099-01-01T00:00:00Z" stale="2099-01-01T00:05:00Z" how="m-g">\r\n<point lat="41.88" lon="-87.64" hae="180.1" ce="13.0" le="1.0" />\r\n<detail>\r\n<track speed="0.0" course="0.0" />\r\n<contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />\r\n<__group name="Dark Green" role="K9" />\r\n</detail>\r\n</event>\r\n\r\n\r\n',
+      },
+    })
+
+    await user.click(screen.getByRole('button', { name: /Sort Detail Tags/i }))
+    expect(inputTextarea.value.indexOf('<__group')).toBeLessThan(inputTextarea.value.indexOf('<contact'))
+    expect(inputTextarea.value.indexOf('<contact')).toBeLessThan(inputTextarea.value.indexOf('<track'))
+
+    await user.click(screen.getByRole('button', { name: /Format XML/i }))
+    expect(inputTextarea.value).toContain('\n  <point ')
+
+    await user.click(screen.getByRole('button', { name: /Normalize Whitespace/i }))
+    expect(inputTextarea.value).not.toContain('\r')
+    expect(inputTextarea.value).not.toMatch(/\n{3,}/)
+
+    expect(screen.getByText(/Template Diff Preview/i)).toBeInTheDocument()
   })
 })

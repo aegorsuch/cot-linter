@@ -11,6 +11,185 @@ import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/mes
 
 const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
 
+type DiffLine = {
+  kind: 'unchanged' | 'added' | 'removed' | 'omitted'
+  text: string
+}
+
+const normalizeLineEndings = (value: string): string => value.replace(/\r\n?/g, '\n')
+
+const normalizeXmlWhitespace = (value: string): string => {
+  const normalized = normalizeLineEndings(value)
+    .split('\n')
+    .map((line) => line.replace(/[\t ]+$/g, ''))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+
+  return normalized.trim()
+}
+
+const getXmlDeclaration = (value: string): string | null => {
+  const declarationMatch = value.match(/^\s*(<\?xml[^>]*\?>)/i)
+  return declarationMatch ? declarationMatch[1] : null
+}
+
+const escapeXmlText = (value: string): string => {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+const escapeXmlAttribute = (value: string): string => {
+  return escapeXmlText(value).replace(/"/g, '&quot;')
+}
+
+const parseXmlDocument = (xmlString: string): { doc: Document | null; error: string | null } => {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(xmlString, 'application/xml')
+  const parserError = doc.querySelector('parsererror')
+
+  if (parserError) {
+    const text = parserError.textContent?.trim()
+    return { doc: null, error: text || 'Unable to parse XML.' }
+  }
+
+  return { doc, error: null }
+}
+
+const formatXmlElement = (element: Element, indentLevel: number): string => {
+  const indent = '  '.repeat(indentLevel)
+  const childIndent = '  '.repeat(indentLevel + 1)
+  const attributes = Array.from(element.attributes)
+    .map((attr) => ` ${attr.name}="${escapeXmlAttribute(attr.value)}"`)
+    .join('')
+
+  const childElements = Array.from(element.children)
+  const textContent = Array.from(element.childNodes)
+    .filter((node) => node.nodeType === Node.TEXT_NODE)
+    .map((node) => node.textContent ?? '')
+    .join('')
+    .trim()
+
+  if (childElements.length === 0) {
+    if (textContent) {
+      return `${indent}<${element.tagName}${attributes}>${escapeXmlText(textContent)}</${element.tagName}>`
+    }
+
+    return `${indent}<${element.tagName}${attributes}></${element.tagName}>`
+  }
+
+  const lines: string[] = [`${indent}<${element.tagName}${attributes}>`]
+
+  if (textContent) {
+    lines.push(`${childIndent}${escapeXmlText(textContent)}`)
+  }
+
+  for (const child of childElements) {
+    lines.push(formatXmlElement(child, indentLevel + 1))
+  }
+
+  lines.push(`${indent}</${element.tagName}>`)
+  return lines.join('\n')
+}
+
+const formatXmlDocument = (doc: Document, declaration: string | null): string => {
+  const root = doc.documentElement
+  const formattedRoot = formatXmlElement(root, 0)
+  return declaration ? `${declaration}\n${formattedRoot}` : formattedRoot
+}
+
+const buildLineDiff = (template: string, current: string): DiffLine[] => {
+  const baseline = normalizeLineEndings(template).split('\n')
+  const candidate = normalizeLineEndings(current).split('\n')
+
+  const dp: number[][] = Array.from({ length: baseline.length + 1 }, () =>
+    Array.from({ length: candidate.length + 1 }, () => 0),
+  )
+
+  for (let i = 1; i <= baseline.length; i += 1) {
+    for (let j = 1; j <= candidate.length; j += 1) {
+      if (baseline[i - 1] === candidate[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1] + 1
+      } else {
+        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
+      }
+    }
+  }
+
+  const diffReversed: DiffLine[] = []
+  let i = baseline.length
+  let j = candidate.length
+
+  while (i > 0 && j > 0) {
+    if (baseline[i - 1] === candidate[j - 1]) {
+      diffReversed.push({ kind: 'unchanged', text: baseline[i - 1] })
+      i -= 1
+      j -= 1
+    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
+      diffReversed.push({ kind: 'removed', text: baseline[i - 1] })
+      i -= 1
+    } else {
+      diffReversed.push({ kind: 'added', text: candidate[j - 1] })
+      j -= 1
+    }
+  }
+
+  while (i > 0) {
+    diffReversed.push({ kind: 'removed', text: baseline[i - 1] })
+    i -= 1
+  }
+
+  while (j > 0) {
+    diffReversed.push({ kind: 'added', text: candidate[j - 1] })
+    j -= 1
+  }
+
+  return diffReversed.reverse()
+}
+
+const compactDiffLines = (lines: DiffLine[], contextLines = 1): DiffLine[] => {
+  if (lines.length === 0) {
+    return lines
+  }
+
+  const includeIndices = new Set<number>()
+
+  lines.forEach((line, index) => {
+    if (line.kind === 'unchanged') {
+      return
+    }
+
+    const start = Math.max(0, index - contextLines)
+    const end = Math.min(lines.length - 1, index + contextLines)
+    for (let i = start; i <= end; i += 1) {
+      includeIndices.add(i)
+    }
+  })
+
+  if (includeIndices.size === 0) {
+    return lines.slice(0, Math.min(lines.length, 8))
+  }
+
+  const compact: DiffLine[] = []
+  let previousIncluded = -1
+
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!includeIndices.has(i)) {
+      continue
+    }
+
+    if (previousIncluded >= 0 && i > previousIncluded + 1) {
+      compact.push({ kind: 'omitted', text: '...' })
+    }
+
+    compact.push(lines[i])
+    previousIncluded = i
+  }
+
+  return compact
+}
+
 function App() {
   const [xml, setXml] = useState('')
   const [platform, setPlatform] = useState<Platform>('ATAK')
@@ -155,6 +334,26 @@ function App() {
   }
 
   const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])
+
+  const fullTemplateDiff = useMemo(() => {
+    if (!xml.trim()) {
+      return []
+    }
+
+    return buildLineDiff(selectedTemplateXml, xml)
+  }, [selectedTemplateXml, xml])
+
+  const compactTemplateDiff = useMemo(() => compactDiffLines(fullTemplateDiff), [fullTemplateDiff])
+
+  const addedDiffCount = useMemo(
+    () => fullTemplateDiff.filter((line) => line.kind === 'added').length,
+    [fullTemplateDiff],
+  )
+
+  const removedDiffCount = useMemo(
+    () => fullTemplateDiff.filter((line) => line.kind === 'removed').length,
+    [fullTemplateDiff],
+  )
 
   const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -306,6 +505,79 @@ function App() {
       document.body.removeChild(helper)
       return didCopy
     }
+  }
+
+  const normalizeWhitespaceInInput = () => {
+    if (!xml.trim()) {
+      showToast('No XML content available to normalize.', 'info')
+      return
+    }
+
+    const normalized = normalizeXmlWhitespace(xml)
+    setXml(normalized)
+    showToast('Normalized XML whitespace.', 'success')
+  }
+
+  const formatXmlInInput = () => {
+    if (!xml.trim()) {
+      showToast('No XML content available to format.', 'info')
+      return
+    }
+
+    const { doc, error } = parseXmlDocument(xml)
+    if (!doc) {
+      showToast(`Unable to format XML: ${error}`, 'error')
+      return
+    }
+
+    const declaration = getXmlDeclaration(xml)
+    const formatted = formatXmlDocument(doc, declaration)
+    setXml(formatted)
+    showToast('Formatted XML.', 'success')
+  }
+
+  const sortDetailTagsInInput = () => {
+    if (!xml.trim()) {
+      showToast('No XML content available to sort.', 'info')
+      return
+    }
+
+    const { doc, error } = parseXmlDocument(xml)
+    if (!doc) {
+      showToast(`Unable to sort <detail> tags: ${error}`, 'error')
+      return
+    }
+
+    const detail = doc.getElementsByTagName('detail')[0]
+    if (!detail) {
+      showToast('No <detail> element found to sort.', 'error')
+      return
+    }
+
+    const childElements = Array.from(detail.children)
+    if (childElements.length < 2) {
+      showToast('Nothing to sort inside <detail>.', 'info')
+      return
+    }
+
+    const currentOrder = childElements.map((element) => element.tagName)
+    const sortedElements = [...childElements].sort((a, b) => a.tagName.localeCompare(b.tagName))
+    const sortedOrder = sortedElements.map((element) => element.tagName)
+
+    sortedElements.forEach((element) => {
+      detail.appendChild(element)
+    })
+
+    const declaration = getXmlDeclaration(xml)
+    const formatted = formatXmlDocument(doc, declaration)
+    setXml(formatted)
+
+    if (currentOrder.join('|') === sortedOrder.join('|')) {
+      showToast('<detail> tags are already sorted.', 'info')
+      return
+    }
+
+    showToast('Sorted <detail> tags alphabetically.', 'success')
   }
 
   const getMissingTagsJsonReport = (): string | null => {
@@ -490,7 +762,32 @@ function App() {
 
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="flex min-h-[480px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[560px] lg:min-h-[680px]">
-          <h2 className="mb-3 text-xs uppercase text-slate-500">Input CoT XML</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs uppercase text-slate-500">Input CoT XML</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={normalizeWhitespaceInInput}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                Normalize Whitespace
+              </button>
+              <button
+                type="button"
+                onClick={sortDetailTagsInInput}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                Sort Detail Tags
+              </button>
+              <button
+                type="button"
+                onClick={formatXmlInInput}
+                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+              >
+                Format XML
+              </button>
+            </div>
+          </div>
           <textarea
             ref={textareaRef}
             className="min-h-0 flex-1 w-full resize-none rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm transition-colors focus:border-emerald-500 focus:outline-none"
@@ -587,6 +884,59 @@ function App() {
           </div>
         </section>
       </main>
+
+      <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/50 p-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-xs uppercase text-slate-500">Template Diff Preview</h2>
+          <p className="text-xs text-slate-400">
+            Comparing current input against <span className="font-semibold text-slate-300">{selectedTemplateLabel}</span>
+          </p>
+        </div>
+
+        {!xml.trim() && (
+          <p className="text-xs italic text-slate-500">Paste or load XML to see changes from the selected template.</p>
+        )}
+
+        {xml.trim() && addedDiffCount === 0 && removedDiffCount === 0 && (
+          <p className="text-xs text-emerald-300">No differences between input and selected template.</p>
+        )}
+
+        {xml.trim() && (addedDiffCount > 0 || removedDiffCount > 0) && (
+          <>
+            <p className="mb-2 text-xs text-slate-400">
+              Added: <span className="font-semibold text-emerald-300">{addedDiffCount}</span>
+              {' '}| Removed: <span className="font-semibold text-red-300">{removedDiffCount}</span>
+            </p>
+            <pre className="max-h-72 overflow-auto rounded border border-slate-700 bg-slate-950/80 p-3 text-xs leading-5">
+              {compactTemplateDiff.map((line, index) => {
+                const prefix =
+                  line.kind === 'added'
+                    ? '+'
+                    : line.kind === 'removed'
+                      ? '-'
+                      : line.kind === 'omitted'
+                        ? '...'
+                        : ' '
+
+                const lineClass =
+                  line.kind === 'added'
+                    ? 'text-emerald-300'
+                    : line.kind === 'removed'
+                      ? 'text-red-300'
+                      : line.kind === 'omitted'
+                        ? 'text-slate-500'
+                        : 'text-slate-400'
+
+                return (
+                  <div key={`template-diff-line-${index}`} className={lineClass}>
+                    {`${prefix} ${line.text}`}
+                  </div>
+                )
+              })}
+            </pre>
+          </>
+        )}
+      </section>
 
       <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
         <h2 className="mb-4 text-xs uppercase text-slate-500">Platform Compatibility Matrix</h2>
