@@ -4,7 +4,6 @@ import {
   PLATFORM_RULE_MATRIX,
   type CrossPlatformMissingTagsResult,
   type MessageValidationProfile,
-  type Platform,
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/messageProfiles.ts'

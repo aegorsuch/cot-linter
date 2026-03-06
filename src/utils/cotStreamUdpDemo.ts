@@ -19,7 +19,7 @@ udpSocket.on('message', (msg) => {
   // Wrap UDP message in a Readable stream for parser
   const stream = Readable.from([msg]);
   streamParseCoT(stream, platform, (result) => {
-    if (result.error) {
+    if ('error' in result) {
       console.error('Parse error:', result.error);
     } else {
       console.log('Validation result:', result);

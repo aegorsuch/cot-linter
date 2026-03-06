@@ -13,7 +13,7 @@ const socket = net.createConnection({ host, port }, () => {
 });
 
 streamParseCoT(socket, platform, (result) => {
-  if (result.error) {
+  if ('error' in result) {
     console.error('Parse error:', result.error);
   } else {
     console.log('Validation result:', result);
