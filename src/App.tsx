@@ -2,11 +2,9 @@ import { useMemo, useRef, useState } from 'react'
 import {
   getMissingTagsForAllPlatforms,
   PLATFORM_RULE_MATRIX,
-  validateCoTWithProfile,
   type CrossPlatformMissingTagsResult,
   type MessageValidationProfile,
   type Platform,
-  type ValidationResult,
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
@@ -29,8 +27,8 @@ function App() {
       : messageProfiles.find((profile) => profile.id === selectedProfileId) ?? null
 
   const selectedTemplateLabel = selectedProfile
-    ? `${platform} ${selectedProfile.label} Template`
-    : `${platform} SA Template`
+    ? `${platform} ${selectedProfile.label}`
+    : `${platform} SA`
 
   const selectedTemplateXml = useMemo(() => {
     if (selectedProfile) {
@@ -39,31 +37,10 @@ function App() {
     return getStarterTemplate(platform)
   }, [platform, selectedProfile])
 
-  const result: ValidationResult | null = xml.trim()
-    ? validateCoTWithProfile(xml, platform, selectedProfile)
-    : null
-
-  const hasHardFails = result ? result.errors.length > 0 : false
-  const hasCompatibilityWarnings = result ? result.warnings.length > 0 : false
-
   const crossPlatformMissing: CrossPlatformMissingTagsResult | null = useMemo(() => {
     if (!xml.trim()) return null
     return getMissingTagsForAllPlatforms(xml)
   }, [xml])
-
-  const warningLocationByTag = useMemo(() => {
-    const map = new Map<string, { line: number; column: number }>()
-    if (!result) return map
-
-    result.warnings.forEach((warning) => {
-      const tagMatch = /Missing\s*<([^>]+)>\s*tag/i.exec(warning.text)
-      if (tagMatch && tagMatch[1] && !map.has(tagMatch[1])) {
-        map.set(tagMatch[1], warning.location)
-      }
-    })
-
-    return map
-  }, [result])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -134,7 +111,8 @@ function App() {
   }
 
   const jumpToMissingTagContext = (tag: string, key: string) => {
-    const location = warningLocationByTag.get(tag) ?? getDetailOrEventLocation(xml)
+    void tag
+    const location = getDetailOrEventLocation(xml)
     jumpToLocation(location.line, location.column, key)
   }
 
@@ -267,55 +245,56 @@ function App() {
         </section>
 
         <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
-          <h2 className="mb-2 text-xs uppercase text-slate-500">Template CoT (Read-Only)</h2>
-
-          <div className="mb-3 flex flex-wrap items-center gap-3">
-            <label htmlFor="platform-select" className="text-xs text-slate-400">
-              Platform
-            </label>
-            <select
-              id="platform-select"
-              value={platform}
-              onChange={(e) => {
-                setPlatform(e.target.value as Platform)
-                setSelectedProfileId('platform-default')
-              }}
-              className="rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-slate-200 outline-none transition-colors hover:border-slate-400 focus:border-emerald-500"
-            >
-              {platforms.map((platformName) => (
-                <option key={`platform-option-${platformName}`} value={platformName}>
-                  {platformName}
-                </option>
-              ))}
-            </select>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xs uppercase text-slate-500">Template CoT (Read-Only)</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <label htmlFor="platform-select" className="text-xs text-slate-400">
+                Platform
+              </label>
+              <select
+                id="platform-select"
+                value={platform}
+                onChange={(e) => {
+                  setPlatform(e.target.value as Platform)
+                  setSelectedProfileId('platform-default')
+                }}
+                className="rounded border border-slate-600 bg-slate-900/80 px-2 py-1 text-xs text-slate-200 outline-none transition-colors hover:border-slate-400 focus:border-emerald-500"
+              >
+                {platforms.map((platformName) => (
+                  <option key={`platform-option-${platformName}`} value={platformName}>
+                    {platformName}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setSelectedProfileId('platform-default')}
-              title="SA Template"
+              title="SA"
               className={`rounded border px-2 py-1 text-xs transition-colors ${
                 selectedProfileId === 'platform-default'
                   ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                   : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
               } max-w-[15rem] truncate md:max-w-none`}
             >
-              SA Template
+              SA
             </button>
             {messageProfiles.map((profile) => (
               <button
                 type="button"
                 key={profile.id}
                 onClick={() => setSelectedProfileId(profile.id)}
-                title={`${platform} ${profile.label} Template`}
+                title={profile.label}
                 className={`rounded border px-2 py-1 text-xs transition-colors ${
                   selectedProfileId === profile.id
                     ? 'border-emerald-500/60 bg-emerald-900/20 text-emerald-200'
                     : 'border-slate-600 bg-slate-900/50 text-slate-300 hover:border-slate-400'
                 } max-w-[15rem] truncate md:max-w-none`}
               >
-                {`${platform} ${profile.label} Template`}
+                {profile.label}
               </button>
             ))}
           </div>
@@ -323,118 +302,16 @@ function App() {
           <textarea
             readOnly
             value={selectedTemplateXml}
-            className="h-[440px] w-full rounded border border-slate-700 bg-slate-950/70 p-4 font-mono text-sm text-slate-300"
+            className="h-[500px] w-full rounded border border-slate-700 bg-slate-950/70 p-4 font-mono text-sm text-slate-300"
           />
         </section>
       </main>
 
       <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-        <h2 className="mb-4 text-xs uppercase text-slate-500">Validation Matrix</h2>
+        <h2 className="mb-4 text-xs uppercase text-slate-500">Platform Compatibility Matrix</h2>
 
-        {!result && (
+        {!crossPlatformMissing && (
           <p className="mb-4 italic text-slate-500">Paste or load CoT XML to run validation.</p>
-        )}
-
-        {result && (
-          <div className="mb-6 space-y-4 rounded border border-slate-700 bg-slate-900/35 p-4">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <div
-                className={`rounded border p-3 ${
-                  hasHardFails
-                    ? 'border-red-500/60 bg-red-900/20 text-red-100'
-                    : 'border-slate-700 bg-slate-900/40 text-slate-300'
-                }`}
-              >
-                <p className="text-xs uppercase tracking-wide">Blocking</p>
-                <p className="text-xl font-bold">{result.errors.length}</p>
-              </div>
-              <div
-                className={`rounded border p-3 ${
-                  hasCompatibilityWarnings
-                    ? 'border-amber-500/60 bg-amber-900/20 text-amber-100'
-                    : 'border-slate-700 bg-slate-900/40 text-slate-300'
-                }`}
-              >
-                <p className="text-xs uppercase tracking-wide">Warning ({platform})</p>
-                <p className="text-xl font-bold">{result.warnings.length}</p>
-              </div>
-            </div>
-
-            {result.errors.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-xs font-bold uppercase text-red-400">Blocking Diagnostics</h3>
-                <ul className="space-y-2 text-sm text-red-200">
-                  {result.errors.map((err, i) => (
-                    <li key={i}>
-                      <button
-                        type="button"
-                        onClick={() => jumpToLocation(err.location.line, err.location.column, `error-${i}`)}
-                        className={`w-full rounded border p-2 text-left transition-colors ${
-                          activeDiagnosticKey === `error-${i}`
-                            ? 'border-red-500 bg-red-900/35'
-                            : 'border-red-900/40 bg-red-950/20 hover:border-red-700/60'
-                        }`}
-                      >
-                        <p>
-                          {err.text}{' '}
-                          <span className="text-red-300">(line {err.location.line}, col {err.location.column})</span>
-                        </p>
-                        <p className="mt-1 text-[11px] text-red-300/90">
-                          Code: <code className="rounded bg-red-900/30 px-1 py-0.5">{err.code}</code>
-                        </p>
-                        {err.suggestion && (
-                          <p className="mt-1 text-xs text-red-100">
-                            Fix: <code className="rounded bg-red-900/40 px-1 py-0.5">{err.suggestion}</code>
-                          </p>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {result.warnings.length > 0 && (
-              <div>
-                <h3 className="mb-2 text-xs font-bold uppercase text-amber-400">Warning Diagnostics ({platform})</h3>
-                <ul className="space-y-2 text-sm text-amber-200">
-                  {result.warnings.map((warn, i) => (
-                    <li key={i}>
-                      <button
-                        type="button"
-                        onClick={() => jumpToLocation(warn.location.line, warn.location.column, `warn-${i}`)}
-                        className={`w-full rounded border p-2 text-left transition-colors ${
-                          activeDiagnosticKey === `warn-${i}`
-                            ? 'border-amber-500 bg-amber-900/35'
-                            : 'border-amber-900/40 bg-amber-950/20 hover:border-amber-700/60'
-                        }`}
-                      >
-                        <p>
-                          {warn.text.startsWith(`${platform}:`) ? warn.text : `${platform}: ${warn.text}`}{' '}
-                          <span className="text-amber-300">
-                            (line {warn.location.line}, col {warn.location.column})
-                          </span>
-                        </p>
-                        <p className="mt-1 text-[11px] text-amber-300/90">
-                          Code: <code className="rounded bg-amber-900/30 px-1 py-0.5">{warn.code}</code>
-                        </p>
-                        {warn.suggestion && (
-                          <p className="mt-1 text-xs text-amber-100">
-                            Suggested tag:{' '}
-                            <code className="rounded bg-amber-900/40 px-1 py-0.5">{warn.suggestion}</code>
-                          </p>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {result.isValid && result.errors.length === 0 && result.warnings.length === 0 && (
-              <p className="text-sm text-emerald-400">Ready for deployment to {platform}.</p>
-            )}
-          </div>
         )}
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (

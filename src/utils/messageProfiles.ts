@@ -4,7 +4,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   {
     id: 'weartak-milstd-point',
     platform: 'WearTAK',
-    label: 'MIL-STD-2525D Point Drop',
+    label: 'MIL-STD-2525D Drop',
     description: 'WearTAK point-drop payload with status, link, and icon metadata.',
     expectedType: 'a-f-G',
     requiredEventAttributes: ['version', 'access'],
@@ -26,7 +26,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
   {
     id: 'weartak-milstd-point-clear',
     platform: 'WearTAK',
-    label: 'MIL-STD-2525D Point Clear',
+    label: 'MIL-STD-2525D Clear',
     description: 'WearTAK point-clear payload used to remove a previously dropped point.',
     expectedType: 'a-u-G',
     requiredEventAttributes: ['version', 'access'],
