@@ -108,13 +108,9 @@ export const getMessageProfilesForPlatform = (platform: Platform): MessageValida
 };
 
 export const getAllTemplateLabels = (): string[] => {
-  const orderedUniqueLabels = MESSAGE_PROFILES.reduce<string[]>((labels, profile) => {
-    if (!labels.includes(profile.label)) {
-      labels.push(profile.label);
-    }
+  const uniqueSortedLabels = Array.from(new Set(MESSAGE_PROFILES.map((profile) => profile.label))).sort(
+    (a, b) => a.localeCompare(b),
+  );
 
-    return labels;
-  }, []);
-
-  return ['SA', ...orderedUniqueLabels];
+  return [...uniqueSortedLabels, 'SA'];
 };

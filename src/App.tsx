@@ -8,7 +8,6 @@ import {
 } from './utils/cotValidator.ts'
 import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
-import { Activity } from 'lucide-react'
 
 const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
 
@@ -492,13 +491,17 @@ function App() {
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
       <header className="mb-8 border-b border-slate-700 pb-4">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Activity className="text-emerald-400" /> Tactical Assault Kit (TAK) Cursor-on-Target (CoT)
+          <img
+            src="/apple-touch-icon.png"
+            alt="TAK logo"
+            className="h-6 w-6 shrink-0"
+          /> Tactical Assault Kit (TAK) Cursor-on-Target (CoT)
           {' '}Linter
         </h1>
       </header>
 
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section className="flex min-h-[440px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[520px] lg:min-h-[620px]">
+        <section className="flex min-h-[480px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[560px] lg:min-h-[680px]">
           <h2 className="mb-3 text-xs uppercase text-slate-500">Input CoT XML</h2>
           <textarea
             ref={textareaRef}
@@ -514,7 +517,7 @@ function App() {
           />
         </section>
 
-        <section className="flex min-h-[440px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[520px] lg:min-h-[620px]">
+        <section className="flex min-h-[480px] flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4 sm:min-h-[560px] lg:min-h-[680px]">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xs uppercase text-slate-500">Template CoT (Read-Only)</h2>
             <div className="flex flex-wrap items-center gap-2">
