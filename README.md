@@ -55,6 +55,7 @@ The app includes profile-based validation for WearTAK message types, including:
 - MIL-STD-2525D Point Clear
 - Manual Alert
 - Manual Alert Clear
+- Chat Send
 
 Selecting a profile updates validation requirements and can load a sample message for that profile.
 
@@ -63,6 +64,7 @@ Selecting a profile updates validation requirements and can load a sample messag
 - Platform Rule Matrix selector for platform-specific behavior.
 - Starter template loader per platform.
 - Profile selector with sample payload loading.
+- Template submission modal with a single `Submit GitHub Issue` action and auto-close on submit.
 - Diagnostic click-to-jump that focuses the input and highlights the relevant line.
 - Cross-platform missing-tag comparison cards.
 - Copy report buttons:
@@ -117,6 +119,7 @@ npm run lint
 5. Click any diagnostic item to jump to the related XML location.
 6. Use the cross-platform section to compare missing tags.
 7. Copy a missing-tags report in JSON or Markdown format for sharing.
+8. Use `Submit Template` to open the submission modal, enter metadata and XML, then click `Submit GitHub Issue` (the modal auto-closes after launch).
 
 ## Project Structure
 

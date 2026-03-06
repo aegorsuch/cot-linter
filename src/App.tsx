@@ -423,8 +423,8 @@ function App() {
 
   const openSubmitTemplateModal = () => {
     setSubmissionPlatform(platform)
-    setSubmissionProfileLabel(selectedProfile ? selectedProfile.label : 'SA')
-    setSubmissionXml(selectedTemplateXml)
+    setSubmissionProfileLabel(submissionTemplateOptions[0] ?? 'SA')
+    setSubmissionXml('')
     setSubmissionNotes('')
     setSubmissionContact('')
     setShowSubmitTemplateModal(true)
@@ -451,18 +451,6 @@ function App() {
     return payload
   }
 
-  const copySubmissionTemplateToClipboard = async () => {
-    if (!submissionXml.trim()) {
-      showToast('Submission XML is empty.', 'error')
-      return
-    }
-
-    const payload = buildSubmissionTemplatePayload()
-
-    const didCopy = await copyWithFallback(payload)
-    showToast(didCopy ? 'Copied template submission payload.' : 'Unable to copy submission payload.', didCopy ? 'success' : 'error')
-  }
-
   const openGitHubIssueForSubmission = async () => {
     if (!submissionXml.trim()) {
       showToast('Submission XML is empty.', 'error')
@@ -484,6 +472,7 @@ function App() {
     })
 
     window.open(`${GITHUB_ISSUE_URL}?${params.toString()}`, '_blank', 'noopener,noreferrer')
+    setShowSubmitTemplateModal(false)
     showToast('Opened GitHub issue with prefilled submission body.', 'success')
   }
 
@@ -491,13 +480,12 @@ function App() {
     <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
       <header className="mb-8 border-b border-slate-700 pb-4">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <img
-            src="/apple-touch-icon.png"
-            alt="TAK logo"
-            className="h-6 w-6 shrink-0"
-          /> Tactical Assault Kit (TAK) Cursor-on-Target (CoT)
+          Tactical Assault Kit (TAK) Cursor-on-Target (CoT)
           {' '}Linter
         </h1>
+        <p className="mt-2 text-sm text-slate-400">
+          This tool is intended to quickly validate CoT XML structure, profile requirements, and platform compatibility.
+        </p>
       </header>
 
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -871,27 +859,11 @@ function App() {
               <button
                 type="button"
                 onClick={() => {
-                  void copySubmissionTemplateToClipboard()
-                }}
-                className="rounded border border-emerald-700/50 px-2 py-1 text-xs text-emerald-200 hover:border-emerald-500/80"
-              >
-                Copy Submission Payload
-              </button>
-              <button
-                type="button"
-                onClick={() => {
                   void openGitHubIssueForSubmission()
                 }}
                 className="rounded border border-emerald-700/50 px-2 py-1 text-xs text-emerald-200 hover:border-emerald-500/80"
               >
-                Open GitHub Issue
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowSubmitTemplateModal(false)}
-                className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-slate-400"
-              >
-                Done
+                Submit GitHub Issue
               </button>
             </div>
           </div>
