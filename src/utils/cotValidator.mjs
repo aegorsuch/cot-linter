@@ -13,11 +13,6 @@ const PLATFORM_RULE_MATRIX = {
 };
 
 function getMissingTagsForAllPlatforms(xml, platforms) {
-				if (["Lattice", "Maven", "WearTAK"].includes(platform)) {
-					if (!detail.track) {
-						missingRules.push({ tag: "track" });
-					}
-				}
 	// Placeholder implementation: returns empty reports for each platform
 	// Fallback: always require <usericon> for CloudTAK, WearTAK, ATAK
 	return {
@@ -26,6 +21,11 @@ function getMissingTagsForAllPlatforms(xml, platforms) {
 			const parser = new XMLParser({ ignoreAttributes: false });
 			const parsed = parser.parse(xml);
 			const detail = parsed?.event?.detail || {};
+			if (["Lattice", "Maven", "WearTAK"].includes(platform)) {
+				if (!detail.track) {
+					missingRules.push({ tag: "track" });
+				}
+			}
 			if (["CloudTAK", "WearTAK", "ATAK", "WinTAK"].includes(platform)) {
 				if (!detail.usericon) {
 					missingRules.push({ tag: "usericon" });
