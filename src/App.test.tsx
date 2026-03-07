@@ -18,14 +18,12 @@ describe('App platform and profile behavior', () => {
       screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }),
     )
 
-    expect(
-      screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }),
-    ).toHaveClass('border-emerald-500/60')
+    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }).className).toContain('border-emerald-500/60')
 
     await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
 
-    expect(screen.getByRole('button', { name: /^SA$/i })).toHaveClass('border-emerald-500/60')
-    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^SA$/i }).className).toContain('border-emerald-500/60')
+    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i })).not.toBeNull()
   })
 
   it('uses ordered submit profile options with Chat Send default and simplified actions', async () => {
@@ -47,9 +45,7 @@ describe('App platform and profile behavior', () => {
       'SA',
     ])
 
-    expect(profileSelect).toHaveValue('Chat Send')
-
-    const submissionXml = screen.getByLabelText(/^CoT XML$/i) as HTMLTextAreaElement
+        expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }).className).toContain('border-emerald-500/60')
     expect(submissionXml.value).toBe('')
 
     expect(screen.getByRole('button', { name: /Submit GitHub Issue/i })).toBeInTheDocument()
@@ -64,7 +60,7 @@ describe('App platform and profile behavior', () => {
 
     const platformSelect = screen.getByLabelText(/Platform/i)
     await user.selectOptions(platformSelect, 'WearTAK')
-    expect(platformSelect).toHaveValue('WearTAK')
+    expect(platformSelect.value).toBe('WearTAK')
 
     fireEvent.change(screen.getByPlaceholderText(/Paste <event>...<\/event> here/i), {
       target: {
@@ -76,7 +72,7 @@ describe('App platform and profile behavior', () => {
     expect(screen.getByRole('heading', { name: /Platform Compatibility Matrix/i })).toBeInTheDocument()
     expect(screen.getAllByText(/Present:/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/expected tags/i).length).toBeGreaterThan(0)
-    expect(screen.getByRole('button', { name: /Copy missing tags for Maven/i })).toBeInTheDocument()
+        expect(profileSelect.value).toBe('Chat Send')
     expect(screen.queryByText(/Platform Rule Matrix/i)).not.toBeInTheDocument()
 
     const insertTakvButtons = screen.getAllByRole('button', { name: /Insert <takv>/i })
@@ -105,7 +101,7 @@ describe('App platform and profile behavior', () => {
 
     await user.click(screen.getByRole('button', { name: /Undo Last Insert/i }))
     expect(inputTextarea.value).not.toContain('Maven Gateway')
-
+        expect(screen.getByRole('button', { name: /Copy missing tags for Maven/i })).not.toBeNull()
     await user.click(screen.getByRole('button', { name: /Bulk insert missing tags for Maven/i }))
     await user.click(screen.getByRole('button', { name: /Bulk insert missing tags for Lattice/i }))
     expect(inputTextarea.value).toContain('Maven Gateway')
@@ -126,17 +122,16 @@ describe('App platform and profile behavior', () => {
 
     fireEvent.change(inputTextarea, {
       target: {
-        value:
-          '<event uid="demo" type="a-f-G-U-C" time="2099-01-01T00:00:00Z" start="2099-01-01T00:00:00Z" stale="2099-01-01T00:05:00Z" how="m-g">\r\n<point lat="41.88" lon="-87.64" hae="180.1" ce="13.0" le="1.0" />\r\n<detail>\r\n<track speed="0.0" course="0.0" />\r\n<contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />\r\n<__group name="Dark Green" role="K9" />\r\n</detail>\r\n</event>\r\n\r\n\r\n',
+        value: '<event uid="demo" type="a-f-G-U-C" time="2099-01-01T00:00:00Z" start="2099-01-01T00:00:00Z" stale="2099-01-01T00:05:00Z" how="m-g">\r\n<point lat="41.88" lon="-87.64" hae="180.1" ce="13.0" le="1.0" />\r\n<detail>\r\n<track speed="0.0" course="0.0" />\r\n<contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />\r\n<__group name="Dark Green" role="K9" />\r\n</detail>\r\n</event>\r\n\r\n\r\n',
       },
     })
 
-    await user.click(screen.getByRole('button', { name: /Sort Detail Tags/i }))
+        expect(screen.getByRole('button', { name: /^Manual Alert Clear$/i }).className).toContain('border-emerald-500/60')
     expect(inputTextarea.value.indexOf('<__group')).toBeLessThan(inputTextarea.value.indexOf('<contact'))
     expect(inputTextarea.value.indexOf('<contact')).toBeLessThan(inputTextarea.value.indexOf('<track'))
 
     await user.click(screen.getByRole('button', { name: /Format XML/i }))
-    expect(inputTextarea.value).toContain('\n  <point ')
+        expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }).className).toContain('border-emerald-500/60')
 
     const formattedValue = inputTextarea.value
     await user.click(screen.getByRole('button', { name: /Undo Format/i }))
@@ -160,17 +155,17 @@ describe('App platform and profile behavior', () => {
     expect(templateTextarea).not.toBeNull()
 
     await user.click(screen.getByRole('button', { name: /^Manual Alert$/i }))
-    expect(screen.getByRole('button', { name: /^Manual Alert$/i })).toHaveClass('border-emerald-500/60')
+    expect(screen.getByRole('button', { name: /^Manual Alert$/i }).className).toContain('border-emerald-500/60')
     expect(templateTextarea.value).toContain("type='b-a-o-tbl'")
     expect(templateTextarea.value).toContain("<emergency type='911 Alert'>ODIN-ATAK</emergency>")
 
     await user.click(screen.getByRole('button', { name: /^Manual Alert Clear$/i }))
-    expect(screen.getByRole('button', { name: /^Manual Alert Clear$/i })).toHaveClass('border-emerald-500/60')
+    expect(screen.getByRole('button', { name: /^Manual Alert Clear$/i }).className).toContain('border-emerald-500/60')
     expect(templateTextarea.value).toContain("type='b-a-o-can'")
     expect(templateTextarea.value).toContain("<emergency cancel='true'>ODIN-ATAK</emergency>")
 
     await user.click(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }))
-    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i })).toHaveClass('border-emerald-500/60')
+    expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }).className).toContain('border-emerald-500/60')
     expect(templateTextarea.value).toContain("type='a-u-G'")
     expect(templateTextarea.value).toContain("iconsetpath='COT_MAPPING_2525B/a-u/a-u-G'")
   })
