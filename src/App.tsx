@@ -11,10 +11,7 @@ import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/mes
 
 const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
 
-type DiffLine = {
-  kind: 'unchanged' | 'added' | 'removed' | 'omitted'
-  text: string
-}
+// ...existing code...
 
 const normalizeLineEndings = (value: string): string => value.replace(/\r\n?/g, '\n')
 
@@ -99,96 +96,7 @@ const formatXmlDocument = (doc: Document, declaration: string | null): string =>
   return declaration ? `${declaration}\n${formattedRoot}` : formattedRoot
 }
 
-const buildLineDiff = (template: string, current: string): DiffLine[] => {
-  const baseline = normalizeLineEndings(template).split('\n')
-  const candidate = normalizeLineEndings(current).split('\n')
-
-  const dp: number[][] = Array.from({ length: baseline.length + 1 }, () =>
-    Array.from({ length: candidate.length + 1 }, () => 0),
-  )
-
-  for (let i = 1; i <= baseline.length; i += 1) {
-    for (let j = 1; j <= candidate.length; j += 1) {
-      if (baseline[i - 1] === candidate[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1])
-      }
-    }
-  }
-
-  const diffReversed: DiffLine[] = []
-  let i = baseline.length
-  let j = candidate.length
-
-  while (i > 0 && j > 0) {
-    if (baseline[i - 1] === candidate[j - 1]) {
-      diffReversed.push({ kind: 'unchanged', text: baseline[i - 1] })
-      i -= 1
-      j -= 1
-    } else if (dp[i - 1][j] >= dp[i][j - 1]) {
-      diffReversed.push({ kind: 'removed', text: baseline[i - 1] })
-      i -= 1
-    } else {
-      diffReversed.push({ kind: 'added', text: candidate[j - 1] })
-      j -= 1
-    }
-  }
-
-  while (i > 0) {
-    diffReversed.push({ kind: 'removed', text: baseline[i - 1] })
-    i -= 1
-  }
-
-  while (j > 0) {
-    diffReversed.push({ kind: 'added', text: candidate[j - 1] })
-    j -= 1
-  }
-
-  return diffReversed.reverse()
-}
-
-const compactDiffLines = (lines: DiffLine[], contextLines = 1): DiffLine[] => {
-  if (lines.length === 0) {
-    return lines
-  }
-
-  const includeIndices = new Set<number>()
-
-  lines.forEach((line, index) => {
-    if (line.kind === 'unchanged') {
-      return
-    }
-
-    const start = Math.max(0, index - contextLines)
-    const end = Math.min(lines.length - 1, index + contextLines)
-    for (let i = start; i <= end; i += 1) {
-      includeIndices.add(i)
-    }
-  })
-
-  if (includeIndices.size === 0) {
-    return lines.slice(0, Math.min(lines.length, 8))
-  }
-
-  const compact: DiffLine[] = []
-  let previousIncluded = -1
-
-  for (let i = 0; i < lines.length; i += 1) {
-    if (!includeIndices.has(i)) {
-      continue
-    }
-
-    if (previousIncluded >= 0 && i > previousIncluded + 1) {
-      compact.push({ kind: 'omitted', text: '...' })
-    }
-
-    compact.push(lines[i])
-    previousIncluded = i
-  }
-
-  return compact
-}
+// ...existing code...
 
 function App() {
   const [xml, setXml] = useState('')
@@ -335,25 +243,7 @@ function App() {
 
   const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])
 
-  const fullTemplateDiff = useMemo(() => {
-    if (!xml.trim()) {
-      return []
-    }
-
-    return buildLineDiff(selectedTemplateXml, xml)
-  }, [selectedTemplateXml, xml])
-
-  const compactTemplateDiff = useMemo(() => compactDiffLines(fullTemplateDiff), [fullTemplateDiff])
-
-  const addedDiffCount = useMemo(
-    () => fullTemplateDiff.filter((line) => line.kind === 'added').length,
-    [fullTemplateDiff],
-  )
-
-  const removedDiffCount = useMemo(
-    () => fullTemplateDiff.filter((line) => line.kind === 'removed').length,
-    [fullTemplateDiff],
-  )
+  // ...existing code...
 
   const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -885,58 +775,7 @@ function App() {
         </section>
       </main>
 
-      <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-xs uppercase text-slate-500">Template Diff Preview</h2>
-          <p className="text-xs text-slate-400">
-            Comparing current input against <span className="font-semibold text-slate-300">{selectedTemplateLabel}</span>
-          </p>
-        </div>
-
-        {!xml.trim() && (
-          <p className="text-xs italic text-slate-500">Paste or load XML to see changes from the selected template.</p>
-        )}
-
-        {xml.trim() && addedDiffCount === 0 && removedDiffCount === 0 && (
-          <p className="text-xs text-emerald-300">No differences between input and selected template.</p>
-        )}
-
-        {xml.trim() && (addedDiffCount > 0 || removedDiffCount > 0) && (
-          <>
-            <p className="mb-2 text-xs text-slate-400">
-              Added: <span className="font-semibold text-emerald-300">{addedDiffCount}</span>
-              {' '}| Removed: <span className="font-semibold text-red-300">{removedDiffCount}</span>
-            </p>
-            <pre className="max-h-72 overflow-auto rounded border border-slate-700 bg-slate-950/80 p-3 text-xs leading-5">
-              {compactTemplateDiff.map((line, index) => {
-                const prefix =
-                  line.kind === 'added'
-                    ? '+'
-                    : line.kind === 'removed'
-                      ? '-'
-                      : line.kind === 'omitted'
-                        ? '...'
-                        : ' '
-
-                const lineClass =
-                  line.kind === 'added'
-                    ? 'text-emerald-300'
-                    : line.kind === 'removed'
-                      ? 'text-red-300'
-                      : line.kind === 'omitted'
-                        ? 'text-slate-500'
-                        : 'text-slate-400'
-
-                return (
-                  <div key={`template-diff-line-${index}`} className={lineClass}>
-                    {`${prefix} ${line.text}`}
-                  </div>
-                )
-              })}
-            </pre>
-          </>
-        )}
-      </section>
+      {/* Template Diff Preview section removed */}
 
       <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
         <h2 className="mb-4 text-xs uppercase text-slate-500">Platform Compatibility Matrix</h2>
