@@ -66,8 +66,8 @@ type ParsedCoT = {
   event?: {
     [key: string]: unknown;
     point?: Record<string, unknown>;
-    // detail variable removed to fix TS6133 error
   };
+     // detail variable removed to fix TS6133 error
 };
 
 type SchemaFragment = {
