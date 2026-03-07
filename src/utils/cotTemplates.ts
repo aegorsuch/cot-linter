@@ -64,3 +64,22 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
 };
 
 export const getStarterTemplate = (platform: Platform): string => PLATFORM_STARTER_TEMPLATES[platform];
+
+// Special template for ATAK + MIL-STD-2525D Drop
+export const ATAK_MIL_STD_2525D_DROP_TEMPLATE = MIL_STD_2525D_DROP_TEMPLATE;
+
+// Mapping for profile-specific templates
+export const PROFILE_TEMPLATES: Record<string, Record<string, string>> = {
+  ATAK: {
+    'MIL-STD-2525D Drop': ATAK_MIL_STD_2525D_DROP_TEMPLATE,
+  },
+  // Add more platform/profile combos as needed
+};
+
+// Returns template for platform/profile combo, falls back to platform starter template
+export function getProfileTemplate(platform: string, profile: string): string {
+  if (PROFILE_TEMPLATES[platform] && PROFILE_TEMPLATES[platform][profile]) {
+    return PROFILE_TEMPLATES[platform][profile];
+  }
+  return getStarterTemplate(platform as Platform);
+}
