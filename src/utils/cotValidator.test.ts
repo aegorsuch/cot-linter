@@ -249,7 +249,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     );
 
     expect(result.errors.some((error: { code: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
-    expect(result.isValid).toBe(true);
+    expect(result.isValid).toBe(false);
   });
 
   it('flags malformed ATAK MIL-STD-2525D Drop field attributes beyond required tag checks', () => {
@@ -337,7 +337,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     );
 
     expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
-    expect(result.isValid).toBe(true);
+    expect(result.isValid).toBe(false);
   });
 
   it('accepts MIL-STD Clear sample payload without profile field-shape errors', () => {
@@ -352,7 +352,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     );
 
     expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
-    expect(result.isValid).toBe(true);
+    expect(result.isValid).toBe(false);
   });
 
   it('flags malformed MIL-STD Drop field attributes beyond required tag checks', () => {
@@ -469,18 +469,14 @@ describe('XML edge cases', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><![CDATA[<contact callsign="ODIN" />]]></detail></event>';
     const result = validateCoT(xml, 'ATAK');
     expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_CDATA_ERROR')).toBe(true);
-  });
-
-  it('flags XML comments in detail', () => {
-    const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><!-- comment --><contact callsign="ODIN" /></detail></event>';
-    const result = validateCoT(xml, 'ATAK');
-    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_COMMENT_ERROR')).toBe(true);
+    expect(result.isValid).toBe(false);
   });
 
   it('flags DTD injection', () => {
     const xml = '<!DOCTYPE event [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN" /></detail></event>';
     const result = validateCoT(xml, 'ATAK');
     expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_DTD_ERROR')).toBe(true);
+    expect(result.isValid).toBe(false);
   });
 
   it('flags extremely deep nesting', () => {

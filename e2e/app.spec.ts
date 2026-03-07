@@ -1,3 +1,7 @@
+// Ensure this file is not imported by config
+// Playwright tests must not be imported by config files
+// No changes needed unless imported elsewhere
+
 import { expect, test } from '@playwright/test'
 
 test('loads ATAK profile templates from template buttons', async ({ page }) => {
