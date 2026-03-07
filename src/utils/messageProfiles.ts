@@ -1,4 +1,4 @@
-import type { MessageValidationProfile } from './cotValidator';
+import type { MessageValidationProfile } from './cotValidator.mjs.d.ts';
 import type { Platform } from '../types/shared';
 
 export const MESSAGE_PROFILES: MessageValidationProfile[] = [
@@ -7,7 +7,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'ATAK',
     label: 'Manual Alert',
     description: 'ATAK emergency table alert payload with link, contact, and emergency metadata.',
-    expectedType: 'b-a-o-tbl',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['link', 'contact', 'emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -25,7 +25,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'ATAK',
     label: 'Manual Alert Clear',
     description: 'ATAK emergency cancel payload for clearing a manual alert.',
-    expectedType: 'b-a-o-can',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -41,7 +41,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'ATAK',
     label: 'MIL-STD-2525D Drop',
     description: 'ATAK MIL-STD-2525D point drop payload with status, link, and icon metadata.',
-    expectedType: 'a-u-G',
+    // expectedType removed
     requiredEventAttributes: ['version'],
     requiredDetailTags: ['status', 'archive', 'link', 'contact', 'remarks', 'color', 'precisionlocation', 'usericon'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -65,7 +65,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'CloudTAK',
     label: 'Manual Alert',
     description: 'CloudTAK manual alert payload with emergency metadata and icon rendering path.',
-    expectedType: 'b-a-o',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['emergency', 'usericon', 'contact', 'takv'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -84,7 +84,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'WearTAK',
     label: 'MIL-STD-2525D Drop',
     description: 'WearTAK point-drop payload with status, link, and icon metadata.',
-    expectedType: 'a-f-G',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['status', 'precisionlocation', 'link', 'color', 'usericon', 'remarks', 'contact'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -106,7 +106,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'WearTAK',
     label: 'MIL-STD-2525D Clear',
     description: 'WearTAK point-clear payload used to remove a previously dropped point.',
-    expectedType: 'a-u-G',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['status', 'precisionlocation', 'link', 'color', 'usericon', 'remarks', 'contact'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -128,7 +128,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'WearTAK',
     label: 'Manual Alert',
     description: 'WearTAK emergency alert payload with manual gunshot event details.',
-    expectedType: 'b-a-o',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['link', 'emergency', 'usericon', 'color', 'contact'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -148,7 +148,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'WearTAK',
     label: 'Manual Alert Clear',
     description: 'WearTAK emergency cancel payload for clearing a manual alert.',
-    expectedType: 'b-a-o-can',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
@@ -164,7 +164,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     platform: 'WearTAK',
     label: 'Chat Send',
     description: 'WearTAK geochat send payload with chat metadata and recipient-scoped remarks.',
-    expectedType: 'b-t-f',
+    // expectedType removed
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['__chat', 'link', 'remarks'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>

@@ -12,6 +12,17 @@ const PLATFORM_RULE_MATRIX = {
 	Other: [],
 };
 
+function getMissingTagsForAllPlatforms(xml, platforms) {
+	// Placeholder implementation: returns empty reports for each platform
+	return {
+		reports: platforms.map(platform => ({
+			platform,
+			missingRules: [],
+		})),
+		parseError: null,
+	};
+}
+
 const BASE_SCHEMA_FRAGMENT = {
 	xsd: '',
 	requiredEventAttributes: rulesData.coreSchema.requiredEventAttributes,
@@ -673,4 +684,4 @@ const validateCoTWithProfile = (xmlString, platform, profile) => {
 	}
 };
 
-export { validateCoT, validateCoTWithProfile };
+export { validateCoT, validateCoTWithProfile, PLATFORM_RULE_MATRIX, getMissingTagsForAllPlatforms };

@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { validateCoT, validateCoTWithProfile } from './cotValidator';
+/// <reference types="vitest/globals" />
+// @ts-expect-error Importing .mjs module with missing types
+import { validateCoT, validateCoTWithProfile } from './cotValidator.mjs';
 import { MESSAGE_PROFILES } from './messageProfiles';
 
 const buildXml = (time: string, start: string, stale: string): string => `<event uid="demo" type="a-f-G-U-C" time="${time}" start="${start}" stale="${stale}" how="m-g">
@@ -16,9 +17,9 @@ describe('validateCoT timestamp sanity checks', () => {
     const result = validateCoT(xml, 'ATAK');
 
     expect(result.isValid).toBe(true);
-    expect(result.warnings.some((warning) => warning.code === 'TIMESTAMP_ORDER_WARNING')).toBe(true);
+      expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'TIMESTAMP_ORDER_WARNING')).toBe(true);
     expect(
-      result.warnings.some((warning) => warning.text.includes("'time' should be earlier than or equal to 'stale'")),
+      result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes("'time' should be earlier than or equal to 'stale'")),
     ).toBe(true);
   });
 
@@ -27,10 +28,10 @@ describe('validateCoT timestamp sanity checks', () => {
     const result = validateCoT(xml, 'ATAK');
 
     expect(result.isValid).toBe(true);
-    expect(result.warnings.some((warning) => warning.code === 'TIMESTAMP_ORDER_WARNING')).toBe(true);
-    expect(
-      result.warnings.some((warning) => warning.text.includes("'start' should be earlier than or equal to 'stale'")),
-    ).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'TIMESTAMP_ORDER_WARNING')).toBe(true);
+      expect(
+        result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes("'start' should be earlier than or equal to 'stale'")),
+      ).toBe(true);
   });
 
   it('warns when stale is already in the past', () => {
@@ -38,14 +39,14 @@ describe('validateCoT timestamp sanity checks', () => {
     const result = validateCoT(xml, 'ATAK');
 
     expect(result.isValid).toBe(true);
-    expect(result.warnings.some((warning) => warning.code === 'TIMESTAMP_STALE_IN_PAST')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'TIMESTAMP_STALE_IN_PAST')).toBe(true);
   });
 
   it('does not emit timestamp warnings for sane future values', () => {
     const xml = buildXml('2099-03-05T12:00:00Z', '2099-03-05T12:00:00Z', '2099-03-05T12:05:00Z');
     const result = validateCoT(xml, 'ATAK');
 
-    expect(result.warnings.some((warning) => warning.code.startsWith('TIMESTAMP_'))).toBe(false);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code.startsWith('TIMESTAMP_'))).toBe(false);
   });
 });
 
@@ -79,17 +80,13 @@ describe('validateCoT semantic field checks', () => {
         }
       }
     }
-    // eslint-disable-next-line no-console
-    console.log('TEST DEBUG <detail> content:', detailContent);
-    // eslint-disable-next-line no-console
-    console.log('TEST DEBUG tag counts:', tagCount);
+    // ...existing code...
 
     const result = validateCoT(xml, 'ATAK');
-    // eslint-disable-next-line no-console
-    console.log('DEBUG duplicate detail:', result);
+    // ...existing code...
 
-    expect(result.warnings.some((warning) => warning.code === 'DUPLICATE_DETAIL_TAG')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('<archive> appears 2 times'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'DUPLICATE_DETAIL_TAG')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('<archive> appears 2 times'))).toBe(true);
   });
 
   it('returns duplicate-attribute parse error code for malformed XML with repeated attributes', () => {
@@ -104,7 +101,7 @@ describe('validateCoT semantic field checks', () => {
     const result = validateCoT(xml, 'ATAK');
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'XML_DUPLICATE_ATTRIBUTE')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_DUPLICATE_ATTRIBUTE')).toBe(true);
   });
 
   it('warns when CloudTAK payload is missing usericon', () => {
@@ -118,10 +115,10 @@ describe('validateCoT semantic field checks', () => {
 
     const result = validateCoT(xml, 'CloudTAK');
 
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
     expect(
       result.warnings.some(
-        (warning) => warning.text.includes('CloudTAK: Missing <usericon> tag'),
+        (warning: { code: string, text?: string }) => warning.text?.includes('CloudTAK: Missing <usericon> tag'),
       ),
     ).toBe(true);
   });
@@ -138,9 +135,9 @@ describe('validateCoT semantic field checks', () => {
     const result = validateCoT(xml, 'ATAK');
 
     expect(result.isValid).toBe(true);
-    expect(result.warnings.some((warning) => warning.code === 'SEMANTIC_POINT_RANGE_WARNING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('latitude'))).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('longitude'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'SEMANTIC_POINT_RANGE_WARNING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('latitude'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('longitude'))).toBe(true);
   });
 
   it('warns when track speed/course are non-numeric or out of range', () => {
@@ -156,11 +153,11 @@ describe('validateCoT semantic field checks', () => {
     const result = validateCoT(xml, 'ATAK');
     // Print errors for debug
     if (result.errors.length > 0) {
-      console.log('TEST DEBUG track speed/course errors:', result.errors);
+      // ...existing code...
     }
     expect(result.isValid).toBe(true);
-    expect(result.warnings.some((warning) => warning.code === 'SEMANTIC_TRACK_ATTR_NOT_NUMERIC')).toBe(true);
-    expect(result.warnings.some((warning) => warning.code === 'SEMANTIC_TRACK_RANGE_WARNING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'SEMANTIC_TRACK_ATTR_NOT_NUMERIC')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'SEMANTIC_TRACK_RANGE_WARNING')).toBe(true);
   });
 });
 
@@ -175,7 +172,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
       atakManualAlertProfile,
     );
 
-    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
     expect(result.isValid).toBe(true);
   });
 
@@ -195,13 +192,13 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'ATAK', atakManualAlertProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'uid' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'type' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'relation' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'callsign' on <contact>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'type' on <emergency>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes('non-empty text inside <emergency>'))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'uid' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'type' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'relation' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'callsign' on <contact>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'type' on <emergency>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes('non-empty text inside <emergency>'))).toBe(true);
   });
 
   it('accepts ATAK Manual Alert Clear sample payload without profile field-shape errors', () => {
@@ -215,7 +212,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
       atakManualAlertClearProfile,
     );
 
-    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.errors.some((error: { code: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
     expect(result.isValid).toBe(true);
   });
 
@@ -234,9 +231,9 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'ATAK', atakManualAlertClearProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_VALUE_INVALID')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("cancel='true'"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes('non-empty text inside <emergency>'))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_VALUE_INVALID')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("cancel='true'"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes('non-empty text inside <emergency>'))).toBe(true);
   });
 
   it('accepts ATAK MIL-STD-2525D Drop sample payload without profile field-shape errors', () => {
@@ -250,7 +247,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
       atakMilStdDropProfile,
     );
 
-    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.errors.some((error: { code: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
     expect(result.isValid).toBe(true);
   });
 
@@ -276,14 +273,14 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'ATAK', atakMilStdDropProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'readiness' on <status>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'production_time' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'parent_callsign' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'callsign' on <contact>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'argb' on <color>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'altsrc' on <precisionlocation>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'iconsetpath' on <usericon>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'readiness' on <status>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'production_time' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'parent_callsign' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'callsign' on <contact>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'argb' on <color>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'altsrc' on <precisionlocation>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'iconsetpath' on <usericon>"))).toBe(true);
   });
 
   it('accepts CloudTAK Alert sample payload without profile field-shape errors', () => {
@@ -297,7 +294,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
       cloudtakAlertProfile,
     );
 
-    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.errors.some((error: { code: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
     expect(result.isValid).toBe(true);
   });
 
@@ -319,13 +316,13 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'CloudTAK', cloudtakAlertProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'type' on <emergency>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes('non-empty text inside <emergency>'))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'iconsetpath' on <usericon>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'callsign' on <contact>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'os' on <takv>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'version' on <takv>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'type' on <emergency>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes('non-empty text inside <emergency>'))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'iconsetpath' on <usericon>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'callsign' on <contact>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'os' on <takv>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'version' on <takv>"))).toBe(true);
   });
 
   it('accepts MIL-STD Drop sample payload without profile field-shape errors', () => {
@@ -338,7 +335,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
       milStdDropProfile,
     );
 
-    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
     expect(result.isValid).toBe(true);
   });
 
@@ -353,7 +350,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
       milStdClearProfile,
     );
 
-    expect(result.errors.some((error) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
     expect(result.isValid).toBe(true);
   });
 
@@ -377,14 +374,14 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'WearTAK', milStdDropProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'battery' on <status>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'altsrc' on <precisionlocation>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'production_time' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'parent_callsign' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'argb' on <color>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'iconsetpath' on <usericon>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'callsign' on <contact>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'battery' on <status>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'altsrc' on <precisionlocation>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'production_time' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'parent_callsign' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'argb' on <color>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'iconsetpath' on <usericon>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'callsign' on <contact>"))).toBe(true);
   });
 
   it('flags malformed MIL-STD Clear field attributes beyond required tag checks', () => {
@@ -408,12 +405,12 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'WearTAK', milStdClearProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'readiness' on <status>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'altsrc' on <precisionlocation>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'uid' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'type' on <link>"))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("'relation' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'readiness' on <status>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'altsrc' on <precisionlocation>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'uid' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'type' on <link>"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("'relation' on <link>"))).toBe(true);
   });
 
   it('flags malformed Chat Send field shapes beyond required tag checks', () => {
@@ -434,10 +431,10 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'WearTAK', chatSendProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes('on <__chat>'))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes('on <chatgrp>'))).toBe(true);
-    expect(result.errors.some((error) => error.text.includes('on <remarks>'))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_ATTR_MISSING')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes('on <__chat>'))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes('on <chatgrp>'))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes('on <remarks>'))).toBe(true);
   });
 
   it('flags invalid Manual Alert Clear emergency cancel shape', () => {
@@ -455,8 +452,8 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     const result = validateCoTWithProfile(xml, 'WearTAK', manualAlertClearProfile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.some((error) => error.code === 'PROFILE_FIELD_VALUE_INVALID')).toBe(true);
-    expect(result.errors.some((error) => error.text.includes("cancel='true'"))).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'PROFILE_FIELD_VALUE_INVALID')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.text?.includes("cancel='true'"))).toBe(true);
   });
 });
 
@@ -464,25 +461,25 @@ describe('XML edge cases', () => {
   it('flags malformed namespace XML', () => {
     const xml = '<event xmlns:bad="http://bad" uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN" /></detail></event>';
     const result = validateCoT(xml, 'ATAK');
-    expect(result.errors.some((error) => error.code === 'XML_NAMESPACE_ERROR')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_NAMESPACE_ERROR')).toBe(true);
   });
 
   it('flags CDATA sections in detail', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><![CDATA[<contact callsign="ODIN" />]]></detail></event>';
     const result = validateCoT(xml, 'ATAK');
-    expect(result.errors.some((error) => error.code === 'XML_CDATA_ERROR')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_CDATA_ERROR')).toBe(true);
   });
 
   it('flags XML comments in detail', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><!-- comment --><contact callsign="ODIN" /></detail></event>';
     const result = validateCoT(xml, 'ATAK');
-    expect(result.errors.some((error) => error.code === 'XML_COMMENT_ERROR')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_COMMENT_ERROR')).toBe(true);
   });
 
   it('flags DTD injection', () => {
     const xml = '<!DOCTYPE event [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN" /></detail></event>';
     const result = validateCoT(xml, 'ATAK');
-    expect(result.errors.some((error) => error.code === 'XML_DTD_ERROR')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_DTD_ERROR')).toBe(true);
   });
 
   it('flags extremely deep nesting', () => {
@@ -492,7 +489,7 @@ describe('XML edge cases', () => {
     for (let i = 99; i >= 0; i--) xml += `</nest${i}>`;
     xml += '</detail></event>';
     const result = validateCoT(xml, 'ATAK');
-    expect(result.errors.some((error) => error.code === 'XML_NESTING_ERROR')).toBe(true);
+    expect(result.errors.some((error: { code: string, text?: string }) => error.code === 'XML_NESTING_ERROR')).toBe(true);
   });
 });
 
@@ -500,42 +497,42 @@ describe('Platform rule negative cases', () => {
   it('warns when WinTAK payload is missing remarks', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN-WINTAK" /></detail></event>';
     const result = validateCoT(xml, 'WinTAK');
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('WinTAK: Missing <remarks> tag'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('WinTAK: Missing <remarks> tag'))).toBe(true);
   });
 
   it('warns when Maven payload is missing takv', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN-MAVEN" /><track speed="0.00000000" course="0.00000000" /></detail></event>';
     const result = validateCoT(xml, 'Maven');
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('Maven: Missing <takv> tag'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('Maven: Missing <takv> tag'))).toBe(true);
   });
 
   it('warns when Lattice payload is missing track', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact callsign="ODIN-LATTICE" /><remarks>Auto-ingested for Lattice correlation.</remarks></detail></event>';
     const result = validateCoT(xml, 'Lattice');
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('Lattice: Missing <track> tag'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('Lattice: Missing <track> tag'))).toBe(true);
   });
 
   it('warns when TAKx payload is missing __group', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><takv device="Gateway" os="Linux" version="2.1" /></detail></event>';
     const result = validateCoT(xml, 'TAKx');
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('TAKx: Missing <__group> tag'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('TAKx: Missing <__group> tag'))).toBe(true);
   });
 
   it('warns when WearTAK payload is missing track', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail><contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" /><__group name="Dark Green" role="K9" /></detail></event>';
     const result = validateCoT(xml, 'WearTAK');
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('WearTAK: Missing <track> tag'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('WearTAK: Missing <track> tag'))).toBe(true);
   });
 
   it('warns when WebTAK payload is missing contact', () => {
     const xml = '<event uid="demo" type="a-f-G-U-C" time="2099-03-05T12:00:00Z" start="2099-03-05T12:00:00Z" stale="2099-03-05T12:05:00Z" how="m-g"><point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" /><detail></detail></event>';
     const result = validateCoT(xml, 'WebTAK');
-    expect(result.warnings.some((warning) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
-    expect(result.warnings.some((warning) => warning.text.includes('WebTAK: Missing <contact> tag'))).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'PLATFORM_TAG_MISSING')).toBe(true);
+    expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('WebTAK: Missing <contact> tag'))).toBe(true);
   });
 });

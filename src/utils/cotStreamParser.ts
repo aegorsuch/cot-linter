@@ -2,7 +2,8 @@
 // Requires: npm install node-expat
 
 import expat from 'node-expat';
-import { validateCoT, type ValidationResult } from './cotValidator';
+// @ts-expect-error Importing .mjs module with missing types
+import { validateCoT, type ValidationResult } from './cotValidator.mjs';
 import type { Platform } from '../types/shared';
 
 // The imported Platform type already covers the supported platforms

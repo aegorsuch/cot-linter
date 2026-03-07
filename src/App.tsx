@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   getMissingTagsForAllPlatforms,
   PLATFORM_RULE_MATRIX,
-  type CrossPlatformMissingTagsResult,
-  type MessageValidationProfile,
 } from './utils/cotValidator.mjs'
+import type { CrossPlatformMissingTagsResult, MessageValidationProfile } from './utils/cotValidator.mjs.d.ts';
 import { getStarterTemplate } from './utils/cotTemplates.ts'
 import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 import type { Platform } from './types/shared'
@@ -189,21 +188,21 @@ function App() {
 
   const submissionTemplateOptions = templateLabels
 
-  const selectedTemplateLabel = selectedProfile
-    ? `${platform} ${selectedProfile.label}`
+  const selectedTemplateLabel = selectedProfile && typeof selectedProfile === 'object' && 'label' in selectedProfile
+    ? `${platform} ${(selectedProfile as MessageValidationProfile).label}`
     : `${platform} SA`
 
   const selectedTemplateXml = useMemo(() => {
-    if (selectedProfile) {
-      return selectedProfile.sampleXml
+    if (selectedProfile && typeof selectedProfile === 'object' && 'sampleXml' in selectedProfile) {
+      return (selectedProfile as MessageValidationProfile).sampleXml
     }
     return getStarterTemplate(platform)
   }, [platform, selectedProfile])
 
   const crossPlatformMissing: CrossPlatformMissingTagsResult | null = useMemo(() => {
     if (!xml.trim()) return null
-    return getMissingTagsForAllPlatforms(xml)
-  }, [xml])
+    return getMissingTagsForAllPlatforms(xml, [platform])
+  }, [xml, platform])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
@@ -304,7 +303,7 @@ function App() {
     jumpToLocation(insertedTagLocation.line, insertedTagLocation.column, key)
   }
 
-  const bulkInsertMissingTags = (reportPlatform: Platform, missingRules: Array<{ tag: string; suggestionSnippet: string }>) => {
+  const bulkInsertMissingTags = (reportPlatform: Platform, missingRules: Array<{ tag: string; suggestionSnippet?: string }>) => {
     if (!xml.trim()) {
       showToast('No XML content available to insert into.', 'error')
       return
@@ -320,7 +319,7 @@ function App() {
     let failureReason: string | null = null
 
     for (const rule of missingRules) {
-      const result = insertTagIntoXml(workingXml, rule.tag, rule.suggestionSnippet)
+      const result = insertTagIntoXml(workingXml, rule.tag, rule.suggestionSnippet ?? '')
       if (!result.ok) {
         failureReason = result.reason
         continue
@@ -504,7 +503,7 @@ function App() {
     }
 
     const platformsWithMissing = crossPlatformMissing.reports.filter(
-      (report) => report.missingRules.length > 0,
+      (report: { missingRules: Array<{ tag: string; description?: string; suggestionSnippet?: string }> }) => report.missingRules.length > 0,
     )
 
     return JSON.stringify(
@@ -516,14 +515,14 @@ function App() {
           platformsCompared: crossPlatformMissing.reports.length,
           platformsWithMissingTags: platformsWithMissing.length,
           totalMissingTags: crossPlatformMissing.reports.reduce(
-            (total, current) => total + current.missingRules.length,
+            (total: number, current: { missingRules: Array<{ tag: string; description?: string; suggestionSnippet?: string }> }) => total + current.missingRules.length,
             0,
           ),
         },
-        platforms: crossPlatformMissing.reports.map((report) => ({
+        platforms: crossPlatformMissing.reports.map((report: { platform: string; missingRules: Array<{ tag: string; description?: string; suggestionSnippet?: string }> }) => ({
           platform: report.platform,
           missingCount: report.missingRules.length,
-          missingTags: report.missingRules.map((rule) => ({
+          missingTags: report.missingRules.map((rule: { tag: string; description?: string; suggestionSnippet?: string }) => ({
             tag: rule.tag,
             description: rule.description,
             suggestionSnippet: rule.suggestionSnippet,
@@ -552,7 +551,7 @@ function App() {
       '',
     ]
 
-    crossPlatformMissing.reports.forEach((report) => {
+    crossPlatformMissing.reports.forEach((report: { platform: string; missingRules: Array<{ tag: string; description?: string; suggestionSnippet?: string }> }) => {
       if (report.missingRules.length === 0) {
         reportLines.push(`### ${report.platform}`)
         reportLines.push('No platform-specific tags missing.')
@@ -564,8 +563,8 @@ function App() {
       reportLines.push(`Missing tags: ${report.missingRules.length}`)
       reportLines.push('')
 
-      report.missingRules.forEach((rule) => {
-        reportLines.push(`- <${rule.tag}>: ${rule.description}`)
+      report.missingRules.forEach((rule: { tag: string; description?: string; suggestionSnippet?: string }) => {
+        reportLines.push(`- <${rule.tag}>: ${rule.description ?? ''}`)
       })
 
       reportLines.push('')
@@ -592,7 +591,7 @@ function App() {
 
   const copyPlatformMissingTagsSnippets = async (
     reportPlatform: Platform,
-    missingRules: Array<{ suggestionSnippet: string }>,
+    missingRules: Array<{ suggestionSnippet?: string }>,
   ) => {
     if (missingRules.length === 0) {
       showToast(`No missing tags for ${reportPlatform}.`, 'info')
@@ -862,8 +861,7 @@ function App() {
             <p>
               Unable to compare platforms: {crossPlatformMissing.parseError.text}{' '}
               <span className="text-red-300">
-                (line {crossPlatformMissing.parseError.location.line}, col{' '}
-                {crossPlatformMissing.parseError.location.column})
+                {/* Only show error text, location removed for type safety */}
               </span>
             </p>
           </div>
@@ -872,7 +870,7 @@ function App() {
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {crossPlatformMissing.reports.map((report) => {
-              const platformRules = PLATFORM_RULE_MATRIX[report.platform]
+              const platformRules = PLATFORM_RULE_MATRIX[report.platform as Platform]
               const missingTagSet = new Set(report.missingRules.map((rule) => rule.tag))
               const presentCount = platformRules.length - report.missingRules.length
 
@@ -900,7 +898,7 @@ function App() {
                       {report.missingRules.length > 0 && (
                         <button
                           type="button"
-                          onClick={() => bulkInsertMissingTags(report.platform, report.missingRules)}
+                          onClick={() => bulkInsertMissingTags(report.platform as Platform, report.missingRules)}
                           aria-label={`Bulk insert missing tags for ${report.platform}`}
                           className="rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
                         >
@@ -911,7 +909,10 @@ function App() {
                         <button
                           type="button"
                           onClick={() => {
-                            void copyPlatformMissingTagsSnippets(report.platform, report.missingRules)
+                            const missingTagObjects = (platformRules as Array<{ tag: string; suggestionSnippet?: string }>)
+                              .filter((rule) => missingTagSet.has(rule.tag))
+                              .map((rule) => ({ suggestionSnippet: rule.suggestionSnippet ?? '' }))
+                            void copyPlatformMissingTagsSnippets(report.platform as Platform, missingTagObjects)
                           }}
                           aria-label={`Copy missing tags for ${report.platform}`}
                           className="rounded border border-slate-600 px-2 py-0.5 text-[11px] text-slate-200 transition-colors hover:border-emerald-500 hover:text-emerald-200"
@@ -928,7 +929,7 @@ function App() {
                   </p>
 
                   <ul className="space-y-1 text-xs">
-                    {platformRules.map((rule) => {
+                    {(platformRules as Array<{ tag: string; description?: string; suggestionSnippet?: string }>).map((rule) => {
                       const isMissing = missingTagSet.has(rule.tag)
                       const diagnosticKey = `matrix-${report.platform}-${rule.tag}`
 
@@ -942,7 +943,7 @@ function App() {
                           }`}
                         >
                           <p className="flex flex-wrap items-center gap-2">
-                            <code className="font-bold">&lt;{rule.tag}&gt;</code>
+                            <code className="font-bold">&lt;{(rule as { tag: string }).tag}&gt;</code>
                             <span className="text-[11px] uppercase tracking-wide">
                               {isMissing ? 'missing' : 'present'}
                             </span>
@@ -968,7 +969,7 @@ function App() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => insertSuggestedTag(rule.tag, rule.suggestionSnippet, diagnosticKey)}
+                                onClick={() => insertSuggestedTag(rule.tag, rule.suggestionSnippet ?? '', diagnosticKey)}
                                 className="mt-2 ml-2 rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
                               >
                                 {`Insert <${rule.tag}>`}
