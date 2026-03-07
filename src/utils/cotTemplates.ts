@@ -76,6 +76,7 @@ export const PROFILE_TEMPLATES: Record<string, Record<string, string>> = {
   ATAK: {
     'MIL-STD-2525D Drop': ATAK_MIL_STD_2525D_DROP_TEMPLATE,
     'Manual Alert': ATAK_MANUAL_ALERT_TEMPLATE,
+    'Manual Alert Clear': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-can" time="2026-02-20T20:13:34.720Z" start="2026-02-20T20:13:34.720Z" stale="2026-02-20T20:13:44.720Z" how="h-e" access="Undefined"><point lat="0.0" lon="0.0" hae="9999999.0" ce="9999999.0" le="9999999.0"/><detail><emergency cancel="true">ODIN-ATAK</emergency></detail></event>`,
   },
   // Add more platform/profile combos as needed
 };
