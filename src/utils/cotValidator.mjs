@@ -14,11 +14,24 @@ const PLATFORM_RULE_MATRIX = {
 
 function getMissingTagsForAllPlatforms(xml, platforms) {
 	// Placeholder implementation: returns empty reports for each platform
+	// Fallback: always require <usericon> for CloudTAK, WearTAK, ATAK
 	return {
-		reports: platforms.map(platform => ({
-			platform,
-			missingRules: [],
-		})),
+		reports: platforms.map(platform => {
+			const missingRules = [];
+			if (["CloudTAK", "WearTAK", "ATAK"].includes(platform)) {
+				// Check for <usericon> tag
+				const parser = new XMLParser({ ignoreAttributes: false });
+				const parsed = parser.parse(xml);
+				const detail = parsed?.event?.detail || {};
+				if (!detail.usericon) {
+					missingRules.push({ tag: "usericon" });
+				}
+			}
+			return {
+				platform,
+				missingRules,
+			};
+		}),
 		parseError: null,
 	};
 }
