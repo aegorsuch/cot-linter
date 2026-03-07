@@ -18,7 +18,7 @@ function getMissingTagsForAllPlatforms(xml, platforms) {
 	return {
 		reports: platforms.map(platform => {
 			const missingRules = [];
-			if (["CloudTAK", "WearTAK", "ATAK"].includes(platform)) {
+			if (["CloudTAK", "WearTAK", "ATAK", "WinTAK"].includes(platform)) {
 				// Check for <usericon> tag
 				const parser = new XMLParser({ ignoreAttributes: false });
 				const parsed = parser.parse(xml);
