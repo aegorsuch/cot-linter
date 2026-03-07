@@ -201,8 +201,9 @@ function App() {
 
   const crossPlatformMissing: CrossPlatformMissingTagsResult | null = useMemo(() => {
     if (!xml.trim()) return null
-    return getMissingTagsForAllPlatforms(xml, [platform])
-  }, [xml, platform])
+    const platforms = Object.keys(PLATFORM_RULE_MATRIX) as Platform[];
+    return getMissingTagsForAllPlatforms(xml, platforms);
+  }, [xml])
 
   const getLineRange = (text: string, line: number, column: number) => {
     const clampedLine = Math.max(1, line)
