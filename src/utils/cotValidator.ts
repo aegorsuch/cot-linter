@@ -10,8 +10,7 @@ export type Platform =
   | 'TAKx'
   | 'WearTAK'
   | 'WebTAK'
-  | 'WinTAK'
-  | 'MIL-STD-2525D Drop';
+  | 'WinTAK';
 
 export interface SourceLocation {
   line: number;
@@ -99,28 +98,6 @@ const BASE_SCHEMA_FRAGMENT: SchemaFragment = {
 };
 
 export const PLATFORM_RULE_MATRIX: Record<Platform, PlatformRule[]> = {
-    'MIL-STD-2525D Drop': [
-      {
-        tag: 'contact',
-        description: '2525D callsign/label rendering.',
-        suggestionSnippet: '<contact callsign="U.16.135057" />',
-      },
-      {
-        tag: 'usericon',
-        description: '2525D icon mapping.',
-        suggestionSnippet: '<usericon iconsetpath="COT_MAPPING_2525B/a-u/a-u-G" />',
-      },
-      {
-        tag: 'link',
-        description: '2525D parent/production linkage.',
-        suggestionSnippet: '<link uid="ANDROID-589520ccfcd20f01" production_time="2020-12-16T19:50:57.629Z" type="a-f-G-U-C" parent_callsign="ODIN-ATAK" relation="p-p" />',
-      },
-      {
-        tag: 'emergency',
-        description: '2525D alert/notification.',
-        suggestionSnippet: '<emergency type="911 Alert">BARON</emergency>',
-      },
-    ],
   ATAK: [
     {
       tag: 'contact',
