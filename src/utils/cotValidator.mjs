@@ -18,13 +18,17 @@ function getMissingTagsForAllPlatforms(xml, platforms) {
 	return {
 		reports: platforms.map(platform => {
 			const missingRules = [];
+			const parser = new XMLParser({ ignoreAttributes: false });
+			const parsed = parser.parse(xml);
+			const detail = parsed?.event?.detail || {};
 			if (["CloudTAK", "WearTAK", "ATAK", "WinTAK"].includes(platform)) {
-				// Check for <usericon> tag
-				const parser = new XMLParser({ ignoreAttributes: false });
-				const parsed = parser.parse(xml);
-				const detail = parsed?.event?.detail || {};
 				if (!detail.usericon) {
 					missingRules.push({ tag: "usericon" });
+				}
+			}
+			if (["CloudTAK", "Maven", "TAKx", "WinTAK"].includes(platform)) {
+				if (!detail.takv) {
+					missingRules.push({ tag: "takv" });
 				}
 			}
 			return {
