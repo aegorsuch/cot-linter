@@ -1075,7 +1075,7 @@ function App() {
               <textarea
                 value={submissionXml}
                 onChange={(e) => setSubmissionXml(e.target.value)}
-                className="mt-1 h-24 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+                className="mt-1 h-16 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
               />
             </label>
 
