@@ -1033,7 +1033,7 @@ function App() {
               </label>
 
               <label className="text-xs text-slate-300">
-                Profile / Category
+                Template
                 <select
                   value={submissionProfileLabel}
                   onChange={(e) => setSubmissionProfileLabel(e.target.value)}
@@ -1044,6 +1044,7 @@ function App() {
                       {templateName}
                     </option>
                   ))}
+                  <option value="Other">Other</option>
                 </select>
               </label>
             </div>
@@ -1064,8 +1065,8 @@ function App() {
               <textarea
                 value={submissionNotes}
                 onChange={(e) => setSubmissionNotes(e.target.value)}
-                className="mt-1 h-20 w-full resize-none rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
-                placeholder="Tell maintainers when/where this template succeeds or fails."
+                className="mt-1 h-10 w-full resize-none rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+                placeholder="Notes about this template."
               />
             </label>
 
@@ -1074,7 +1075,7 @@ function App() {
               <textarea
                 value={submissionXml}
                 onChange={(e) => setSubmissionXml(e.target.value)}
-                className="mt-1 h-48 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+                className="mt-1 h-24 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
               />
             </label>
 
