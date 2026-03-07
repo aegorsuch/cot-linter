@@ -686,8 +686,10 @@ function App() {
             Server Address
             <input
               type="text"
-              placeholder="e.g. 192.168.1.100 or takserver.example.com"
+              placeholder="e.g. tak.weartak.com"
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+              value={takServerAddress}
+              onChange={e => setTakServerAddress(e.target.value)}
             />
           </label>
           <label className="text-xs text-slate-300">
@@ -696,6 +698,8 @@ function App() {
               type="number"
               placeholder="e.g. 8087"
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+              value={takServerPort}
+              onChange={e => setTakServerPort(e.target.value)}
             />
           </label>
           <label className="text-xs text-slate-300">
@@ -704,6 +708,8 @@ function App() {
               type="text"
               placeholder="Username"
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+              value={takServerUsername}
+              onChange={e => setTakServerUsername(e.target.value)}
             />
           </label>
           <label className="text-xs text-slate-300">
@@ -712,15 +718,30 @@ function App() {
               type="password"
               placeholder="Password"
               className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+              value={takServerPassword}
+              onChange={e => setTakServerPassword(e.target.value)}
             />
           </label>
           <button
             type="button"
             className="rounded border border-emerald-700/50 px-2 py-1 text-xs text-emerald-200 hover:border-emerald-500/80 mt-2"
+            onClick={handleTakServerConnect}
           >
             Connect to TAK Server
           </button>
         </div>
+        // ...existing code...
+
+        // TAK server connection state
+        const [takServerAddress, setTakServerAddress] = useState('tak.weartak.com')
+        const [takServerPort, setTakServerPort] = useState('8087')
+        const [takServerUsername, setTakServerUsername] = useState('')
+        const [takServerPassword, setTakServerPassword] = useState('')
+
+        const handleTakServerConnect = () => {
+          showToast(`Connecting to TAK server at ${takServerAddress}:${takServerPort}...`, 'info')
+          // WebSocket connection logic will go here
+        }
         <p className="mt-2 text-xs text-slate-400">
           You can connect to both local and remote TAK servers (including WebTAK) if reachable and protocol is supported.
         </p>
