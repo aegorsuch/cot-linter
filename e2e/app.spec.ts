@@ -8,7 +8,7 @@
 
 import { expect, test } from '@playwright/test'
 
-test.skip('loads ATAK profile templates from template buttons', async ({ page }) => {
+test('loads ATAK profile templates from template buttons', async ({ page }) => {
   await page.goto('/')
 
   await page.getByLabel('Platform').selectOption('ATAK')
@@ -27,7 +27,7 @@ test.skip('loads ATAK profile templates from template buttons', async ({ page })
   await expect(templateTextarea).toContainText("iconsetpath='COT_MAPPING_2525B/a-u/a-u-G'")
 })
 
-test.skip('submit modal defaults to Chat Send with blank XML', async ({ page }) => {
+test('submit modal defaults to Chat Send with blank XML', async ({ page }) => {
   await page.goto('/')
 
   await page.getByRole('button', { name: 'Submit Template' }).click()
