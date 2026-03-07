@@ -837,117 +837,120 @@ function App() {
 
         {crossPlatformMissing && !crossPlatformMissing.parseError && (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {crossPlatformMissing.reports.map((report) => {
-              const platformRules = PLATFORM_RULE_MATRIX[report.platform]
-              const missingTagSet = new Set(report.missingRules.map((rule) => rule.tag))
-              const presentCount = platformRules.length - report.missingRules.length
+            {crossPlatformMissing.reports
+              .slice()
+              .sort((a, b) => a.platform.localeCompare(b.platform))
+              .map((report) => {
+                const platformRules = PLATFORM_RULE_MATRIX[report.platform]
+                const missingTagSet = new Set(report.missingRules.map((rule) => rule.tag))
+                const presentCount = platformRules.length - report.missingRules.length
 
-              return (
-                <article
-                  key={`compare-${report.platform}`}
-                  className={`rounded border p-3 ${
-                    report.platform === platform
-                      ? 'border-emerald-500/60 bg-emerald-900/15'
-                      : 'border-slate-700 bg-slate-900/40'
-                  }`}
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`rounded px-2 py-0.5 text-[11px] font-bold ${
-                          report.missingRules.length === 0
-                            ? 'bg-emerald-900/40 text-emerald-200'
-                            : 'bg-amber-900/40 text-amber-200'
-                        }`}
-                      >
-                        Missing: {report.missingRules.length}
-                      </span>
-                      {report.missingRules.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => bulkInsertMissingTags(report.platform, report.missingRules)}
-                          aria-label={`Bulk insert missing tags for ${report.platform}`}
-                          className="rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
-                        >
-                          Bulk Insert
-                        </button>
-                      )}
-                      {report.missingRules.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            void copyPlatformMissingTagsSnippets(report.platform, report.missingRules)
-                          }}
-                          aria-label={`Copy missing tags for ${report.platform}`}
-                          className="rounded border border-slate-600 px-2 py-0.5 text-[11px] text-slate-200 transition-colors hover:border-emerald-500 hover:text-emerald-200"
-                        >
-                          Copy Missing
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="mb-2 text-[11px] text-slate-400">
-                    Present: <span className="font-bold text-emerald-300">{presentCount}</span> of{' '}
-                    {platformRules.length} expected tags
-                  </p>
-
-                  <ul className="space-y-1 text-xs">
-                    {platformRules.map((rule) => {
-                      const isMissing = missingTagSet.has(rule.tag)
-                      const diagnosticKey = `matrix-${report.platform}-${rule.tag}`
-
-                      return (
-                        <li
-                          key={`${report.platform}-${rule.tag}`}
-                          className={`rounded border px-2 py-1 ${
-                            isMissing
-                              ? 'border-amber-700/40 bg-amber-950/25 text-amber-200'
-                              : 'border-emerald-700/30 bg-emerald-950/20 text-emerald-200'
+                return (
+                  <article
+                    key={`compare-${report.platform}`}
+                    className={`rounded border p-3 ${
+                      report.platform === platform
+                        ? 'border-emerald-500/60 bg-emerald-900/15'
+                        : 'border-slate-700 bg-slate-900/40'
+                    }`}
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h3 className="text-sm font-bold text-slate-100">{report.platform}</h3>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`rounded px-2 py-0.5 text-[11px] font-bold ${
+                            report.missingRules.length === 0
+                              ? 'bg-emerald-900/40 text-emerald-200'
+                              : 'bg-amber-900/40 text-amber-200'
                           }`}
                         >
-                          <p className="flex flex-wrap items-center gap-2">
-                            <code className="font-bold">&lt;{rule.tag}&gt;</code>
-                            <span className="text-[11px] uppercase tracking-wide">
-                              {isMissing ? 'missing' : 'present'}
-                            </span>
-                          </p>
-                          {isMissing && (
-                            <>
-                              <p className="mt-1 text-[11px] text-amber-100">
-                                Add:{' '}
-                                <code className="rounded bg-amber-900/30 px-1 py-0.5">
-                                  {rule.suggestionSnippet}
-                                </code>
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => jumpToMissingTagContext(rule.tag, diagnosticKey)}
-                                className={`mt-2 rounded border px-2 py-0.5 text-[11px] transition-colors ${
-                                  activeDiagnosticKey === diagnosticKey
-                                    ? 'border-amber-500/80 bg-amber-900/35 text-amber-100'
-                                    : 'border-amber-700/50 text-amber-200 hover:border-amber-500/80'
-                                }`}
-                              >
-                                {`Go to insertion point (line ${insertionLocation.line}, col ${insertionLocation.column})`}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => insertSuggestedTag(rule.tag, rule.suggestionSnippet, diagnosticKey)}
-                                className="mt-2 ml-2 rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
-                              >
-                                {`Insert <${rule.tag}>`}
-                              </button>
-                            </>
-                          )}
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </article>
-              )
-            })}
+                          Missing: {report.missingRules.length}
+                        </span>
+                        {report.missingRules.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => bulkInsertMissingTags(report.platform, report.missingRules)}
+                            aria-label={`Bulk insert missing tags for ${report.platform}`}
+                            className="rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
+                          >
+                            Bulk Insert
+                          </button>
+                        )}
+                        {report.missingRules.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void copyPlatformMissingTagsSnippets(report.platform, report.missingRules)
+                            }}
+                            aria-label={`Copy missing tags for ${report.platform}`}
+                            className="rounded border border-slate-600 px-2 py-0.5 text-[11px] text-slate-200 transition-colors hover:border-emerald-500 hover:text-emerald-200"
+                          >
+                            Copy Missing
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="mb-2 text-[11px] text-slate-400">
+                      Present: <span className="font-bold text-emerald-300">{presentCount}</span> of{' '}
+                      {platformRules.length} expected tags
+                    </p>
+
+                    <ul className="space-y-1 text-xs">
+                      {platformRules.map((rule) => {
+                        const isMissing = missingTagSet.has(rule.tag)
+                        const diagnosticKey = `matrix-${report.platform}-${rule.tag}`
+
+                        return (
+                          <li
+                            key={`${report.platform}-${rule.tag}`}
+                            className={`rounded border px-2 py-1 ${
+                              isMissing
+                                ? 'border-amber-700/40 bg-amber-950/25 text-amber-200'
+                                : 'border-emerald-700/30 bg-emerald-950/20 text-emerald-200'
+                            }`}
+                          >
+                            <p className="flex flex-wrap items-center gap-2">
+                              <code className="font-bold">&lt;{rule.tag}&gt;</code>
+                              <span className="text-[11px] uppercase tracking-wide">
+                                {isMissing ? 'missing' : 'present'}
+                              </span>
+                            </p>
+                            {isMissing && (
+                              <>
+                                <p className="mt-1 text-[11px] text-amber-100">
+                                  Add:{' '}
+                                  <code className="rounded bg-amber-900/30 px-1 py-0.5">
+                                    {rule.suggestionSnippet}
+                                  </code>
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={() => jumpToMissingTagContext(rule.tag, diagnosticKey)}
+                                  className={`mt-2 rounded border px-2 py-0.5 text-[11px] transition-colors ${
+                                    activeDiagnosticKey === diagnosticKey
+                                      ? 'border-amber-500/80 bg-amber-900/35 text-amber-100'
+                                      : 'border-amber-700/50 text-amber-200 hover:border-amber-500/80'
+                                  }`}
+                                >
+                                  {`Go to insertion point (line ${insertionLocation.line}, col ${insertionLocation.column})`}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => insertSuggestedTag(rule.tag, rule.suggestionSnippet, diagnosticKey)}
+                                  className="mt-2 ml-2 rounded border border-emerald-700/50 px-2 py-0.5 text-[11px] text-emerald-200 transition-colors hover:border-emerald-500/80"
+                                >
+                                  {`Insert <${rule.tag}>`}
+                                </button>
+                              </>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </article>
+                )
+              })}
           </div>
         )}
       </section>
