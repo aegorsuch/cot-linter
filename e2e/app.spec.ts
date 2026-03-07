@@ -1,7 +1,6 @@
-// Guard: Only run with Playwright
-if (!process.env.PLAYWRIGHT_TEST_INTERNAL) {
-  throw new Error('e2e/app.spec.ts must only be run with Playwright. Use "npm run test:e2e" or "npx playwright test".');
-}
+// WARNING: This file is for Playwright only.
+// Do NOT run with Vitest or npm test.
+// Use "npm run test:e2e" or "npx playwright test" for e2e tests.
 
 // Ensure this file is not imported by config
 // Playwright tests must not be imported by config files
