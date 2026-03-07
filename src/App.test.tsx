@@ -36,7 +36,7 @@ describe('App platform and profile behavior', () => {
 
     await user.click(screen.getByRole('button', { name: /Submit Template/i }))
 
-    const profileSelect = screen.getByLabelText(/^Profile \/ Category$/i) as HTMLSelectElement
+    const profileSelect = screen.getByLabelText(/^Template$/i) as HTMLSelectElement
     const optionOrder = Array.from(profileSelect.options).map((option) => option.text)
 
     expect(optionOrder).toEqual([
@@ -46,6 +46,7 @@ describe('App platform and profile behavior', () => {
       'MIL-STD-2525D Clear',
       'MIL-STD-2525D Drop',
       'SA',
+      'Other',
     ])
 
     expect(profileSelect).toHaveValue('Chat Send')
