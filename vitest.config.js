@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    environment: 'node', // or 'jsdom' if DOM is needed
+    environment: 'jsdom', // jsdom is required for React Testing Library and user-event
     globals: true,
     server: {
       deps: {

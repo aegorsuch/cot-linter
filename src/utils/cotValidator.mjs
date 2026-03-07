@@ -430,33 +430,38 @@ const validateCoT = (xmlString, platform) => {
 			}
 		}
 		   // XML edge case detection (always emit errors for these cases)
-		   if (/xmlns:/i.test(xmlString)) {
-			   pushError(result, 'XML_NAMESPACE_ERROR', 'XML contains a namespace declaration, which is not supported.', ROOT_LOCATION, 'critical', 'high');
-		   }
-		   if (/<!\[CDATA\[/i.test(xmlString)) {
-			   pushError(result, 'XML_CDATA_ERROR', 'XML contains a CDATA section, which is not supported.', ROOT_LOCATION, 'critical', 'high');
-			   result.isValid = false;
-		   }
-		   if (/<!--/.test(xmlString)) {
-			   pushError(result, 'XML_COMMENT_ERROR', 'XML contains a comment, which is not supported.', ROOT_LOCATION, 'critical', 'high');
-			   result.isValid = false;
-		   }
-		   if (/<!DOCTYPE/i.test(xmlString)) {
-			   pushError(result, 'XML_DTD_ERROR', 'XML contains a DTD declaration, which is not supported.', ROOT_LOCATION, 'critical', 'high');
-			   result.isValid = false;
-		   }
-		   // Deep nesting check
-		   const maxDepth = 50;
-		   let depth = 0, maxFound = 0;
-		   for (let i = 0; i < xmlString.length; i++) {
-			   if (xmlString[i] === '<' && xmlString[i+1] !== '/' && xmlString[i+1] !== '!' && xmlString[i+1] !== '?') depth++;
-			   if (xmlString[i] === '<' && xmlString[i+1] === '/') depth--;
-			   if (depth > maxFound) maxFound = depth;
-		   }
-		   if (maxFound > maxDepth) {
-			   pushError(result, 'XML_NESTING_ERROR', `XML nesting depth exceeds safe limit (${maxDepth}).`, ROOT_LOCATION, 'critical', 'high');
-			   result.isValid = false;
-		   }
+				let criticalXmlError = false;
+				if (/xmlns:/i.test(xmlString)) {
+					pushError(result, 'XML_NAMESPACE_ERROR', 'XML contains a namespace declaration, which is not supported.', ROOT_LOCATION, 'critical', 'high');
+					criticalXmlError = true;
+				}
+				if (/<!\[CDATA\[/i.test(xmlString)) {
+					pushError(result, 'XML_CDATA_ERROR', 'XML contains a CDATA section, which is not supported.', ROOT_LOCATION, 'critical', 'high');
+					criticalXmlError = true;
+				}
+				if (/<!--/.test(xmlString)) {
+					pushError(result, 'XML_COMMENT_ERROR', 'XML contains a comment, which is not supported.', ROOT_LOCATION, 'critical', 'high');
+					criticalXmlError = true;
+				}
+				if (/<!DOCTYPE/i.test(xmlString)) {
+					pushError(result, 'XML_DTD_ERROR', 'XML contains a DTD declaration, which is not supported.', ROOT_LOCATION, 'critical', 'high');
+					criticalXmlError = true;
+				}
+				// Deep nesting check
+				const maxDepth = 50;
+				let depth = 0, maxFound = 0;
+				for (let i = 0; i < xmlString.length; i++) {
+					if (xmlString[i] === '<' && xmlString[i+1] !== '/' && xmlString[i+1] !== '!' && xmlString[i+1] !== '?') depth++;
+					if (xmlString[i] === '<' && xmlString[i+1] === '/') depth--;
+					if (depth > maxFound) maxFound = depth;
+				}
+				if (maxFound > maxDepth) {
+					pushError(result, 'XML_NESTING_ERROR', `XML nesting depth exceeds safe limit (${maxDepth}).`, ROOT_LOCATION, 'critical', 'high');
+					criticalXmlError = true;
+				}
+				if (criticalXmlError) {
+					result.isValid = false;
+				}
 	}
 	result.isValid = result.errors.length === 0;
 	return result;
