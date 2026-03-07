@@ -67,7 +67,6 @@ type ParsedCoT = {
     [key: string]: unknown;
     point?: Record<string, unknown>;
   };
-     // detail variable removed to fix TS6133 error
 };
 
 type SchemaFragment = {
@@ -643,7 +642,6 @@ const validateTrackSemantics = (
 
 const validateDetailDuplicates = (
   xmlString: string,
-  detail: Record<string, unknown>,
   result: ValidationResult,
 ): void => {
   // Flexible regex for <detail> extraction and duplicate tag detection
@@ -1165,7 +1163,7 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
 
   // Duplicate tag check
   if (event.detail && typeof event.detail === 'object') {
-    validateDetailDuplicates(xmlString, event.detail as Record<string, unknown>, result);
+    validateDetailDuplicates(xmlString, result);
   }
 
   // Call track validation if <track> tag exists
@@ -1295,9 +1293,16 @@ export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformM
     return { parseError, reports: emptyReports };
   }
 
-  const detail = (parsed.event?.detail ?? {}) as Record<string, unknown>;
+  // Ensure event exists and extract detail
+  const event = parsed.event;
+  const detailRaw = event?.detail ?? {};
+  
+  // Standardize detail as a Record for the filter check
+  const detail = (Array.isArray(detailRaw) ? detailRaw[0] : detailRaw) as Record<string, unknown>;
+
   const reports = ALL_PLATFORMS_SORTED.map((platform) => {
     const rules = PLATFORM_RULE_MATRIX[platform];
+    // Now 'detail' is explicitly used here
     const missingRules = rules.filter((rule) => !hasDetailTag(detail, rule.tag));
     return { platform, missingRules };
   });
