@@ -165,6 +165,8 @@ describe('App platform and profile behavior', () => {
     if (groupIndex !== -1 && contactIndex !== -1 && trackIndex !== -1) {
       expect(groupIndex).toBeLessThan(contactIndex)
       expect(contactIndex).toBeLessThan(trackIndex)
+    } else {
+      // Skip index assertions if elements are missing
     }
     await user.click(screen.getByRole('button', { name: /Format XML/i }))
         expect(screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }).className).toContain('border-emerald-500/60')

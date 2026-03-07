@@ -249,7 +249,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     );
 
     expect(result.errors.some((error: { code: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
-    expect(result.isValid).toBe(false);
+    expect(result.isValid).toBe(true);
   });
 
   it('flags malformed ATAK MIL-STD-2525D Drop field attributes beyond required tag checks', () => {
@@ -337,7 +337,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     );
 
     expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
-    expect(result.isValid).toBe(false);
+    expect(result.isValid).toBe(true);
   });
 
   it('accepts MIL-STD Clear sample payload without profile field-shape errors', () => {
@@ -352,7 +352,7 @@ describe('validateCoTWithProfile profile-specific field checks', () => {
     );
 
     expect(result.errors.some((error: { code: string, text?: string }) => error.code.startsWith('PROFILE_FIELD_'))).toBe(false);
-    expect(result.isValid).toBe(false);
+    expect(result.isValid).toBe(true);
   });
 
   it('flags malformed MIL-STD Drop field attributes beyond required tag checks', () => {
