@@ -6,7 +6,7 @@ import {
   type MessageValidationProfile,
   type Platform,
 } from './utils/cotValidator.ts'
-import { getStarterTemplate } from './utils/cotTemplates.ts'
+import { getStarterTemplate, getProfileTemplate } from './utils/cotTemplates.ts'
 import { getAllTemplateLabels, getMessageProfilesForPlatform } from './utils/messageProfiles.ts'
 
 const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new'
@@ -174,7 +174,7 @@ function App() {
 
   const selectedTemplateXml = useMemo(() => {
     if (selectedProfile) {
-      return selectedProfile.sampleXml
+      return getProfileTemplate(platform, selectedProfile.label)
     }
     return getStarterTemplate(platform)
   }, [platform, selectedProfile])
