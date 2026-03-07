@@ -1,3 +1,4 @@
+export const ATAK_MANUAL_ALERT_TEMPLATE = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-tbl" time="2026-02-20T20:13:34.035Z" start="2026-02-20T20:13:34.035Z" stale="2026-02-20T20:13:44.035Z" how="h-e" access="Undefined"><point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" /><detail><link uid="ANDROID-4eb92ff46e615c21" type="a-f-G-U-C" relation="p-p"/><contact callsign="ODIN-WEARTAK-Alert"/><emergency type="911 Alert">BARON</emergency></detail></event>`;
 export const MIL_STD_2525D_DROP_TEMPLATE = `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<event version='2.0' uid='a0c524c6-0422-4382-9981-e39d1dc71730' type='a-u-G' time='2020-12-16T19:59:34.910Z' start='2020-12-16T19:59:34.910Z' stale='2021-01-02T20:40:03.838Z' how='h-g-i-g-o'>\n  <point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" />\n\t<detail>\n\t\t<status readiness='true'/>\n\t\t<archive/>\n\t\t<link uid='ANDROID-589520ccfcd20f01' production_time='2020-12-16T19:50:57.629Z' type='a-f-G-U-C' parent_callsign='ODIN-ATAK' relation='p-p'/>\n\t\t<contact callsign='U.16.135057'/>\n\t\t<remarks></remarks>\n\t\t<archive/>\n\t\t<color argb='-1'/>\n\t\t<precisionlocation altsrc='???'/>\n\t\t<usericon iconsetpath='COT_MAPPING_2525B/a-u/a-u-G'/>\n\t</detail>\n</event>`;
 import type { Platform } from './cotValidator';
 
@@ -22,7 +23,8 @@ const wearTakTemplate = (): string => `<event version="2.0" uid="WEAROS_demo_uid
 </event>`;
 
 export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
-  ATAK: MIL_STD_2525D_DROP_TEMPLATE,
+    'MIL-STD-2525D Drop': MIL_STD_2525D_DROP_TEMPLATE,
+  ATAK: ATAK_MANUAL_ALERT_TEMPLATE,
   CloudTAK: baseTemplate(
     '    <contact callsign="ODIN-CLOUDTAK" />\n' +
       '    <takv device="Android" os="Android 14" version="5.0" />',
