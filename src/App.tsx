@@ -281,25 +281,34 @@ function App() {
   ):
     | { ok: true; updatedXml: string; insertedOffset: number }
     | { ok: false; reason: string } => {
-    if (!sourceXml.trim()) {
+    if (!sourceXml || typeof sourceXml !== 'string' || !sourceXml.trim()) {
       return { ok: false, reason: 'No XML content available to insert into.' }
     }
-
-    const tagRegex = new RegExp(`<\\s*${escapeRegExp(tag)}(\\s|>|/)`, 'i')
+    // Check for malformed XML
+    const { doc, error } = parseXmlDocument(sourceXml)
+    if (!doc) {
+      return { ok: false, reason: `Malformed XML: ${error}` }
+    }
+    // Check for <detail> element
+    const detail = doc.getElementsByTagName('detail')[0]
+    if (!detail) {
+      return { ok: false, reason: 'No <detail> section found. Add a <detail> element first.' }
+    }
+    // Check for duplicate tag
+    const tagRegex = new RegExp(`<\s*${escapeRegExp(tag)}(\s|>|/)`, 'i')
     if (tagRegex.test(sourceXml)) {
       return { ok: false, reason: `Skipped insert: <${tag}> already exists.` }
     }
-
+    // Find insertion point
     const insertion = findDetailCloseInsertion(sourceXml)
     if (!insertion) {
-      return { ok: false, reason: 'Could not find </detail>. Add a <detail> section first.' }
+      return { ok: false, reason: 'Could not find </detail> closing tag. Add a <detail> section first.' }
     }
-
+    // Clean up whitespace before insertion
     const needsLeadingNewline = insertion.index > 0 && sourceXml[insertion.index - 1] !== '\n'
     const insertText = `${needsLeadingNewline ? '\n' : ''}${insertion.childIndent}${snippet}\n`
     const updatedXml = `${sourceXml.slice(0, insertion.index)}${insertText}${sourceXml.slice(insertion.index)}`
     const insertedOffset = insertion.index + (needsLeadingNewline ? 1 : 0) + insertion.childIndent.length
-
     return { ok: true, updatedXml, insertedOffset }
   }
 
@@ -337,10 +346,14 @@ function App() {
     for (const rule of missingRules) {
       const result = insertTagIntoXml(workingXml, rule.tag, rule.suggestionSnippet)
       if (!result.ok) {
+        // If malformed XML, abort bulk insert
+        if (result.reason && result.reason.startsWith('Malformed XML')) {
+          showToast(result.reason, 'error')
+          return
+        }
         failureReason = result.reason
         continue
       }
-
       workingXml = result.updatedXml
       insertedTags.push(rule.tag)
     }
