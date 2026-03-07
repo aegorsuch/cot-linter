@@ -997,7 +997,14 @@ function App() {
 
       {showSubmitTemplateModal && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 p-4">
-          <div className="w-full max-w-3xl rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100">
+          <div
+            className="w-full max-w-3xl rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100"
+            style={{
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxSizing: 'border-box',
+            }}
+          >
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-bold uppercase tracking-wide text-slate-300">Submit Template</h3>
               <button
