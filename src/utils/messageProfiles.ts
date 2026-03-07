@@ -12,6 +12,16 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-tbl" time="2026-02-20T20:13:34.035Z" start="2026-02-20T20:13:34.035Z" stale="2026-02-20T20:13:44.035Z" how="h-e" access="Undefined"><point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" /><detail><link uid="ANDROID-4eb92ff46e615c21" type="a-f-G-U-C" relation="p-p"/><contact callsign="ODIN-ATAK-Alert"/><emergency type="911 Alert">ODIN-ATAK</emergency></detail></event>`,
   },
   {
+    id: 'atak-manual-alert-clear',
+    platform: 'ATAK',
+    label: 'Manual Alert Clear',
+    description: 'ATAK emergency alert clear/cancel payload.',
+    expectedType: 'b-a-o-can',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['emergency', 'point'],
+    sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-can" time="2026-02-20T20:13:34.720Z" start="2026-02-20T20:13:34.720Z" stale="2026-02-20T20:13:44.720Z" how="h-e" access="Undefined"><point lat="0.0" lon="0.0" hae="9999999.0" ce="9999999.0" le="9999999.0"/><detail><emergency cancel="true">ODIN-ATAK</emergency></detail></event>`,
+  },
+  {
     id: 'weartak-milstd-point',
     platform: 'WearTAK',
     label: 'MIL-STD-2525D Drop',
