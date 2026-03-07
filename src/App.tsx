@@ -238,21 +238,19 @@ function App() {
     return { line, column }
   }
 
-  const getDetailOrEventLocation = (text: string): { line: number; column: number } => {
-    const detailMatch = /<\s*detail(\s|>)/i.exec(text)
+  const insertionLocation = useMemo(() => {
+    const detailMatch = /<\s*detail(?: |>)/i.exec(xml)
     if (detailMatch && detailMatch.index >= 0) {
-      return toLineColFromOffset(text, detailMatch.index)
+      return toLineColFromOffset(xml, detailMatch.index)
     }
 
-    const eventMatch = /<\s*event(\s|>)/i.exec(text)
+    const eventMatch = /<\s*event(?: |>)/i.exec(xml)
     if (eventMatch && eventMatch.index >= 0) {
-      return toLineColFromOffset(text, eventMatch.index)
+      return toLineColFromOffset(xml, eventMatch.index)
     }
 
     return { line: 1, column: 1 }
-  }
-
-  const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])
+  }, [xml])
 
   // ...existing code...
 
@@ -295,7 +293,7 @@ function App() {
       return { ok: false, reason: 'No <detail> section found. Add a <detail> element first.' }
     }
     // Check for duplicate tag
-    const tagRegex = new RegExp(`<\s*${escapeRegExp(tag)}(\s|>|/)`, 'i')
+    const tagRegex = new RegExp(`< *${escapeRegExp(tag)}(?: |>|/)`, 'i')
     if (tagRegex.test(sourceXml)) {
       return { ok: false, reason: `Skipped insert: <${tag}> already exists.` }
     }
