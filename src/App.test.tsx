@@ -116,7 +116,10 @@ describe('App platform and profile behavior', () => {
     expect(inputTextarea.value).not.toContain('Lattice correlation')
   })
 
+  it('shows template diff preview and supports one-click XML normalizers', async () => {
+    const user = userEvent.setup()
 
+    render(<App />)
 
     await user.click(screen.getByRole('button', { name: /Copy into Input/i }))
     expect(screen.getByText(/No differences between input and selected template/i)).toBeInTheDocument()
@@ -144,6 +147,3 @@ describe('App platform and profile behavior', () => {
     expect(screen.getByText(/Template Diff Preview/i)).toBeInTheDocument()
   })
 })
-  // ...existing code...
-  // ...existing code...
-  // ...existing code...

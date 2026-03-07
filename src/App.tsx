@@ -335,6 +335,7 @@ function App() {
 
   const insertionLocation = useMemo(() => getDetailOrEventLocation(xml), [xml])
 
+  const fullTemplateDiff = useMemo(() => {
     if (!xml.trim()) {
       return []
     }
@@ -353,7 +354,6 @@ function App() {
     () => fullTemplateDiff.filter((line) => line.kind === 'removed').length,
     [fullTemplateDiff],
   )
-  // ...existing code...
 
   const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -885,6 +885,7 @@ function App() {
         </section>
       </main>
 
+      <section className="mb-8 rounded-lg border border-slate-700 bg-slate-800/50 p-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-xs uppercase text-slate-500">Template Diff Preview</h2>
           <p className="text-xs text-slate-400">
@@ -936,7 +937,6 @@ function App() {
           </>
         )}
       </section>
-      // ...existing code...
 
       <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
         <h2 className="mb-4 text-xs uppercase text-slate-500">Platform Compatibility Matrix</h2>
