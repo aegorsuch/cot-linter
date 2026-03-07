@@ -22,10 +22,7 @@ const wearTakTemplate = (): string => `<event version="2.0" uid="WEAROS_demo_uid
 </event>`;
 
 export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
-  ATAK: baseTemplate(
-    '    <contact callsign="ODIN-ATAK" />\n' +
-      '    <__group name="Dark Green" role="K9" />',
-  ),
+  ATAK: MIL_STD_2525D_DROP_TEMPLATE,
   CloudTAK: baseTemplate(
     '    <contact callsign="ODIN-CLOUDTAK" />\n' +
       '    <takv device="Android" os="Android 14" version="5.0" />',

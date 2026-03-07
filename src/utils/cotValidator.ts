@@ -10,7 +10,8 @@ export type Platform =
   | 'TAKx'
   | 'WearTAK'
   | 'WebTAK'
-  | 'WinTAK';
+  | 'WinTAK'
+  | 'MIL-STD-2525D Drop';
 
 export interface SourceLocation {
   line: number;
