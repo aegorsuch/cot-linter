@@ -121,6 +121,7 @@ describe('validateCoT semantic field checks', () => {
         (warning: { code: string, text?: string }) => warning.text?.includes('CloudTAK: Missing <usericon> tag'),
       ),
     ).toBe(true);
+    expect(result.isValid).toBe(true); // Platform tag missing is a warning, not an error
   });
 
   it('warns when point lat/lon are out of range and ce/le/hae are unrealistic', () => {
@@ -134,7 +135,7 @@ describe('validateCoT semantic field checks', () => {
 
     const result = validateCoT(xml, 'ATAK');
 
-    expect(result.isValid).toBe(true);
+    expect(result.isValid).toBe(true); // Out-of-range values are warnings, not errors
     expect(result.warnings.some((warning: { code: string, text?: string }) => warning.code === 'SEMANTIC_POINT_RANGE_WARNING')).toBe(true);
     expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('latitude'))).toBe(true);
     expect(result.warnings.some((warning: { code: string, text?: string }) => warning.text?.includes('longitude'))).toBe(true);
