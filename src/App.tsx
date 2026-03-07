@@ -42,16 +42,27 @@ const escapeXmlAttribute = (value: string): string => {
 }
 
 const parseXmlDocument = (xmlString: string): { doc: Document | null; error: string | null } => {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(xmlString, 'application/xml')
-  const parserError = doc.querySelector('parsererror')
-
-  if (parserError) {
-    const text = parserError.textContent?.trim()
-    return { doc: null, error: text || 'Unable to parse XML.' }
+  if (!xmlString || typeof xmlString !== 'string' || !xmlString.trim()) {
+    return { doc: null, error: 'No XML input provided.' }
   }
-
-  return { doc, error: null }
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(xmlString, 'application/xml')
+    const parserError = doc.querySelector('parsererror')
+    if (parserError) {
+      const text = parserError.textContent?.trim()
+      // Try to extract line/column info if available
+      let location = ''
+      const match = text && text.match(/at line (\d+), column (\d+)/i)
+      if (match) {
+        location = ` (line ${match[1]}, col ${match[2]})`
+      }
+      return { doc: null, error: (text || 'Unable to parse XML.') + location }
+    }
+    return { doc, error: null }
+  } catch (err) {
+    return { doc: null, error: 'XML parsing failed: ' + (err instanceof Error ? err.message : String(err)) }
+  }
 }
 
 const formatXmlElement = (element: Element, indentLevel: number): string => {
