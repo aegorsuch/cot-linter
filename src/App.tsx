@@ -1,3 +1,65 @@
+    // GitHub issue URL
+    const GITHUB_ISSUE_URL = 'https://github.com/aegorsuch/cot-linter/issues/new';
+
+    // Build GitHub issue body
+    const buildSubmissionTemplatePayload = () => {
+      return [
+        '# CoT Template Submission',
+        '',
+        `- Platform: ${submissionPlatform}`,
+        `- Template: ${submissionTemplate}`,
+        `- Submitted at: ${new Date().toISOString()}`,
+        `- Contact: ${submissionContact || 'Not provided'}`,
+        '',
+        '## Notes',
+        submissionNotes || 'None',
+        '',
+        '## XML',
+        '```xml',
+        submissionXml,
+        '```',
+      ].join('\n');
+    };
+
+    // Handler to submit template to GitHub
+    const handleSubmitTemplate = () => {
+      if (!submissionXml.trim()) {
+        setShowSubmitTemplateModal(false);
+        return;
+      }
+      const payload = buildSubmissionTemplatePayload();
+      const issueTitle = `[Template Submission] ${submissionPlatform} - ${submissionTemplate}`;
+      const params = new URLSearchParams({
+        title: issueTitle,
+        body: payload,
+      });
+      window.open(`${GITHUB_ISSUE_URL}?${params.toString()}`, '_blank', 'noopener,noreferrer');
+      setShowSubmitTemplateModal(false);
+    };
+  // State for submit template modal
+  const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState(false);
+  const [submissionPlatform, setSubmissionPlatform] = useState(platforms[0] || '');
+  const [submissionTemplate, setSubmissionTemplate] = useState(availableMessageTypes[0] || '');
+  const [submissionXml, setSubmissionXml] = useState('');
+  const [submissionNotes, setSubmissionNotes] = useState('');
+  const [submissionContact, setSubmissionContact] = useState('');
+
+  // Handler to open modal
+  const openSubmitTemplateModal = () => {
+    setShowSubmitTemplateModal(true);
+    setSubmissionPlatform(platforms[0] || '');
+    setSubmissionTemplate(availableMessageTypes[0] || '');
+    setSubmissionXml('');
+    setSubmissionNotes('');
+    setSubmissionContact('');
+  };
+
+  // Handler to submit (dummy, can be extended)
+  const handleSubmitTemplate = () => {
+    // Here you could send to backend or GitHub
+    setShowSubmitTemplateModal(false);
+    // Optionally clear fields
+  };
 import { useState } from 'react';
 import { PLATFORM_RULE_MATRIX, type MessageValidationProfile } from './utils/cotValidator.ts';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles.ts';
@@ -51,6 +113,95 @@ export default function App() {
         <p className="mt-2 text-sm text-slate-400">Validate CoT XML against all relevant profiles for the selected message type across platforms.</p>
       </header>
       <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="mb-4">
+          <button
+            className="rounded border border-emerald-700 px-4 py-2 text-xs text-emerald-200 bg-slate-800 hover:border-emerald-500"
+            onClick={openSubmitTemplateModal}
+          >
+            Submit New Template
+          </button>
+        </div>
+              {/* Submit Template Modal */}
+              {showSubmitTemplateModal && (
+                <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 p-4">
+                  <div className="w-full max-w-3xl rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100" style={{ maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+                    <div className="mb-3 flex items-center justify-between">
+                      <h3 className="text-sm font-bold uppercase tracking-wide text-slate-300">Submit Template</h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowSubmitTemplateModal(false)}
+                        className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:border-slate-400"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      <label className="text-xs text-slate-300">
+                        Platform
+                        <select
+                          value={submissionPlatform}
+                          onChange={e => setSubmissionPlatform(e.target.value)}
+                          className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                        >
+                          {platforms.map(platformName => (
+                            <option key={`submit-platform-${platformName}`} value={platformName}>{platformName}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-xs text-slate-300">
+                        Template
+                        <select
+                          value={submissionTemplate}
+                          onChange={e => setSubmissionTemplate(e.target.value)}
+                          className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                        >
+                          {availableMessageTypes.map(templateName => (
+                            <option key={`submission-template-option-${templateName}`} value={templateName}>{templateName}</option>
+                          ))}
+                          <option value="Other">Other</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label className="mt-3 block text-xs text-slate-300">
+                      Contact (optional)
+                      <input
+                        type="text"
+                        value={submissionContact}
+                        onChange={e => setSubmissionContact(e.target.value)}
+                        className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                        placeholder="Email, handle, or team"
+                      />
+                    </label>
+                    <label className="mt-3 block text-xs text-slate-300">
+                      Notes (optional)
+                      <textarea
+                        value={submissionNotes}
+                        onChange={e => setSubmissionNotes(e.target.value)}
+                        className="mt-1 h-10 w-full resize-none rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+                        placeholder="Notes about this template."
+                      />
+                    </label>
+                    <label className="mt-3 block text-xs text-slate-300">
+                      CoT XML
+                      <textarea
+                        value={submissionXml}
+                        onChange={e => setSubmissionXml(e.target.value)}
+                        className="mt-1 h-16 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
+                        placeholder="Paste ideal <event> XML here"
+                      />
+                    </label>
+                    <div className="mt-3 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSubmitTemplate}
+                        className="rounded border border-emerald-700/50 px-2 py-1 text-xs text-emerald-200 hover:border-emerald-500/80"
+                      >
+                        Submit
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
         <section className="flex flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4">
           <div className="mb-3 flex items-center gap-2">
             <label htmlFor="message-type-select" className="text-xs text-slate-400">Message Type</label>
