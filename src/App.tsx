@@ -173,13 +173,13 @@
                     </label>
                   </div>
                   <label className="mt-3 block text-xs text-slate-300">
-                    Contact (optional)
+                    Email or GitHub username
                     <input
                       type="text"
                       value={submissionContact}
                       onChange={e => setSubmissionContact(e.target.value)}
                       className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-slate-200"
-                      placeholder="Email, handle, or team"
+                      placeholder="Email or GitHub username"
                     />
                   </label>
                   <label className="mt-3 block text-xs text-slate-300">
