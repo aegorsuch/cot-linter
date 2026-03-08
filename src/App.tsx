@@ -121,19 +121,19 @@
 
       return (
         <div className="min-h-screen bg-slate-900 p-8 font-mono text-slate-100">
-          <header className="mb-8 border-b border-slate-700 pb-4">
-            <h1 className="text-2xl font-bold">CoT Linter (Restarted)</h1>
-            <p className="mt-2 text-sm text-slate-400">Validate CoT XML against all relevant profiles for the selected message type across platforms.</p>
+          <header className="mb-8 border-b border-slate-700 pb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">CoT Linter</h1>
+              <p className="mt-2 text-sm text-slate-400">Validate CoT XML against all relevant profiles for the selected message type across platforms.</p>
+            </div>
+            <button
+              className="rounded border border-emerald-700 px-4 py-2 text-xs text-emerald-200 bg-slate-800 hover:border-emerald-500"
+              onClick={openSubmitTemplateModal}
+            >
+              Submit New Template
+            </button>
           </header>
           <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="mb-4">
-              <button
-                className="rounded border border-emerald-700 px-4 py-2 text-xs text-emerald-200 bg-slate-800 hover:border-emerald-500"
-                onClick={openSubmitTemplateModal}
-              >
-                Submit New Template
-              </button>
-            </div>
             {/* Submit Template Modal */}
             {showSubmitTemplateModal && (
               <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 p-4">
@@ -217,7 +217,7 @@
             )}
             <section className="flex flex-col rounded-lg border border-slate-700 bg-slate-800/50 p-4">
               <div className="mb-3 flex items-center gap-2">
-                <label htmlFor="message-type-select" className="text-xs text-slate-400">Message Type</label>
+                <label htmlFor="message-type-select" className="text-xs text-slate-400">Event Type</label>
                 <select
                   id="message-type-select"
                   value={messageType}
@@ -239,7 +239,7 @@
                 className="mt-2 rounded border border-emerald-500 px-4 py-2 text-xs text-emerald-200"
                 onClick={handleValidate}
               >
-                Validate XML
+                Validate CoT
               </button>
             </section>
             <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
@@ -318,8 +318,9 @@
               </div>
             </section>
             {/* New right panel for viewing ideal template XML */}
-            <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
-              <h2 className="mb-4 text-xs uppercase text-slate-500">View Ideal Template</h2>
+            {/* Move Load Template section to bottom of Insert CoT terminal */}
+            <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-4 mt-6">
+              <h2 className="mb-4 text-xs uppercase text-slate-500">Load Template</h2>
               <div className="mb-3 flex items-center gap-2">
                 <label htmlFor="view-platform-select" className="text-xs text-slate-400">Select Platform</label>
                 <select
