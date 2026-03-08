@@ -13,7 +13,7 @@ describe('App platform and profile behavior', () => {
 
     render(<App />)
 
-    await user.selectOptions(screen.getByLabelText(/Platform/i), 'WearTAK')
+    await user.selectOptions(screen.getByLabelText('Select Platform'), 'WearTAK')
     await user.click(
       screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }),
     )
@@ -22,7 +22,7 @@ describe('App platform and profile behavior', () => {
       screen.getByRole('button', { name: /^MIL-STD-2525D Drop$/i }),
     ).toHaveClass('border-emerald-500/60')
 
-    await user.selectOptions(screen.getByLabelText(/Platform/i), 'ATAK')
+    await user.selectOptions(screen.getByLabelText('Select Platform'), 'ATAK')
 
     expect(screen.getByRole('button', { name: /^SA$/i })).toHaveClass('border-emerald-500/60')
     expect(screen.getByRole('button', { name: /MIL-STD-2525D Drop \*/i })).toBeInTheDocument()
@@ -36,7 +36,7 @@ describe('App platform and profile behavior', () => {
 
     await user.click(screen.getByRole('button', { name: /Submit Template/i }))
 
-    const profileSelect = screen.getByLabelText(/^Template$/i) as HTMLSelectElement
+    const profileSelect = screen.getByLabelText('Select Template') as HTMLSelectElement
     const optionOrder = Array.from(profileSelect.options).map((option) => option.text)
 
     expect(optionOrder).toEqual([
@@ -64,7 +64,7 @@ describe('App platform and profile behavior', () => {
 
     render(<App />)
 
-    const platformSelect = screen.getByLabelText(/Platform/i)
+    const platformSelect = screen.getByLabelText('Select Platform')
     await user.selectOptions(platformSelect, 'WearTAK')
     expect(platformSelect).toHaveValue('WearTAK')
 
