@@ -1,6 +1,16 @@
 import type { MessageValidationProfile, Platform } from './cotValidator';
 
 export const MESSAGE_PROFILES: MessageValidationProfile[] = [
+    {
+      id: 'weartak-sa',
+      platform: 'WearTAK',
+      label: 'SA',
+      description: 'WearTAK SA template for situational awareness.',
+      expectedType: 'a-f-G-U-C',
+      requiredEventAttributes: ['version', 'access'],
+      requiredDetailTags: ['remarks', 'contact', '__group', 'track'],
+      sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="WEAROS_demo_uid" type="a-f-G-U-C" time="2026-03-05T12:00:00Z" start="2026-03-05T12:00:00Z" stale="2026-03-05T12:05:00Z" how="m-g" access="Undefined">\n  <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />\n  <detail>\n    <remarks></remarks>\n    <contact endpoint="*:-1:stcp" callsign="ODIN-WEARTAK" />\n    <__group name="Dark Green" role="K9" />\n    <track speed="0.00000000" course="0.00000000" />\n  </detail>\n</event>`,
+    },
   {
     id: 'atak-manual-alert',
     platform: 'ATAK',
@@ -20,7 +30,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['emergency', 'point'],
     sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-can" time="2026-02-20T20:13:34.720Z" start="2026-02-20T20:13:34.720Z" stale="2026-02-20T20:13:44.720Z" how="h-e" access="Undefined"><point lat="0.0" lon="0.0" hae="9999999.0" ce="9999999.0" le="9999999.0"/><detail><emergency cancel="true">ODIN-ATAK</emergency></detail></event>`,
-  },
+    },
   {
     id: 'weartak-chat-send',
     platform: 'WearTAK',
@@ -28,7 +38,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     description: 'WearTAK geochat send payload with chat metadata and recipient-scoped remarks.',
     expectedType: 'b-t-f',
     requiredEventAttributes: ['version', 'access'],
-    requiredDetailTags: ['point', 'detail', '__chat', 'chatgrp', 'link', 'remarks'],
+    requiredDetailTags: ['__chat', 'chatgrp', 'link', 'remarks'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<event version='2.0' uid='d62ca8a4-9489-45ce-9e5a-4e9eb78fb732' type='b-t-f' time='2026-02-27T03:08:28.000Z' start='2026-02-27T03:08:29.490Z' stale='2027-02-27T03:08:29.490Z' how='h-g-i-g-o' access='Undefined'>\n  <point lat='41.8799922' lon='-87.6411654' hae='178.1' ce='22.8' le='1.6' />\n  <detail>\n    <__chat sender='ODIN-WEARTAK' recipient='ODIN-ATAK' message='Hello from WearTAK!'/>\n    <chatgrp name='ODIN-Group'/>\n    <link uid='WEAROS_ec3eecdeb3329263' production_time='2026-02-27T03:08:29.490Z' type='a-f-G-U-C' parent_callsign='ODIN-WEARTAK' relation='p-p'/>\n    <remarks>WearTAK geochat send</remarks>\n  </detail>\n</event>`,
   },
   {
@@ -82,8 +92,69 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     requiredEventAttributes: ['version', 'access'],
     requiredDetailTags: ['emergency'],
     sampleXml: `<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<event version='2.0' uid='3ec08f24-bbb4-41e8-86e1-c990e1052c44' type='b-a-o-can' time='2026-02-27T03:02:23.000Z' start='2026-02-27T03:02:24.696Z' stale='2026-02-27T03:17:24.696Z' how='h-e' access='Undefined'>\n  <point lat='41.879986' lon='-87.6409504' hae='178.1' ce='15.0' le='1.7' />\n  <detail>\n    <emergency cancel='true'>ODIN-WEARTAK</emergency>\n  </detail>\n</event>`,
+    },
+    {
+  
+    id: 'webtak-manual-alert',
+    platform: 'WebTAK',
+    label: 'Manual Alert',
+    description: 'WebTAK manual alert payload (generic example).',
+    expectedType: 'b-a-o-tbl',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+    sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="webtak-123" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="44.0" lon="-79.0" hae="0" ce="10" le="10" /><detail><link uid="WEBTAK-123" type="a-f-G-U-C" relation="p-p"/><contact callsign="WebTAK Alert"/><emergency type="Manual Alert">WebTAK</emergency></detail></event>`,
   },
+  {
+    id: 'cloudtak-manual-alert',
+    platform: 'CloudTAK',
+    label: 'Manual Alert',
+    description: 'CloudTAK manual alert payload (generic example).',
+    expectedType: 'b-a-o-tbl',
+    requiredEventAttributes: ['version', 'access'],
+    requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+    sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="cloudtak-123" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="45.0" lon="-80.0" hae="0" ce="10" le="10" /><detail><link uid="CLOUDTAK-123" type="a-f-G-U-C" relation="p-p"/><contact callsign="CloudTAK Alert"/><emergency type="Manual Alert">CloudTAK</emergency></detail></event>`,
+    },
   // ...existing code...
+    {
+      id: 'itak-manual-alert',
+      platform: 'iTAK',
+      label: 'Manual Alert',
+      description: 'iTAK manual alert payload (generic example).',
+      expectedType: 'b-a-o-tbl',
+      requiredEventAttributes: ['version', 'access'],
+      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="itak-123" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="40.0" lon="-75.0" hae="0" ce="10" le="10" /><detail><link uid="ITAK-123" type="a-f-G-U-C" relation="p-p"/><contact callsign="iTAK-Alert"/><emergency type="Manual Alert">iTAK</emergency></detail></event>`,
+    },
+    {
+      id: 'takaware-manual-alert',
+      platform: 'TAK Aware',
+      label: 'Manual Alert',
+      description: 'TAK Aware manual alert payload (generic example).',
+      expectedType: 'b-a-o-tbl',
+      requiredEventAttributes: ['version', 'access'],
+      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="takaware-456" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="41.0" lon="-76.0" hae="0" ce="10" le="10" /><detail><link uid="TAKAWARE-456" type="a-f-G-U-C" relation="p-p"/><contact callsign="TAK Aware Alert"/><emergency type="Manual Alert">TAK Aware</emergency></detail></event>`,
+    },
+    {
+      id: 'wintak-manual-alert',
+      platform: 'WinTAK',
+      label: 'Manual Alert',
+      description: 'WinTAK manual alert payload (generic example).',
+      expectedType: 'b-a-o-tbl',
+      requiredEventAttributes: ['version', 'access'],
+      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="wintak-789" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="42.0" lon="-77.0" hae="0" ce="10" le="10" /><detail><link uid="WINTAK-789" type="a-f-G-U-C" relation="p-p"/><contact callsign="WinTAK Alert"/><emergency type="Manual Alert">WinTAK</emergency></detail></event>`,
+    },
+    {
+      id: 'takx-manual-alert',
+      platform: 'TAKx',
+      label: 'Manual Alert',
+      description: 'TAKx manual alert payload (generic example).',
+      expectedType: 'b-a-o-tbl',
+      requiredEventAttributes: ['version', 'access'],
+      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="takx-321" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="43.0" lon="-78.0" hae="0" ce="10" le="10" /><detail><link uid="TAKX-321" type="a-f-G-U-C" relation="p-p"/><contact callsign="TAKx Alert"/><emergency type="Manual Alert">TAKx</emergency></detail></event>`,
+    },
   {
     id: 'atak-milstd-drop',
     platform: 'ATAK',
@@ -104,6 +175,5 @@ export const getAllTemplateLabels = (): string[] => {
   const uniqueSortedLabels = Array.from(new Set(MESSAGE_PROFILES.map((profile) => profile.label))).sort(
     (a, b) => a.localeCompare(b),
   );
-
-  return [...uniqueSortedLabels, 'SA'];
+  return uniqueSortedLabels;
 };
