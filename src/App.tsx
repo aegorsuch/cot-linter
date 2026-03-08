@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { MessageValidationProfile } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
+import { PROFILE_TEMPLATES } from './utils/cotTemplates';
 
 const platforms = Array.from(new Set(MESSAGE_PROFILES.map(p => p.platform)));
 const availableMessageTypes = getAllTemplateLabels();
@@ -111,6 +112,13 @@ export default function App() {
                   const isVerified = verifiedMatrix.some(v => v.platform === platform && v.label === label);
                   const isUnverifiedATAK = platform === "ATAK" && ["Chat Send", "SA", "MIL-STD-2525D Clear"].includes(label);
                   const finalVerified = isVerified && !isUnverifiedATAK;
+                  // Check if profile-specific template exists
+                  const hasProfileTemplate = PROFILE_TEMPLATES[platform] && PROFILE_TEMPLATES[platform][label];
+                  const template = hasProfileTemplate ? PROFILE_TEMPLATES[platform][label] : '';
+                  const handleLoadTemplate = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setXml(template);
+                  };
                   return (
                     <article
                       key={`profile-compare-${platform}`}
@@ -118,6 +126,15 @@ export default function App() {
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <span className={`text-sm font-bold ${finalVerified ? "text-slate-100" : "text-slate-400"}`}>{platform}</span>
+                        {hasProfileTemplate && (
+                          <button
+                            className="ml-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-1 px-3 rounded shadow focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 text-xs"
+                            onClick={handleLoadTemplate}
+                            aria-label={`Load for ${platform}`}
+                          >
+                            Load
+                          </button>
+                        )}
                       </div>
                       {finalVerified ? (
                         <>
