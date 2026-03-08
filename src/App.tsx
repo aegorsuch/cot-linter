@@ -130,7 +130,7 @@
               className="rounded border border-emerald-700 px-4 py-2 text-xs text-emerald-200 bg-slate-800 hover:border-emerald-500"
               onClick={openSubmitTemplateModal}
             >
-              Submit New Template
+              Submit Template
             </button>
           </header>
           <main className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -200,7 +200,7 @@
                       value={submissionXml}
                       onChange={e => setSubmissionXml(e.target.value)}
                       className="mt-1 h-16 w-full rounded border border-slate-600 bg-slate-950 p-2 text-xs text-slate-200"
-                      placeholder="Paste ideal <event> XML here"
+                      placeholder="Paste CoT here"
                     />
                   </label>
                   <div className="mt-3 flex items-center gap-2">
@@ -244,7 +244,7 @@
             </section>
             <section className="rounded-lg border border-slate-700 bg-slate-800/50 p-6">
               <h2 className="mb-4 text-xs uppercase text-slate-500" role="heading" aria-level={2} aria-label="Platform Compatibility Matrix">Platform Compatibility Matrix</h2>
-              <h2 className="mb-4 text-xs uppercase text-slate-500">Profile Tag Validation Across Platforms</h2>
+              
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {(validationResults.length > 0 ? validationResults : platforms.map(platform => {
                   // Default empty profile for platforms if no validation yet
@@ -268,14 +268,22 @@
                                           )) : <li className="text-slate-400">None</li>}
                                         </ul>
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <h3 className="text-sm font-bold text-slate-100">{platform}</h3>
+                      <button
+                        type="button"
+                        className="text-sm font-bold text-slate-100 hover:underline focus:outline-none"
+                        aria-label={`Load template for ${platform}`}
+                        onClick={() => {
+                          setViewPlatform(platform);
+                          setViewTemplate(profile.label);
+                        }}
+                      >
+                        {platform}
+                      </button>
                       <span className="rounded px-2 py-0.5 text-[11px] font-bold bg-emerald-900/40 text-emerald-200">
                         Missing: {missingTags.length}
                       </span>
                     </div>
-                    <p className="mb-2 text-[11px] text-slate-400">
-                      Profile: <span className="font-bold text-emerald-300">{profile.label}</span>
-                    </p>
+                    {/* Profile label removed as requested */}
                     <p className="mb-2 text-[11px] text-slate-400">Present:</p>
                     <ul className="space-y-1 text-xs" aria-label="Present tags">
                       {presentTags.length > 0 ? presentTags.map((tag: string, idx: number) => (
