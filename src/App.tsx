@@ -104,16 +104,11 @@ export default function App() {
                 .slice()
                 .sort((a, b) => a.platform.localeCompare(b.platform))
                 .map(({ platform, missingTags }) => {
-                  // Find the selected message type
-                  // Use React state for messageType
                   let label = messageType;
-                  // If validationResults is empty, fallback to default label
                   if (!label && validationResults.length === 0) {
                     label = "Manual Alert";
                   }
-                  // For ATAK, grey out Chat Send, SA, MIL-STD-2525D Clear
                   const isVerified = verifiedMatrix.some(v => v.platform === platform && v.label === label);
-                  // Special case: ATAK Chat Send, SA, MIL-STD-2525D Clear
                   const isUnverifiedATAK = platform === "ATAK" && ["Chat Send", "SA", "MIL-STD-2525D Clear"].includes(label);
                   const finalVerified = isVerified && !isUnverifiedATAK;
                   return (
@@ -123,11 +118,6 @@ export default function App() {
                     >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <span className={`text-sm font-bold ${finalVerified ? "text-slate-100" : "text-slate-400"}`}>{platform}</span>
-                        {finalVerified ? (
-                          <span className="rounded px-2 py-0.5 text-[11px] font-bold bg-emerald-900/40 text-emerald-200">
-                            Missing: {missingTags.length}
-                          </span>
-                        ) : null}
                       </div>
                       {finalVerified ? (
                         <>
