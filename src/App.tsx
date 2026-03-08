@@ -69,11 +69,10 @@
       }
 
       // Find the ideal template XML for selected platform/template
-      const idealProfile = (() => {
-        const platformKey = viewPlatform as keyof typeof MESSAGE_PROFILES;
-        const profiles = Array.isArray(MESSAGE_PROFILES[platformKey]) ? MESSAGE_PROFILES[platformKey] : [];
-        return profiles.find((p: MessageValidationProfile) => p.label === viewTemplate);
-      })();
+      const idealProfile = MESSAGE_PROFILES.find(
+        (p: MessageValidationProfile) =>
+          p.platform === viewPlatform && p.label === viewTemplate
+      );
 
       // Handler for validation
       const validateXmlAgainstProfiles = (): Array<{ platform: string; profile: MessageValidationProfile; missingTags: string[] }> => {
