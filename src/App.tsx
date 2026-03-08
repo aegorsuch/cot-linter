@@ -11,7 +11,7 @@
       // State for validation
       const [messageType, setMessageType] = useState(availableMessageTypes[0] || '');
       const [xml, setXml] = useState('');
-      const [validationResults, setValidationResults] = useState<Array<{ platform: string; profile: MessageValidationProfile; missingTags: string[]; presentTags: string[] }>>([]);
+      const [validationResults, setValidationResults] = useState<Array<{ platform: string; profile: MessageValidationProfile; missingTags: string[] }>>([]);
 
       // State for viewing ideal template
       const [viewPlatform, setViewPlatform] = useState(platforms[0] || '');
@@ -76,7 +76,7 @@
       })();
 
       // Handler for validation
-      const validateXmlAgainstProfiles = (): Array<{ platform: string; profile: MessageValidationProfile; missingTags: string[]; presentTags: string[] }> => {
+      const validateXmlAgainstProfiles = (): Array<{ platform: string; profile: MessageValidationProfile; missingTags: string[] }> => {
         // Basic validation logic: parse XML, compare tags to each profile for selected messageType
         if (!xml.trim()) return [];
 
@@ -99,17 +99,14 @@
               platform,
               profile: profile || { label: messageType, requiredTags: [], sampleXml: '' },
               missingTags: [],
-              presentTags: [],
             };
           }
-          // Compare requiredTags to parsedTags
-          const presentTags = profile.requiredTags.filter((tag: string) => parsedTags.includes(tag));
+          // Only missingTags needed
           const missingTags = profile.requiredTags.filter((tag: string) => !parsedTags.includes(tag));
           return {
             platform,
             profile,
             missingTags,
-            presentTags,
           };
         });
       };
@@ -257,16 +254,9 @@
                     missingTags: [],
                     presentTags: [],
                   };
-                })).map(({ platform, profile, missingTags, presentTags }) => (
+                })).map(({ platform, profile, missingTags }) => (
                   <article key={`profile-compare-${platform}`} className="rounded border p-3 border-slate-700 bg-slate-900/40">
-                                        <p className="mb-2 text-[11px] text-slate-400">Expected tags:</p>
-                                        <ul className="space-y-1 text-xs" aria-label="Expected tags">
-                                          {profile.requiredTags && profile.requiredTags.length > 0 ? profile.requiredTags.map((tag: string, idx: number) => (
-                                            <li key={idx} className="rounded border border-slate-700/40 bg-slate-950/25 text-slate-200 px-2 py-1">
-                                              <code className="font-bold">{tag}</code>
-                                            </li>
-                                          )) : <li className="text-slate-400">None</li>}
-                                        </ul>
+                                        {/* Expected tags removed as requested */}
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <button
                         type="button"
@@ -283,15 +273,7 @@
                         Missing: {missingTags.length}
                       </span>
                     </div>
-                    {/* Profile label removed as requested */}
-                    <p className="mb-2 text-[11px] text-slate-400">Present:</p>
-                    <ul className="space-y-1 text-xs" aria-label="Present tags">
-                      {presentTags.length > 0 ? presentTags.map((tag: string, idx: number) => (
-                        <li key={idx} className="rounded border border-emerald-700/40 bg-emerald-950/25 text-emerald-200 px-2 py-1">
-                          <code className="font-bold">{tag}</code>
-                        </li>
-                      )) : <li className="text-slate-400">None</li>}
-                    </ul>
+                    {/* Present tags removed as requested */}
                     <p className="mb-2 text-[11px] text-slate-400">Missing:</p>
                     <ul className="space-y-1 text-xs" aria-label="Missing tags">
                       {missingTags.length > 0 ? missingTags.map((tag: string, idx: number) => (
@@ -300,27 +282,7 @@
                         </li>
                       )) : <li className="text-slate-400">None</li>}
                     </ul>
-                    <div className="mt-2 flex gap-2">
-                      <button
-                        type="button"
-                        aria-label={`Bulk insert missing tags for ${platform}`}
-                        className="rounded border border-amber-700/40 bg-amber-950/25 text-amber-200 px-2 py-1 text-xs"
-                        onClick={() => navigator.clipboard.writeText(missingTags.join(','))}
-                      >
-                        Bulk insert missing tags for {platform}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Copy missing tags for ${platform}`}
-                        className="rounded border border-emerald-700/40 bg-emerald-950/25 text-emerald-200 px-2 py-1 text-xs"
-                        onClick={() => navigator.clipboard.writeText(missingTags.join(','))}
-                      >
-                        Copy missing tags for {platform}
-                      </button>
-                    </div>
-                    {missingTags.length === 0 && (
-                      <p className="result-ok">All required tags present for {platform}.</p>
-                    )}
+                    {/* Summary and copy buttons removed as requested */}
                   </article>
                 ))}
               </div>
