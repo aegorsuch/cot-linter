@@ -62,9 +62,9 @@ export default function App() {
           <span className="text-xs text-slate-400">Validate CoT XML for all platforms</span>
         </div>
       </header>
-      <main className="flex flex-1 gap-8 p-8">
+      <main className="flex flex-col md:flex-row flex-1 gap-4 md:gap-8 p-2 md:p-8">
         {/* Left Panel: Input and Validation */}
-        <section className="flex flex-col gap-4" style={{ flex: '1 1 33%', maxWidth: '33%' }}>
+        <section className="flex flex-col gap-4 w-full md:w-1/3">
           <div className="flex items-center gap-2 mb-2">
             <label htmlFor="message-type-select" className="text-xs text-slate-400">Event Type:</label>
             <select
@@ -93,9 +93,9 @@ export default function App() {
           </button>
         </section>
         {/* Right Panel: Compatibility Matrix */}
-        <section className="bg-slate-900 rounded-lg shadow-lg p-6 flex flex-col" style={{ flex: '2 1 67%', maxWidth: '67%' }}>
+        <section className="bg-slate-900 rounded-lg shadow-lg p-4 md:p-6 flex flex-col w-full md:w-2/3">
           <h2 className="mb-6 text-xs text-slate-500 font-semibold tracking-wider">Compatibility Matrix</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {(() => {
               const results = validationResults.length > 0 ? validationResults : platforms.map(platform => ({ platform, missingTags: [] }));
               // List of verified platforms
