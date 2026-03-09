@@ -58,8 +58,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <header className="w-full py-4 px-8 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold">CoT Linter</h1>
-          <span className="text-xs text-slate-400">Validate CoT XML for all platforms</span>
+
         </div>
       </header>
       <main className="flex flex-col flex-1 gap-4 p-2 md:p-8">
@@ -89,13 +88,13 @@ export default function App() {
             className="mt-2 rounded border border-emerald-500 px-4 py-2 text-xs text-emerald-200 bg-emerald-900 hover:border-emerald-400 shadow"
             onClick={handleValidate}
           >
-            Validate CoT
+            Validate CoT in Compatibility Matrix Below
           </button>
         </section>
         {/* Right Panel: Compatibility Matrix */}
         <section className="bg-slate-900 rounded-lg shadow-lg p-4 md:p-6 flex flex-col w-full">
-          <h2 className="mb-6 text-xs text-slate-500 font-semibold tracking-wider">Compatibility Matrix</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {(() => {
               const results = validationResults.length > 0 ? validationResults : platforms.map(platform => ({ platform, missingTags: [] }));
               // List of verified platforms
