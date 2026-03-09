@@ -3,7 +3,19 @@ import type { MessageValidationProfile } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
 import { PROFILE_TEMPLATES } from './utils/cotTemplates';
 
-const platforms = Array.from(new Set(MESSAGE_PROFILES.map(p => p.platform)));
+const basePlatforms = [
+  'ATAK',
+  'CloudTAK',
+  'Lattice',
+  'Maven',
+  'iTAK',
+  'TAK Aware',
+  'TAKx',
+  'WearTAK',
+  'WebTAK',
+  'WinTAK',
+];
+const platforms = basePlatforms;
 const availableMessageTypes = getAllTemplateLabels();
 
 export default function App() {
@@ -20,7 +32,7 @@ export default function App() {
       return;
     }
     // Extract tags only from <detail>
-    let detailTags: string[] = [];
+    const detailTags: string[] = [];
     try {
       const detailMatch = xml.match(/<detail[^>]*>([\s\S]*?)<\/detail>/i);
       if (detailMatch) {
@@ -31,7 +43,7 @@ export default function App() {
           detailTags.push(match[1]);
         }
       }
-    } catch (e) {
+    } catch {
       // ignore parse errors
     }
     const results = platforms.map((platform: string) => {
