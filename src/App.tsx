@@ -62,9 +62,9 @@ export default function App() {
           <span className="text-xs text-slate-400">Validate CoT XML for all platforms</span>
         </div>
       </header>
-      <main className="flex flex-col md:flex-row flex-1 gap-4 md:gap-8 p-2 md:p-8">
-        {/* Left Panel: Input and Validation */}
-        <section className="flex flex-col gap-4 w-full md:w-1/3">
+      <main className="flex flex-col flex-1 gap-4 p-2 md:p-8">
+        {/* Input and Validation */}
+        <section className="flex flex-col gap-4 w-full">
           <div className="flex items-center gap-2 mb-2">
             <label htmlFor="message-type-select" className="text-xs text-slate-400">Event Type:</label>
             <select
@@ -93,7 +93,7 @@ export default function App() {
           </button>
         </section>
         {/* Right Panel: Compatibility Matrix */}
-        <section className="bg-slate-900 rounded-lg shadow-lg p-4 md:p-6 flex flex-col w-full md:w-2/3">
+        <section className="bg-slate-900 rounded-lg shadow-lg p-4 md:p-6 flex flex-col w-full">
           <h2 className="mb-6 text-xs text-slate-500 font-semibold tracking-wider">Compatibility Matrix</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
             {(() => {
@@ -134,13 +134,13 @@ export default function App() {
                   return (
                     <article
                       key={`profile-compare-${platform}`}
-                      className={`rounded-lg border p-4 shadow ${finalVerified ? "border-slate-700 bg-slate-900/40" : "border-slate-800 bg-slate-800/60 opacity-60"}`}
+                      className={`w-full rounded-lg border p-4 shadow ${finalVerified ? "border-slate-700 bg-slate-900/40" : "border-slate-800 bg-slate-800/60 opacity-60"}`}
                     >
-                      <div className="mb-2 flex items-center justify-between gap-2">
+                      <div className="mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                         <span className={`text-sm font-bold ${finalVerified ? "text-slate-100" : "text-slate-400"}`}>{platform}</span>
                         {hasProfileTemplate && (
                           <button
-                            className="ml-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-1 px-3 rounded shadow focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 text-xs"
+                            className="mt-2 sm:mt-0 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-1 px-4 sm:px-3 rounded shadow focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 text-xs w-full sm:w-auto"
                             onClick={handleLoadTemplate}
                             aria-label={`Load for ${platform}`}
                           >
