@@ -143,11 +143,19 @@ The copied missing-tags report includes:
 
 If clipboard APIs are unavailable in the browser context, the app uses a fallback copy mechanism.
 
-## Known Limitations
+
+## Known Issues & Limitations
 
 - Validation is rule-based and not a full external XSD validation pipeline.
-- Platform checks currently focus on presence of key detail tags, not full semantic correctness of each tag payload.
+- Platform checks focus on presence of key detail tags, not full semantic correctness of each tag payload.
+- No end-to-end (E2E) tests are included; only unit and integration tests are present.
+- UI does not currently support accessibility features (e.g., screen reader labels, keyboard navigation for all controls).
+- Error handling for malformed XML is basic; some edge cases may not show user-friendly messages.
+- Lattice and Maven always appear in the compatibility matrix, even if no profiles exist for them.
+- The app does not persist user input or validation state between reloads.
+- Only a subset of platforms and profiles are supported; others may require manual extension.
 - Empty input intentionally shows an empty comparison baseline across platforms.
+
 
 ## License
 
