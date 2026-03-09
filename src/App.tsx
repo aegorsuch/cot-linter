@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { MessageValidationProfile } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
 import { PROFILE_TEMPLATES } from './utils/cotTemplates';
@@ -19,6 +19,7 @@ const platforms = basePlatforms;
 const availableMessageTypes = getAllTemplateLabels();
 
 export default function App() {
+  const xmlInputRef = useRef<HTMLTextAreaElement>(null);
   const [messageType, setMessageType] = useState<string>(availableMessageTypes[0] || '');
   const [xml, setXml] = useState<string>('');
   const [validationResults, setValidationResults] = useState<Array<{ platform: string; missingTags: string[] }>>([]);
@@ -54,6 +55,23 @@ export default function App() {
     setValidationResults(results);
   }
 
+  // Helper: focus and select tag in XML
+  function jumpToTag(tag: string) {
+    if (!xmlInputRef.current) return;
+    const xmlText = xmlInputRef.current.value;
+    // Find the first occurrence of <tag or <tag>
+    const regex = new RegExp(`<${tag}([ >])`, 'i');
+    const match = regex.exec(xmlText);
+    if (match) {
+      const start = match.index;
+      const end = start + tag.length + 1;
+      xmlInputRef.current.focus();
+      xmlInputRef.current.setSelectionRange(start, end);
+    } else {
+      xmlInputRef.current.focus();
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <header className="w-full py-4 px-8 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
@@ -87,6 +105,7 @@ export default function App() {
             </select>
           </div>
           <textarea
+            ref={xmlInputRef}
             className="w-full h-48 rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm"
             placeholder="Paste <event>...</event> XML here..."
             value={xml}
@@ -160,7 +179,12 @@ export default function App() {
                           <p className="mb-2 text-[11px] text-slate-400">Missing:</p>
                           <ul className="space-y-1 text-xs" aria-label="Missing tags">
                             {missingTags.length > 0 ? missingTags.map((tag: string, idx: number) => (
-                              <li key={idx} className="rounded border border-amber-700/40 bg-amber-950/25 text-amber-200 px-2 py-1">
+                              <li
+                                key={idx}
+                                className="rounded border border-amber-700/40 bg-amber-950/25 text-amber-200 px-2 py-1 cursor-pointer hover:bg-amber-900/60"
+                                onClick={() => jumpToTag(tag)}
+                                title={`Jump to <${tag}> in XML`}
+                              >
                                 <code className="font-bold">{tag}</code>
                               </li>
                             )) : <li className="text-slate-400">None</li>}
