@@ -58,7 +58,15 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <header className="w-full py-4 px-8 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
         <div className="flex items-center gap-4">
-
+          <a
+            href="https://github.com/aegorsuch/cot-linter"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-emerald-300 hover:text-emerald-400 underline"
+            aria-label="View source on GitHub"
+          >
+            View Source on GitHub
+          </a>
         </div>
       </header>
       <main className="flex flex-col flex-1 gap-4 p-2 md:p-8">

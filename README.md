@@ -1,4 +1,7 @@
+
 # CoT-Linter
+
+[![View Source on GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&style=flat-square)](https://github.com/aegorsuch/cot-linter)
 
 A web-based Cursor-on-Target (CoT) XML linter for fast schema checks, platform compatibility checks, and profile-specific validation.
 
@@ -49,13 +52,14 @@ Profile checks (when selected) can also enforce:
 
 ## Message Profiles
 
-The app includes profile-based validation for WearTAK message types, including:
+The app includes profile-based validation for message types, including:
 
+- Chat Send
+- SA
 - MIL-STD-2525D Point Drop
 - MIL-STD-2525D Point Clear
 - Manual Alert
 - Manual Alert Clear
-- Chat Send
 
 Selecting a profile updates validation requirements and can load a sample message for that profile.
 
@@ -112,14 +116,12 @@ npm run lint
 
 ## Usage
 
-1. Choose a platform from the rule matrix.
-2. Optionally choose a message profile.
-3. Paste CoT XML into the input area, or load a starter/profile sample.
-4. Review hard fails and warnings in the status panel.
-5. Click any diagnostic item to jump to the related XML location.
-6. Use the cross-platform section to compare missing tags.
-7. Copy a missing-tags report in JSON or Markdown format for sharing.
-8. Use `Submit Template` to open the submission modal, enter metadata and XML, then click `Submit GitHub Issue` (the modal auto-closes after launch).
+1. **Select Event Type:** Use the "Event Type" dropdown to choose the message profile you want to validate against.
+2. **Paste or Load XML:** Paste your CoT `<event>...</event>` XML into the input area, or use the "Load" button in the compatibility matrix to insert a starter template for a specific platform/profile.
+3. **Validate:** Click "Validate CoT in Compatibility Matrix Below" to run validation.
+4. **Review Results:** The compatibility matrix below will show missing tags and template status for each platform.
+5. **Submit Template:** If a template is missing for a platform, use the "Submit Template" button to open the submission modal, fill in details, and submit your XML for review.
+6. **Iterate:** Edit your XML and re-validate as needed. The UI updates results in real time.
 
 ## Project Structure
 
