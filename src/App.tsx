@@ -64,7 +64,7 @@ export default function App() {
       </header>
       <main className="flex flex-1 gap-8 p-8">
         {/* Left Panel: Input and Validation */}
-        <section className="w-full max-w-md flex flex-col gap-4">
+        <section className="flex flex-col gap-4" style={{ flex: '1 1 33%', maxWidth: '33%' }}>
           <div className="flex items-center gap-2 mb-2">
             <label htmlFor="message-type-select" className="text-xs text-slate-400">Event Type:</label>
             <select
@@ -93,9 +93,9 @@ export default function App() {
           </button>
         </section>
         {/* Right Panel: Compatibility Matrix */}
-        <section className="flex-1 bg-slate-900 rounded-lg shadow-lg p-6 flex flex-col">
+        <section className="bg-slate-900 rounded-lg shadow-lg p-6 flex flex-col" style={{ flex: '2 1 67%', maxWidth: '67%' }}>
           <h2 className="mb-6 text-xs text-slate-500 font-semibold tracking-wider">Compatibility Matrix</h2>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {(() => {
               const results = validationResults.length > 0 ? validationResults : platforms.map(platform => ({ platform, missingTags: [] }));
               // List of verified platforms
@@ -161,7 +161,7 @@ export default function App() {
                         </>
                       ) : (
                         <div className="mt-2 flex flex-col items-start">
-                          <p className="text-xs text-slate-400 mb-2">No verified template available.</p>
+                          <p className="text-xs text-slate-400 mb-2">No template available.</p>
                           <button
                             className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-1 px-3 rounded shadow focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 text-xs"
                             onClick={openSubmitTemplateModal}
