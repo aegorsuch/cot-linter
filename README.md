@@ -73,9 +73,6 @@ Selecting a profile updates validation requirements and can load a sample messag
 - Template submission modal with a single `Submit GitHub Issue` action and auto-close on submit.
 - Diagnostic click-to-jump that focuses the input and highlights the relevant line.
 - Cross-platform missing-tag comparison cards.
-- Copy report buttons:
-  - `Copy Missing Tags JSON`
-  - `Copy Missing Tags Markdown`
 
 ## Getting Started
 
@@ -136,16 +133,6 @@ src/
     messageProfiles.ts       Profile definitions and sample messages
 ```
 
-## Report Output Notes
-
-The copied missing-tags report includes:
-
-- Generation timestamp
-- Selected platform and profile
-- Aggregate summary counts
-- Per-platform missing tags with descriptions and suggestion snippets
-
-If clipboard APIs are unavailable in the browser context, the app uses a fallback copy mechanism.
 
 
 ## Known Issues & Limitations
