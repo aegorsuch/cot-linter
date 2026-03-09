@@ -14,7 +14,7 @@ This project is built with React, TypeScript, and Vite, and is designed to help 
 - Flags non-blocking platform compatibility warnings for missing platform tags.
 - Supports profile-driven validation for specific message styles.
 - Compares missing tags across all supported platforms side-by-side.
-- Copies missing tag comparison reports as JSON or Markdown for sharing.
+
 
 ## Supported Platforms
 
@@ -26,6 +26,8 @@ This project is built with React, TypeScript, and Vite, and is designed to help 
 - WearTAK
 - WebTAK
 - WinTAK
+- Lattice
+- Maven
 
 Each platform has a rule matrix of recommended detail tags (for example `contact`, `__group`, `takv`, `usericon`, `track`, `remarks`).
 
