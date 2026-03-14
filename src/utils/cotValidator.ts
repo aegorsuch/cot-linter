@@ -529,6 +529,12 @@ const validateTimestampSanity = (
   }
 };
 
+/**
+ * Validates a CoT XML string for required schema and platform-specific tags.
+ * @param xmlString The CoT XML string to validate.
+ * @param platform The platform name (e.g., 'ATAK', 'CloudTAK').
+ * @returns ValidationResult with isValid, errors, and warnings arrays.
+ */
 export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
   const result: ValidationResult = { isValid: true, errors: [], warnings: [] };
 
@@ -603,6 +609,13 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
   }
 };
 
+/**
+ * Validates a CoT XML string with additional profile-specific requirements.
+ * @param xmlString The CoT XML string to validate.
+ * @param platform The platform name.
+ * @param profile The message profile object.
+ * @returns ValidationResult with isValid, errors, and warnings arrays.
+ */
 export const validateCoTWithProfile = (
   xmlString: string,
   platform: Platform,
@@ -679,6 +692,11 @@ export const validateCoTWithProfile = (
   }
 };
 
+/**
+ * Checks which recommended tags are missing for each supported platform.
+ * @param xmlString The CoT XML string to check.
+ * @returns CrossPlatformMissingTagsResult with parseError and reports per platform.
+ */
 export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformMissingTagsResult => {
   const emptyReports = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).map((platform) => ({
     platform,

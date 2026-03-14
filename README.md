@@ -115,12 +115,87 @@ npm run lint
 
 ## Usage
 
-1. **Select Event Type:** Use the "Event Type" dropdown to choose the message profile you want to validate against.
-2. **Paste or Load XML:** Paste your CoT `<event>...</event>` XML into the input area, or use the "Load" button in the compatibility matrix to insert a starter template for a specific platform/profile.
-3. **Validate:** Click "Validate CoT in Compatibility Matrix Below" to run validation.
-4. **Review Results:** The compatibility matrix below will show missing tags and template status for each platform.
-5. **Submit Template:** If a template is missing for a platform, use the "Submit Template" button to open the submission modal, fill in details, and submit your XML for review.
-6. **Iterate:** Edit your XML and re-validate as needed. The UI updates results in real time.
+
+## Example: Validating a CoT XML Event
+
+**Sample XML:**
+
+```xml
+<event uid="demo-uid" type="a-f-G-U-C" time="2026-03-05T12:00:00Z" start="2026-03-05T12:00:00Z" stale="2026-03-05T12:05:00Z" how="m-g">
+  <point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" />
+  <detail>
+    <contact callsign="ODIN-ATAK" />
+    <__group name="Dark Green" role="K9" />
+  </detail>
+</event>
+```
+
+**Expected Output (ATAK platform):**
+
+```
+{
+  isValid: true,
+  errors: [],
+  warnings: []
+}
+```
+
+**Example with a missing <contact> tag:**
+
+```xml
+<event uid="demo-uid" type="a-f-G-U-C" time="2026-03-05T12:00:00Z" start="2026-03-05T12:00:00Z" stale="2026-03-05T12:05:00Z" how="m-g">
+  <point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" />
+  <detail>
+    <__group name="Dark Green" role="K9" />
+  </detail>
+</event>
+```
+
+**Expected Output (ATAK platform):**
+
+```
+{
+  isValid: true,
+  errors: [],
+  warnings: [
+    {
+      code: 'PLATFORM_TAG_MISSING',
+      text: 'ATAK: Missing <contact> tag. Callsign/label rendering in map views.',
+      ...
+    }
+  ]
+}
+```
+
+---
+
+## API Reference
+
+### validateCoT(xml: string, platform: Platform): ValidationResult
+
+Validates a CoT XML string for required schema and platform-specific tags.
+
+- **xml**: The CoT XML string to validate.
+- **platform**: The platform name (e.g., 'ATAK', 'CloudTAK').
+- **Returns:** `{ isValid: boolean, errors: ValidationMessage[], warnings: ValidationMessage[] }`
+
+### validateCoTWithProfile(xml: string, platform: Platform, profile: MessageValidationProfile): ValidationResult
+
+Validates a CoT XML string with additional profile-specific requirements.
+
+- **xml**: The CoT XML string to validate.
+- **platform**: The platform name.
+- **profile**: The message profile object.
+- **Returns:** `{ isValid: boolean, errors: ValidationMessage[], warnings: ValidationMessage[] }`
+
+### getMissingTagsForAllPlatforms(xml: string): CrossPlatformMissingTagsResult
+
+Checks which recommended tags are missing for each supported platform.
+
+- **xml**: The CoT XML string to check.
+- **Returns:** `{ parseError: ValidationMessage | null, reports: PlatformMissingTagsReport[] }`
+
+See code comments in `src/utils/cotValidator.ts` for detailed type definitions.
 
 ## Project Structure
 
