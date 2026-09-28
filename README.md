@@ -1,11 +1,28 @@
 
 # CoT-Linter
 
-[![View Source on GitHub](https://img.shields.io/badge/GitHub-Repository-181717?logo=github&style=flat-square)](https://github.com/aegorsuch/cot-linter)
+[![View Source on TAK Forge](https://img.shields.io/badge/TAK%20Forge-Canonical%20Repository-181717?style=flat-square)](https://git.tak.gov/aegorsuch/cot-linter)
 
 A web-based Cursor-on-Target (CoT) XML linter for fast schema checks, platform compatibility checks, and profile-specific validation.
 
 This project is built with React, TypeScript, and Vite, and is designed to help operators and developers quickly identify CoT payload issues before deployment.
+
+## Project Information
+
+### Rights
+
+Unlimited Rights granted to TAK Product Center.
+
+### Point of Contact
+
+Alex Gorsuch on chat.tak.gov or Signal.
+
+### Repositories
+
+The TAK Forge repository is canonical. GitHub is a secondary repository:
+
+- [TAK Forge (canonical)](https://git.tak.gov/aegorsuch/cot-linter)
+- [GitHub (secondary)](https://github.com/aegorsuch/cot-linter)
 
 ## What It Does
 
