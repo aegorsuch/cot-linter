@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { validateCoTWithProfile } from './utils/cotValidator';
 import type { Platform, ValidationResult } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
@@ -26,12 +26,41 @@ export default function App() {
   const [targetPlatform, setTargetPlatform] = useState<Platform>('ATAK');
   const [targetResult, setTargetResult] = useState<ValidationResult | null>(null);
   const [sourceResult, setSourceResult] = useState<ValidationResult | null>(null);
+  const [validateTimestamps, setValidateTimestamps] = useState(false);
+  const [suggestionSaved, setSuggestionSaved] = useState(false);
+  const closeModalButtonRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const selectedPublicSample = PUBLIC_SAMPLES.find(sample => sample.platform === samplePlatform && sample.label === messageType);
   const selectedProjectSample = samplePlatform === 'WearTAK' ? PROFILE_TEMPLATES.WearTAK[messageType] : undefined;
   const selectedExampleXml = selectedPublicSample?.xml ?? selectedProjectSample;
   const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState<boolean>(false);
-  const openSubmitTemplateModal = () => setShowSubmitTemplateModal(true);
+  const openSubmitTemplateModal = () => {
+    setSuggestionSaved(false);
+    setShowSubmitTemplateModal(true);
+  };
   const closeSubmitTemplateModal = () => setShowSubmitTemplateModal(false);
+
+  useEffect(() => {
+    if (!showSubmitTemplateModal) return;
+    closeModalButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeSubmitTemplateModal();
+      if (event.key === 'Tab' && modalRef.current) {
+        const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>('button, input, select, textarea'));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showSubmitTemplateModal]);
 
   function handleValidate() {
     if (!xml.trim()) {
@@ -41,8 +70,9 @@ export default function App() {
     }
     const sourceProfile = MESSAGE_PROFILES.find(profile => profile.platform === samplePlatform && profile.label === messageType) ?? null;
     const targetProfile = MESSAGE_PROFILES.find(profile => profile.platform === targetPlatform && profile.label === messageType) ?? null;
-    setSourceResult(validateCoTWithProfile(xml, samplePlatform, sourceProfile));
-    setTargetResult(validateCoTWithProfile(xml, targetPlatform, targetProfile));
+    const options = { validateTimestamps };
+    setSourceResult(validateCoTWithProfile(xml, samplePlatform, sourceProfile, options));
+    setTargetResult(validateCoTWithProfile(xml, targetPlatform, targetProfile, options));
   }
 
   return (
@@ -113,6 +143,15 @@ export default function App() {
             >
               {platforms.map(platform => <option key={platform} value={platform}>{platform}</option>)}
             </select>
+            <label className="ml-2 flex items-center gap-2 text-xs text-slate-300">
+              <input
+                type="checkbox"
+                checked={validateTimestamps}
+                onChange={event => { setValidateTimestamps(event.target.checked); setTargetResult(null); setSourceResult(null); }}
+                className="h-4 w-4 accent-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
+              />
+              Validate timestamps
+            </label>
           </div>
           <textarea
             className="w-full h-48 rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm"
@@ -130,6 +169,7 @@ export default function App() {
             <section aria-label="Target validation" className="border-t border-slate-700 pt-4 text-sm">
               <h2 className="font-semibold">{targetPlatform} / {messageType}</h2>
               <p className="text-xs text-slate-400">XML checks do not establish that the target client will display or clear this event.</p>
+              <p className="mt-1 text-xs text-slate-500">Platform tag results are heuristic recommendations based on known rule data.</p>
               {messageType.endsWith('Clear') && <p className="mt-2 text-xs text-slate-400">A single clear event cannot establish its relationship to the original point or the target's receive behavior.</p>}
               {sourceResult && sourceResult.errors.some(error => error.code.startsWith('PROFILE_')) && (
                 <ul className="mt-2 space-y-1" aria-label="Source profile errors">
@@ -140,10 +180,10 @@ export default function App() {
                 <p className="mt-2 text-amber-200">No {targetPlatform} {messageType} behavior profile. Target display/clear compatibility is unverified.</p>
               )}
               <ul className="mt-2 space-y-1" aria-label="Validation errors">
-                {targetResult.errors.map((error, index) => <li key={index} className="text-rose-300">{error.text} (line {error.location.line}, column {error.location.column})</li>)}
+                {targetResult.errors.map((error, index) => <li key={index} className="text-rose-300">{error.text} (line {error.location.line}, column {error.location.column}){error.suggestion && <span className="block text-xs text-slate-400">Suggestion: {error.suggestion}</span>}</li>)}
               </ul>
               <ul className="mt-2 space-y-1" aria-label="Validation warnings">
-                {targetResult.warnings.filter(warning => messageType === 'SA' || warning.code !== 'PLATFORM_TAG_MISSING').map((warning, index) => <li key={index} className="text-amber-200">{warning.text} (line {warning.location.line}, column {warning.location.column})</li>)}
+                {targetResult.warnings.filter(warning => messageType === 'SA' || warning.code !== 'PLATFORM_TAG_MISSING').map((warning, index) => <li key={index} className="text-amber-200">{warning.text} (line {warning.location.line}, column {warning.location.column}){warning.suggestion && <span className="block text-xs text-slate-400">Suggestion: {warning.suggestion}</span>}</li>)}
               </ul>
               {targetResult.errors.length === 0 && !sourceResult?.errors.some(error => error.code.startsWith('PROFILE_')) && <p className="mt-2 text-emerald-300">No structural or known profile errors found. Client behavior is not confirmed.</p>}
             </section>
@@ -153,25 +193,25 @@ export default function App() {
               className="self-start rounded bg-indigo-700 px-3 py-1 text-xs text-white hover:bg-indigo-800"
               onClick={openSubmitTemplateModal}
             >
-              Submit Template
+              Suggest Template
             </button>
           )}
         </section>
       </main>
       {/* Submit Template Modal */}
         {showSubmitTemplateModal && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 p-4">
-            <div className="w-full max-w-3xl rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100" style={{ maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/70 p-4" role="presentation">
+            <div ref={modalRef} className="w-full max-w-3xl rounded-lg border border-slate-700 bg-slate-900 p-4 text-slate-100" style={{ maxHeight: '90vh', overflowY: 'auto', boxSizing: 'border-box' }} role="dialog" aria-modal="true" aria-labelledby="suggest-template-title">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">Submit Template</h2>
-                <button className="text-xs text-slate-400 hover:text-emerald-400" onClick={closeSubmitTemplateModal}>Close</button>
+                <h2 id="suggest-template-title" className="text-lg font-bold">Suggest Template</h2>
+                <button ref={closeModalButtonRef} aria-label="Close suggest template dialog" className="rounded px-2 py-1 text-xs text-slate-400 hover:text-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400" onClick={closeSubmitTemplateModal}>Close</button>
               </div>
-              <p className="mb-4 text-xs text-slate-400">Paste your ideal CoT XML template for any platform and event type. This will be submitted for review.</p>
-              <form className="flex flex-col gap-4">
+              <p className="mb-4 text-xs text-slate-400">Save a template suggestion locally for this browser session. No network submission is made.</p>
+              <form className="flex flex-col gap-4" onSubmit={event => { event.preventDefault(); localStorage.setItem('cot-linter-template-suggestion', JSON.stringify(Object.fromEntries(new FormData(event.currentTarget).entries()))); setSuggestionSaved(true); }}>
                 <div className="flex gap-4">
                   <div className="flex flex-col flex-1">
                     <label htmlFor="submit-platform" className="text-xs text-slate-400 mb-1">Platform</label>
-                    <select id="submit-platform" className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100" style={{ minWidth: '120px' }}>
+                    <select id="submit-platform" name="platform" className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100" style={{ minWidth: '120px' }}>
                       {platforms.map(platform => (
                         <option key={platform} value={platform}>{platform}</option>
                       ))}
@@ -179,7 +219,7 @@ export default function App() {
                   </div>
                   <div className="flex flex-col flex-1">
                     <label htmlFor="submit-event-type" className="text-xs text-slate-400 mb-1">Event Type</label>
-                    <select id="submit-event-type" className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100" style={{ minWidth: '120px' }}>
+                    <select id="submit-event-type" name="eventType" className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100" style={{ minWidth: '120px' }}>
                       {availableMessageTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
@@ -187,20 +227,16 @@ export default function App() {
                   </div>
                   <div className="flex flex-col flex-1">
                     <label htmlFor="submit-email" className="text-xs text-slate-400 mb-1">Email (optional)</label>
-                    <input id="submit-email" type="email" className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100" placeholder="your@email.com" />
+                    <input id="submit-email" name="email" type="email" className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100" placeholder="your@email.com" />
                   </div>
                 </div>
                 <textarea
                   className="w-full h-48 rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm mb-4"
+                  name="xml"
                   placeholder="Paste ideal <event>...</event> XML here..."
                 />
-                <button
-                  className="rounded border border-emerald-700 px-4 py-2 text-xs text-emerald-200 bg-slate-800 hover:border-emerald-500"
-                  onClick={closeSubmitTemplateModal}
-                  type="button"
-                >
-                  Submit
-                </button>
+                <button className="rounded border border-emerald-700 px-4 py-2 text-xs text-emerald-200 bg-slate-800 hover:border-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400" type="submit">Save suggestion</button>
+                {suggestionSaved && <p role="status" className="text-xs text-emerald-300">Suggestion saved locally for this session.</p>}
               </form>
             </div>
           </div>

@@ -35,6 +35,10 @@ export interface ValidationResult {
   warnings: ValidationMessage[];
 }
 
+export interface ValidationOptions {
+  validateTimestamps?: boolean;
+}
+
 export interface PlatformRule {
   tag: string;
   description: string;
@@ -529,13 +533,121 @@ const validateTimestampSanity = (
   }
 };
 
+const validateEventSemantics = (
+  xmlString: string,
+  event: ParsedCoT['event'],
+  result: ValidationResult,
+): void => {
+  if (!event) {
+    return;
+  }
+
+  const eventType = event[toAttr('type')];
+  if (typeof eventType !== 'string' || !/^[a-z](?:-[A-Za-z0-9]+)+$/.test(eventType)) {
+    pushError(
+      result,
+      'EVENT_TYPE_INVALID',
+      `Semantic violation: event type '${String(eventType ?? '') || 'undefined'}' is not a valid CoT type.` ,
+      findAttributeLocation(xmlString, 'event', 'type'),
+      'high',
+      'high',
+      '<event type="a-f-G-U-C">',
+    );
+  }
+
+  const point = event.point;
+  if (!point || typeof point !== 'object') {
+    return;
+  }
+
+  const numericAttributes = ['lat', 'lon', 'hae', 'ce', 'le'];
+  for (const attribute of numericAttributes) {
+    const value = point[toAttr(attribute)];
+    if (typeof value !== 'string' || value.trim() === '' || !Number.isFinite(Number(value))) {
+      pushError(
+        result,
+        'POINT_ATTRIBUTE_NOT_NUMERIC',
+        `Semantic violation: <point> attribute '${attribute}' must be numeric.`,
+        findAttributeLocation(xmlString, 'point', attribute),
+        'high',
+        'high',
+        `<point ${attribute}="0">`,
+      );
+    }
+  }
+
+  const latitude = Number(point[toAttr('lat')]);
+  const longitude = Number(point[toAttr('lon')]);
+  if (Number.isFinite(latitude) && (latitude < -90 || latitude > 90)) {
+    pushError(result, 'POINT_LATITUDE_OUT_OF_RANGE', 'Semantic violation: latitude must be between -90 and 90.', findAttributeLocation(xmlString, 'point', 'lat'), 'high', 'high', 'Set latitude to a value between -90 and 90.');
+  }
+  if (Number.isFinite(longitude) && (longitude < -180 || longitude > 180)) {
+    pushError(result, 'POINT_LONGITUDE_OUT_OF_RANGE', 'Semantic violation: longitude must be between -180 and 180.', findAttributeLocation(xmlString, 'point', 'lon'), 'high', 'high', 'Set longitude to a value between -180 and 180.');
+  }
+
+  for (const attribute of ['ce', 'le']) {
+    const value = Number(point[toAttr(attribute)]);
+    if (Number.isFinite(value) && value < 0) {
+      pushError(result, 'POINT_ERROR_VALUE_NEGATIVE', `Semantic violation: '${attribute}' cannot be negative.`, findAttributeLocation(xmlString, 'point', attribute), 'medium', 'high', `Set ${attribute} to zero or a positive value.`);
+    }
+  }
+};
+
+const validateDuplicateElements = (xmlString: string, value: unknown, result: ValidationResult, parentTag = 'event'): void => {
+  if (!value || typeof value !== 'object') {
+    return;
+  }
+
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    if (key.startsWith('@_')) {
+      continue;
+    }
+    if (Array.isArray(child)) {
+      pushError(
+        result,
+        'DUPLICATE_ELEMENT',
+        `Schema violation: <${parentTag}> contains duplicate <${key}> elements.`,
+        findTagLocation(xmlString, key),
+        'high',
+        'high',
+        'Keep only one instance of this element unless the profile explicitly allows repeats.',
+      );
+      child.forEach(item => validateDuplicateElements(xmlString, item, result, key));
+    } else {
+      validateDuplicateElements(xmlString, child, result, key);
+    }
+  }
+};
+
+const validateEmptyAttributes = (xmlString: string, result: ValidationResult): void => {
+  const tagRegex = /<([A-Za-z_][\w:.-]*)(?:\s[^>]*)?>/g;
+  const attributeRegex = /([A-Za-z_][\w:.-]*)\s*=\s*(["'])\2/g;
+  let tagMatch: RegExpExecArray | null;
+  while ((tagMatch = tagRegex.exec(xmlString)) !== null) {
+    let attributeMatch: RegExpExecArray | null;
+    while ((attributeMatch = attributeRegex.exec(tagMatch[0])) !== null) {
+      const attribute = attributeMatch[1];
+      pushWarning(
+        result,
+        'EMPTY_ATTRIBUTE_WARNING',
+        `Suspicious empty attribute '${attribute}' on <${tagMatch[1]}>.`,
+        toLineCol(xmlString, tagMatch.index + attributeMatch.index),
+        'low',
+        'medium',
+        'Provide a value or remove the attribute if it is not required.',
+      );
+    }
+    attributeRegex.lastIndex = 0;
+  }
+};
+
 /**
  * Validates a CoT XML string for required schema and platform-specific tags.
  * @param xmlString The CoT XML string to validate.
  * @param platform The platform name (e.g., 'ATAK', 'CloudTAK').
  * @returns ValidationResult with isValid, errors, and warnings arrays.
  */
-export const validateCoT = (xmlString: string, platform: Platform): ValidationResult => {
+export const validateCoT = (xmlString: string, platform: Platform, options: ValidationOptions = {}): ValidationResult => {
   const result: ValidationResult = { isValid: true, errors: [], warnings: [] };
 
   const { parsed, parseError } = parseXmlForValidation(xmlString);
@@ -562,7 +674,12 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
     const event = parsed.event;
 
     validateSchemaBackedStructure(xmlString, event, result);
-    validateTimestampSanity(xmlString, event, result);
+    validateEventSemantics(xmlString, event, result);
+    validateDuplicateElements(xmlString, event, result);
+    validateEmptyAttributes(xmlString, result);
+    if (options.validateTimestamps !== false) {
+      validateTimestampSanity(xmlString, event, result);
+    }
 
     const detail = (event?.detail ?? {}) as Record<string, unknown>;
     const rules = PLATFORM_RULE_MATRIX[platform];
@@ -580,7 +697,7 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
         pushWarning(
           result,
           'PLATFORM_TAG_MISSING',
-          `${platform}: Missing <${rule.tag}> tag. ${rule.description}`,
+          `${platform}: Heuristic recommendation: missing <${rule.tag}> tag. ${rule.description}`,
           detailLocation,
           'medium',
           'medium',
@@ -620,8 +737,9 @@ export const validateCoTWithProfile = (
   xmlString: string,
   platform: Platform,
   profile: MessageValidationProfile | null,
+  options: ValidationOptions = {},
 ): ValidationResult => {
-  const result = validateCoT(xmlString, platform);
+  const result = validateCoT(xmlString, platform, options);
 
   if (!profile || profile.platform !== platform) {
     return result;

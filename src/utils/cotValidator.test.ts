@@ -63,3 +63,35 @@ describe('validateCoT timestamp sanity checks', () => {
     expect(result.warnings.some((warning) => warning.code.startsWith('TIMESTAMP_'))).toBe(false);
   });
 });
+
+describe('validateCoT semantic checks', () => {
+  it('rejects invalid coordinates and event types', () => {
+    const xml = buildXml('2099-03-05T12:00:00Z', '2099-03-05T12:00:00Z', '2099-03-05T12:05:00Z')
+      .replace('type="a-f-G-U-C"', 'type="invalid"')
+      .replace('lat="41.880025"', 'lat="91"')
+      .replace('lon="-87.641793"', 'lon="not-a-number"');
+
+    const result = validateCoT(xml, 'ATAK');
+
+    expect(result.errors.some(error => error.code === 'EVENT_TYPE_INVALID')).toBe(true);
+    expect(result.errors.some(error => error.code === 'POINT_LATITUDE_OUT_OF_RANGE')).toBe(true);
+    expect(result.errors.some(error => error.code === 'POINT_ATTRIBUTE_NOT_NUMERIC')).toBe(true);
+  });
+
+  it('reports duplicate elements and suspicious empty attributes', () => {
+    const xml = buildXml('2099-03-05T12:00:00Z', '2099-03-05T12:00:00Z', '2099-03-05T12:05:00Z')
+      .replace('<contact callsign="ODIN-ATAK" />', '<contact callsign="" /><contact callsign="ODIN-ATAK" />');
+
+    const result = validateCoT(xml, 'ATAK');
+
+    expect(result.errors.some(error => error.code === 'DUPLICATE_ELEMENT')).toBe(true);
+    expect(result.warnings.some(warning => warning.code === 'EMPTY_ATTRIBUTE_WARNING')).toBe(true);
+  });
+
+  it('can skip timestamp checks for historical fixtures', () => {
+    const xml = buildXml('2020-03-05T12:00:00Z', '2020-03-05T12:00:00Z', '2020-03-05T12:05:00Z');
+    const result = validateCoT(xml, 'ATAK', { validateTimestamps: false });
+
+    expect(result.warnings.some(warning => warning.code.startsWith('TIMESTAMP_'))).toBe(false);
+  });
+});
