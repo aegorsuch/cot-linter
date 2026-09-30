@@ -18,7 +18,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     description: 'ATAK emergency alert payload with manual event details.',
     expectedType: 'b-a-o-tbl',
     requiredEventAttributes: ['version', 'access'],
-    requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+    requiredDetailTags: ['link', 'emergency', 'contact'],
     sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-tbl" time="2026-02-20T20:13:34.035Z" start="2026-02-20T20:13:34.035Z" stale="2026-02-20T20:13:44.035Z" how="h-e" access="Undefined"><point lat="34.1234" lon="-117.1234" hae="0" ce="10" le="10" /><detail><link uid="ANDROID-4eb92ff46e615c21" type="a-f-G-U-C" relation="p-p"/><contact callsign="ODIN-ATAK-Alert"/><emergency type="911 Alert">ODIN-ATAK</emergency></detail></event>`,
   },
   {
@@ -28,7 +28,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     description: 'ATAK emergency alert clear/cancel payload.',
     expectedType: 'b-a-o-can',
     requiredEventAttributes: ['version', 'access'],
-    requiredDetailTags: ['emergency', 'point'],
+    requiredDetailTags: ['emergency'],
     sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="13155716143-9-1-1" type="b-a-o-can" time="2026-02-20T20:13:34.720Z" start="2026-02-20T20:13:34.720Z" stale="2026-02-20T20:13:44.720Z" how="h-e" access="Undefined"><point lat="0.0" lon="0.0" hae="9999999.0" ce="9999999.0" le="9999999.0"/><detail><emergency cancel="true">ODIN-ATAK</emergency></detail></event>`,
     },
   {
@@ -101,7 +101,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     description: 'WebTAK manual alert payload (generic example).',
     expectedType: 'b-a-o-tbl',
     requiredEventAttributes: ['version', 'access'],
-    requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+    requiredDetailTags: ['link', 'emergency', 'contact'],
     sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="webtak-123" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="44.0" lon="-79.0" hae="0" ce="10" le="10" /><detail><link uid="WEBTAK-123" type="a-f-G-U-C" relation="p-p"/><contact callsign="WebTAK Alert"/><emergency type="Manual Alert">WebTAK</emergency></detail></event>`,
   },
   {
@@ -111,7 +111,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
     description: 'CloudTAK manual alert payload (generic example).',
     expectedType: 'b-a-o-tbl',
     requiredEventAttributes: ['version', 'access'],
-    requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+    requiredDetailTags: ['link', 'emergency', 'contact'],
     sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="cloudtak-123" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="45.0" lon="-80.0" hae="0" ce="10" le="10" /><detail><link uid="CLOUDTAK-123" type="a-f-G-U-C" relation="p-p"/><contact callsign="CloudTAK Alert"/><emergency type="Manual Alert">CloudTAK</emergency></detail></event>`,
     },
   // ...existing code...
@@ -122,7 +122,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
       description: 'iTAK manual alert payload (generic example).',
       expectedType: 'b-a-o-tbl',
       requiredEventAttributes: ['version', 'access'],
-      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      requiredDetailTags: ['link', 'emergency', 'contact'],
       sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="itak-123" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="40.0" lon="-75.0" hae="0" ce="10" le="10" /><detail><link uid="ITAK-123" type="a-f-G-U-C" relation="p-p"/><contact callsign="iTAK-Alert"/><emergency type="Manual Alert">iTAK</emergency></detail></event>`,
     },
     {
@@ -132,7 +132,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
       description: 'TAK Aware manual alert payload (generic example).',
       expectedType: 'b-a-o-tbl',
       requiredEventAttributes: ['version', 'access'],
-      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      requiredDetailTags: ['link', 'emergency', 'contact'],
       sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="takaware-456" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="41.0" lon="-76.0" hae="0" ce="10" le="10" /><detail><link uid="TAKAWARE-456" type="a-f-G-U-C" relation="p-p"/><contact callsign="TAK Aware Alert"/><emergency type="Manual Alert">TAK Aware</emergency></detail></event>`,
     },
     {
@@ -142,7 +142,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
       description: 'WinTAK manual alert payload (generic example).',
       expectedType: 'b-a-o-tbl',
       requiredEventAttributes: ['version', 'access'],
-      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      requiredDetailTags: ['link', 'emergency', 'contact'],
       sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="wintak-789" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="42.0" lon="-77.0" hae="0" ce="10" le="10" /><detail><link uid="WINTAK-789" type="a-f-G-U-C" relation="p-p"/><contact callsign="WinTAK Alert"/><emergency type="Manual Alert">WinTAK</emergency></detail></event>`,
     },
     {
@@ -152,7 +152,7 @@ export const MESSAGE_PROFILES: MessageValidationProfile[] = [
       description: 'TAKx manual alert payload (generic example).',
       expectedType: 'b-a-o-tbl',
       requiredEventAttributes: ['version', 'access'],
-      requiredDetailTags: ['link', 'emergency', 'contact', 'point'],
+      requiredDetailTags: ['link', 'emergency', 'contact'],
       sampleXml: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<event version="2.0" uid="takx-321" type="b-a-o-tbl" time="2026-03-07T12:00:00.000Z" start="2026-03-07T12:00:00.000Z" stale="2026-03-07T12:10:00.000Z" how="h-e" access="Undefined"><point lat="43.0" lon="-78.0" hae="0" ce="10" le="10" /><detail><link uid="TAKX-321" type="a-f-G-U-C" relation="p-p"/><contact callsign="TAKx Alert"/><emergency type="Manual Alert">TAKx</emergency></detail></event>`,
     },
   {

@@ -30,7 +30,7 @@ The TAK Forge repository is canonical. GitHub is a secondary repository:
 - Flags blocking issues (hard fails) with line and column locations.
 - Flags non-blocking platform compatibility warnings for missing platform tags.
 - Supports profile-driven validation for specific message styles.
-- Compares missing tags across all supported platforms side-by-side.
+- Checks pasted outbound CoT against a selected target platform without claiming client interoperability from structural checks alone.
 
 
 ## Supported Platforms
@@ -46,7 +46,7 @@ The TAK Forge repository is canonical. GitHub is a secondary repository:
 - Lattice
 - Maven
 
-Each platform has a rule matrix of recommended detail tags (for example `contact`, `__group`, `takv`, `usericon`, `track`, `remarks`).
+Each platform has a rule matrix of recommended detail tags (for example `contact`, `__group`, `takv`, `usericon`, `track`, `remarks`). These generic hints are shown for SA events; other message types require their own profile.
 
 ## Validation Model
 
@@ -82,14 +82,21 @@ The app includes profile-based validation for message types, including:
 
 Selecting a profile updates validation requirements and can load a sample message for that profile.
 
+## CoT Examples
+
+The **CoT examples** picker includes six project-provided WearTAK samples already in this repository (SA, chat, point drop/clear, and manual alert/clear). Their original capture provenance is not recorded, so they are not labeled verified captures.
+
+It also contains 11 sanitized adaptations of published test data: ATAK-style SA, alerts and alert clear, markers, waypoint, circle, and video feed; plus WinTAK-style SA and chat. Each public example links directly to its original source. The bulk come from [FreeTAKTest's CoT examples](https://github.com/FreeTAKTeam/FreeTAKTest/tree/main/TestData/COT_examples) (EPL-2.0); the WinTAK SA example is adapted from a [PyTAK test fixture](https://github.com/snstac/pytak/blob/main/tests/test_takmsg2xml.py) (Apache-2.0).
+
+Choose a source platform and event type, then load an example or paste outbound XML. Select the target platform and run **Check target compatibility**. The result shows XML errors, timestamp warnings, source profile mismatches, and any known target profile requirements. Without a target profile, the result explicitly says display/clear behavior is unverified. A single clear event cannot establish whether it refers to an earlier point or how the receiver handled it. Combinations without an example cannot be loaded, but pasted XML can still be checked.
+
+The public fixtures are **source-backed examples, not verified captures**. They do not establish which client emitted every message; some platform labels are inferred from identifiers or payload fields. UIDs, callsigns, locations, endpoints, and message contents were replaced; timestamps are historical and therefore stale. Passing this linter's structural checks does not prove that a TAK client will accept or produce an example. For verified templates, collect and review authorized captures with the client version and action recorded.
+
 ## UI Highlights
 
-- Platform Rule Matrix selector for platform-specific behavior.
-- Starter template loader per platform.
-- Profile selector with sample payload loading.
-- Template submission modal with a single `Submit GitHub Issue` action and auto-close on submit.
-- Diagnostic click-to-jump that focuses the input and highlights the relevant line.
-- Cross-platform missing-tag comparison cards.
+- Source, event type, and target selectors with example loading.
+- A target report that separates known XML/profile errors from unverified client behavior.
+- Template submission modal for missing target profiles.
 
 ## Getting Started
 

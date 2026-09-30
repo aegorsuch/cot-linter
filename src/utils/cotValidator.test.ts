@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { validateCoT } from './cotValidator';
+import { validateCoT, validateCoTWithProfile } from './cotValidator';
+import { MESSAGE_PROFILES } from './messageProfiles';
+import { PROFILE_TEMPLATES } from './cotTemplates';
+
+it('checks root point without demanding another point inside alert details', () => {
+  const profile = MESSAGE_PROFILES.find(entry => entry.platform === 'ATAK' && entry.label === 'Manual Alert Clear')!;
+  const result = validateCoTWithProfile(PROFILE_TEMPLATES.ATAK['Manual Alert Clear'], 'ATAK', profile);
+
+  expect(result.errors.some(error => error.code === 'PROFILE_DETAIL_TAG_MISSING' && error.text.includes('<point>'))).toBe(false);
+});
+
+it('counts empty detail elements as present in a WearTAK clear', () => {
+  const profile = MESSAGE_PROFILES.find(entry => entry.platform === 'WearTAK' && entry.label === 'MIL-STD-2525D Clear')!;
+  const result = validateCoTWithProfile(PROFILE_TEMPLATES.WearTAK['MIL-STD-2525D Clear'], 'WearTAK', profile);
+
+  expect(result.errors.some(error => error.code === 'PROFILE_DETAIL_TAG_MISSING' && error.text.includes('<remarks>'))).toBe(false);
+});
 
 const buildXml = (time: string, start: string, stale: string): string => `<event uid="demo" type="a-f-G-U-C" time="${time}" start="${start}" stale="${stale}" how="m-g">
   <point lat="41.880025" lon="-87.641793" hae="180.1" ce="13.0" le="1.0" />

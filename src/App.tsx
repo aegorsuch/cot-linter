@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
-import type { MessageValidationProfile } from './utils/cotValidator';
+import { useState } from 'react';
+import { validateCoTWithProfile } from './utils/cotValidator';
+import type { Platform, ValidationResult } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
-import { PROFILE_TEMPLATES } from './utils/cotTemplates';
+import { PROFILE_TEMPLATES, PUBLIC_SAMPLES } from './utils/cotTemplates';
 
 const basePlatforms = [
   'ATAK',
@@ -16,60 +17,32 @@ const basePlatforms = [
   'WinTAK',
 ];
 const platforms = basePlatforms;
-const availableMessageTypes = getAllTemplateLabels();
+const availableMessageTypes = Array.from(new Set([...getAllTemplateLabels(), ...PUBLIC_SAMPLES.map(sample => sample.label)])).sort((a, b) => a.localeCompare(b));
 
 export default function App() {
-  const xmlInputRef = useRef<HTMLTextAreaElement>(null);
-  const [messageType, setMessageType] = useState<string>(availableMessageTypes[0] || '');
+  const [messageType, setMessageType] = useState<string>(PUBLIC_SAMPLES[0].label);
   const [xml, setXml] = useState<string>('');
-  const [validationResults, setValidationResults] = useState<Array<{ platform: string; missingTags: string[] }>>([]);
+  const [samplePlatform, setSamplePlatform] = useState(PUBLIC_SAMPLES[0].platform);
+  const [targetPlatform, setTargetPlatform] = useState<Platform>('ATAK');
+  const [targetResult, setTargetResult] = useState<ValidationResult | null>(null);
+  const [sourceResult, setSourceResult] = useState<ValidationResult | null>(null);
+  const selectedPublicSample = PUBLIC_SAMPLES.find(sample => sample.platform === samplePlatform && sample.label === messageType);
+  const selectedProjectSample = samplePlatform === 'WearTAK' ? PROFILE_TEMPLATES.WearTAK[messageType] : undefined;
+  const selectedExampleXml = selectedPublicSample?.xml ?? selectedProjectSample;
   const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState<boolean>(false);
   const openSubmitTemplateModal = () => setShowSubmitTemplateModal(true);
   const closeSubmitTemplateModal = () => setShowSubmitTemplateModal(false);
 
   function handleValidate() {
     if (!xml.trim()) {
-      setValidationResults([]);
+      setTargetResult(null);
+      setSourceResult(null);
       return;
     }
-    // Extract tags only from <detail>
-    const detailTags: string[] = [];
-    try {
-      const detailMatch = xml.match(/<detail[^>]*>([\s\S]*?)<\/detail>/i);
-      if (detailMatch) {
-        const detailContent = detailMatch[1];
-        const tagRegex = /<([a-zA-Z0-9_:-]+)[\s>]/g;
-        let match;
-        while ((match = tagRegex.exec(detailContent))) {
-          detailTags.push(match[1]);
-        }
-      }
-    } catch {
-      // ignore parse errors
-    }
-    const results = platforms.map((platform: string) => {
-      const profile = MESSAGE_PROFILES.find((p: MessageValidationProfile) => p.platform === platform && p.label === messageType);
-      const missingTags = profile && profile.requiredDetailTags ? profile.requiredDetailTags.filter((tag: string) => !detailTags.includes(tag)) : [];
-      return { platform, missingTags };
-    });
-    setValidationResults(results);
-  }
-
-  // Helper: focus and select tag in XML
-  function jumpToTag(tag: string) {
-    if (!xmlInputRef.current) return;
-    const xmlText = xmlInputRef.current.value;
-    // Find the first occurrence of <tag or <tag>
-    const regex = new RegExp(`<${tag}([ >])`, 'i');
-    const match = regex.exec(xmlText);
-    if (match) {
-      const start = match.index;
-      const end = start + tag.length + 1;
-      xmlInputRef.current.focus();
-      xmlInputRef.current.setSelectionRange(start, end);
-    } else {
-      xmlInputRef.current.focus();
-    }
+    const sourceProfile = MESSAGE_PROFILES.find(profile => profile.platform === samplePlatform && profile.label === messageType) ?? null;
+    const targetProfile = MESSAGE_PROFILES.find(profile => profile.platform === targetPlatform && profile.label === messageType) ?? null;
+    setSourceResult(validateCoTWithProfile(xml, samplePlatform, sourceProfile));
+    setTargetResult(validateCoTWithProfile(xml, targetPlatform, targetProfile));
   }
 
   return (
@@ -88,125 +61,101 @@ export default function App() {
         </div>
       </header>
       <main className="flex flex-col flex-1 gap-4 p-2 md:p-8">
-        {/* Input and Validation */}
-        <section className="flex flex-col gap-4 w-full">
-          <div className="flex items-center gap-2 mb-2">
+        <section className="flex flex-col gap-2 border-b border-slate-800 pb-4">
+          <span className="text-xs text-slate-300">CoT examples</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor="sample-platform-select" className="text-xs text-slate-400">Source platform:</label>
+            <select
+              id="sample-platform-select"
+              className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-100"
+              value={samplePlatform}
+              onChange={e => { setSamplePlatform(e.target.value as Platform); setTargetResult(null); setSourceResult(null); }}
+            >
+              {platforms.map(platform => (
+                <option key={platform} value={platform}>{platform}</option>
+              ))}
+            </select>
             <label htmlFor="message-type-select" className="text-xs text-slate-400">Event Type:</label>
             <select
               id="message-type-select"
-              className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 w-auto"
+              className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-100"
               value={messageType}
-              onChange={e => setMessageType(e.target.value)}
-              style={{ minWidth: '120px', maxWidth: '180px' }}
+              onChange={e => { setMessageType(e.target.value); setTargetResult(null); setSourceResult(null); }}
             >
-              {availableMessageTypes.map((type: string) => (
-                <option key={type} value={type}>{type}</option>
-              ))}
+              {availableMessageTypes.map(type => <option key={type} value={type}>{type}</option>)}
+            </select>
+            <button
+              className="rounded border border-emerald-600 bg-emerald-900 px-3 py-2 text-xs text-emerald-100 hover:border-emerald-400"
+              disabled={!selectedExampleXml}
+              onClick={() => {
+                if (!selectedExampleXml) return;
+                setXml(selectedExampleXml);
+                setTargetResult(null);
+                setSourceResult(null);
+              }}
+            >
+              Load example
+            </button>
+            {selectedPublicSample && <a href={selectedPublicSample.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-emerald-300 underline hover:text-emerald-200">View source</a>}
+          </div>
+          {!selectedExampleXml && <p className="text-xs text-slate-400">No example for this platform and event type.</p>}
+          <p className="text-xs text-slate-400">{selectedProjectSample ? 'Project-provided WearTAK example; capture provenance not recorded.' : 'Sanitized adaptations of public fixtures, not verified client captures. Platform labels may be inferred; timestamps are historical.'}</p>
+        </section>
+        {/* Input and Validation */}
+        <section className="flex flex-col gap-4 w-full">
+          <div className="flex items-center gap-2">
+            <label htmlFor="target-platform-select" className="text-xs text-slate-400">Target platform:</label>
+            <select
+              id="target-platform-select"
+              className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-100"
+              value={targetPlatform}
+              onChange={e => { setTargetPlatform(e.target.value as Platform); setTargetResult(null); }}
+            >
+              {platforms.map(platform => <option key={platform} value={platform}>{platform}</option>)}
             </select>
           </div>
           <textarea
-            ref={xmlInputRef}
             className="w-full h-48 rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm"
             placeholder="Paste <event>...</event> XML here..."
             value={xml}
-            onChange={e => setXml(e.target.value)}
+            onChange={e => { setXml(e.target.value); setTargetResult(null); setSourceResult(null); }}
           />
           <button
             className="mt-2 rounded border border-emerald-500 px-4 py-2 text-xs text-emerald-200 bg-emerald-900 hover:border-emerald-400 shadow"
             onClick={handleValidate}
           >
-            Validate CoT in Compatibility Matrix Below
+            Check target compatibility
           </button>
-        </section>
-        {/* Right Panel: Compatibility Matrix */}
-        <section className="bg-slate-900 rounded-lg shadow-lg p-4 md:p-6 flex flex-col w-full">
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {(() => {
-              const results = validationResults.length > 0 ? validationResults : platforms.map(platform => ({ platform, missingTags: [] }));
-              // List of verified platforms
-              // List of verified platform/template combinations
-              const verifiedMatrix = [
-                { platform: "ATAK", label: "Manual Alert" },
-                { platform: "ATAK", label: "Manual Alert Clear" },
-                { platform: "ATAK", label: "MIL-STD-2525D Drop" },
-                { platform: "WearTAK", label: "SA" },
-                { platform: "WearTAK", label: "Chat Send" },
-                { platform: "WearTAK", label: "MIL-STD-2525D Drop" },
-                { platform: "WearTAK", label: "MIL-STD-2525D Clear" },
-                { platform: "WearTAK", label: "Manual Alert" },
-                { platform: "WearTAK", label: "Manual Alert Clear" },
-                { platform: "WearTAK", label: "Manual Alert Gunshot" },
-              ];
-              // Find the message type for each platform
-              return results
-                .slice()
-                .sort((a, b) => a.platform.localeCompare(b.platform))
-                .map(({ platform, missingTags }) => {
-                  let label = messageType;
-                  if (!label && validationResults.length === 0) {
-                    label = "Manual Alert";
-                  }
-                  const isVerified = verifiedMatrix.some(v => v.platform === platform && v.label === label);
-                  const isUnverifiedATAK = platform === "ATAK" && ["Chat Send", "SA", "MIL-STD-2525D Clear"].includes(label);
-                  const finalVerified = isVerified && !isUnverifiedATAK;
-                  // Check if profile-specific template exists
-                  const hasProfileTemplate = PROFILE_TEMPLATES[platform] && PROFILE_TEMPLATES[platform][label];
-                  const template = hasProfileTemplate ? PROFILE_TEMPLATES[platform][label] : '';
-                  const handleLoadTemplate = (e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setXml(template);
-                  };
-                  return (
-                    <article
-                      key={`profile-compare-${platform}`}
-                      className={`w-full rounded-lg border p-4 shadow ${finalVerified ? "border-slate-700 bg-slate-900/40" : "border-slate-800 bg-slate-800/60 opacity-60"}`}
-                    >
-                      <div className="mb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                        <span className={`text-sm font-bold ${finalVerified ? "text-slate-100" : "text-slate-400"}`}>{platform}</span>
-                        {hasProfileTemplate && (
-                          <button
-                            className="mt-2 sm:mt-0 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-1 px-4 sm:px-3 rounded shadow focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 text-xs w-full sm:w-auto"
-                            onClick={handleLoadTemplate}
-                            aria-label={`Load for ${platform}`}
-                          >
-                            Load
-                          </button>
-                        )}
-                      </div>
-                      {finalVerified ? (
-                        <>
-                          <p className="mb-2 text-[11px] text-slate-400">Missing:</p>
-                          <ul className="space-y-1 text-xs" aria-label="Missing tags">
-                            {missingTags.length > 0 ? missingTags.map((tag: string, idx: number) => (
-                              <li
-                                key={idx}
-                                className="rounded border border-amber-700/40 bg-amber-950/25 text-amber-200 px-2 py-1 cursor-pointer hover:bg-amber-900/60"
-                                onClick={() => jumpToTag(tag)}
-                                title={`Jump to <${tag}> in XML`}
-                              >
-                                <code className="font-bold">{tag}</code>
-                              </li>
-                            )) : <li className="text-slate-400">None</li>}
-                          </ul>
-                        </>
-                      ) : (
-                        <div className="mt-2 flex flex-col items-start">
-                          <p className="text-xs text-slate-400 mb-2">No template available.</p>
-                          <button
-                            className="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-1 px-3 rounded shadow focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 text-xs"
-                            onClick={openSubmitTemplateModal}
-                            aria-label="Submit Template"
-                          >
-                            Submit Template
-                          </button>
-                        </div>
-                      )}
-                    </article>
-                  );
-                });
-            })()}
-          </div>
+          {targetResult && (
+            <section aria-label="Target validation" className="border-t border-slate-700 pt-4 text-sm">
+              <h2 className="font-semibold">{targetPlatform} / {messageType}</h2>
+              <p className="text-xs text-slate-400">XML checks do not establish that the target client will display or clear this event.</p>
+              {messageType.endsWith('Clear') && <p className="mt-2 text-xs text-slate-400">A single clear event cannot establish its relationship to the original point or the target's receive behavior.</p>}
+              {sourceResult && sourceResult.errors.some(error => error.code.startsWith('PROFILE_')) && (
+                <ul className="mt-2 space-y-1" aria-label="Source profile errors">
+                  {sourceResult.errors.filter(error => error.code.startsWith('PROFILE_')).map((error, index) => <li key={index} className="text-rose-300">{samplePlatform} source: {error.text}</li>)}
+                </ul>
+              )}
+              {!MESSAGE_PROFILES.some(profile => profile.platform === targetPlatform && profile.label === messageType) && (
+                <p className="mt-2 text-amber-200">No {targetPlatform} {messageType} behavior profile. Target display/clear compatibility is unverified.</p>
+              )}
+              <ul className="mt-2 space-y-1" aria-label="Validation errors">
+                {targetResult.errors.map((error, index) => <li key={index} className="text-rose-300">{error.text} (line {error.location.line}, column {error.location.column})</li>)}
+              </ul>
+              <ul className="mt-2 space-y-1" aria-label="Validation warnings">
+                {targetResult.warnings.filter(warning => messageType === 'SA' || warning.code !== 'PLATFORM_TAG_MISSING').map((warning, index) => <li key={index} className="text-amber-200">{warning.text} (line {warning.location.line}, column {warning.location.column})</li>)}
+              </ul>
+              {targetResult.errors.length === 0 && !sourceResult?.errors.some(error => error.code.startsWith('PROFILE_')) && <p className="mt-2 text-emerald-300">No structural or known profile errors found. Client behavior is not confirmed.</p>}
+            </section>
+          )}
+          {!MESSAGE_PROFILES.some(profile => profile.platform === targetPlatform && profile.label === messageType) && (
+            <button
+              className="self-start rounded bg-indigo-700 px-3 py-1 text-xs text-white hover:bg-indigo-800"
+              onClick={openSubmitTemplateModal}
+            >
+              Submit Template
+            </button>
+          )}
         </section>
       </main>
       {/* Submit Template Modal */}

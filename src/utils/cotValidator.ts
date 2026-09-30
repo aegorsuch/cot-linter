@@ -572,7 +572,7 @@ export const validateCoT = (xmlString: string, platform: Platform): ValidationRe
     void _schemaFragment;
 
     for (const rule of rules) {
-      if (!detail[rule.tag]) {
+      if (!Object.hasOwn(detail, rule.tag)) {
         const detailLocation = event?.detail
           ? findTagLocation(xmlString, 'detail')
           : findTagLocation(xmlString, 'event');
@@ -665,7 +665,7 @@ export const validateCoTWithProfile = (
     }
 
     for (const tag of profile.requiredDetailTags) {
-      if (!detail[tag]) {
+      if (!Object.hasOwn(detail, tag)) {
         const detailLocation = event?.detail
           ? findTagLocation(xmlString, 'detail')
           : findTagLocation(xmlString, 'event');
@@ -715,7 +715,7 @@ export const getMissingTagsForAllPlatforms = (xmlString: string): CrossPlatformM
   const detail = (parsed.event?.detail ?? {}) as Record<string, unknown>;
   const reports = (Object.keys(PLATFORM_RULE_MATRIX) as Platform[]).map((platform) => {
     const rules = PLATFORM_RULE_MATRIX[platform];
-    const missingRules = rules.filter((rule) => !detail[rule.tag]);
+    const missingRules = rules.filter((rule) => !Object.hasOwn(detail, rule.tag));
     return { platform, missingRules };
   });
 

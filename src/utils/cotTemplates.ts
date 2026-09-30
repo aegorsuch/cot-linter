@@ -68,6 +68,192 @@ export const PLATFORM_STARTER_TEMPLATES: Record<Platform, string> = {
 
 export const getStarterTemplate = (platform: Platform): string => PLATFORM_STARTER_TEMPLATES[platform];
 
+export interface PublicSample {
+  platform: Platform;
+  label: string;
+  xml: string;
+  sourceUrl: string;
+}
+
+export const PUBLIC_SAMPLES: PublicSample[] = [
+  {
+    platform: 'ATAK',
+    label: 'SA',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/Presence_InitialATAK.cot',
+    xml: `<event version="2.0" uid="ANDROID-example" type="a-f-G-U-C" time="2023-12-29T18:49:38.624Z" start="2023-12-29T18:49:38.624Z" stale="2023-12-29T18:55:53.624Z" how="h-g-i-g-o">
+  <point lat="34.1234" lon="-117.1234" hae="9999999.0" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <takv os="28" version="4.8.1.8 (0c4d4662).1676511632-CIV" device="SAMSUNG SM-G950W" platform="ATAK-CIV" />
+    <contact endpoint="*:-1:stcp" callsign="Example" />
+    <uid Droid="Example" />
+    <__group role="Team Member" name="Yellow" />
+    <status battery="0" />
+    <track course="292.4544485383155" speed="0.0" />
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'WinTAK',
+    label: 'SA',
+    sourceUrl: 'https://github.com/snstac/pytak/blob/main/tests/test_takmsg2xml.py',
+    xml: `<event version="2.0" uid="wintak-example" type="a-f-G-E-V-C" time="2020-02-08T18:10:44.000Z" start="2020-02-08T18:10:44.000Z" stale="2020-02-08T18:11:11.000Z" how="h-e">
+  <point lat="34.1234" lon="-117.1234" hae="26.767999" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <contact callsign="Example HQ" endpoint="*:-1:stcp" />
+    <__group name="Yellow" role="HQ" />
+    <status battery="87" />
+    <takv platform="WinTAK-CIV" device="LENOVO" os="Windows 10" version="1.10.0.137" />
+    <precisionlocation geopointsrc="GPS" altsrc="GPS" />
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'WinTAK',
+    label: 'Chat Send',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/Chat.cot',
+    xml: `<event version="2.0" uid="GeoChat.WINTAK-example.Red.message-1" type="b-t-f" time="2022-05-16T13:24:59.71Z" start="2022-05-16T13:24:59.71Z" stale="2022-05-17T13:24:59.71Z" how="h-g-i-g-o">
+  <point lat="0" lon="0" hae="9999999" ce="9999999" le="9999999" />
+  <detail>
+    <__chat id="Red" chatroom="Red" senderCallsign="WinTAK" groupOwner="false">
+      <chatgrp id="Red" uid0="WINTAK-example" uid1="user1" uid2="user2" />
+      <hierarchy><group uid="TeamGroups" name="Teams"><group uid="Red" name="Red"><contact uid="WINTAK-example" name="WinTAK" /></group></group></hierarchy>
+    </__chat>
+    <link uid="WINTAK-example" type="a-f-G-U-C-I" relation="p-p" />
+    <remarks source="BAO.F.WinTAK.WINTAK-example" sourceID="WINTAK-example" to="Red" time="2022-05-16T13:24:59.71Z">Test message</remarks>
+    <marti><dest callsign="user2" /></marti>
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'Manual Alert',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/AlertTrouble.cot',
+    xml: `<event version="2.0" uid="ANDROID-example-9-1-1" type="b-a-o-tbl" time="2022-10-18T13:31:42.224Z" start="2022-10-18T13:31:42.224Z" stale="2022-10-18T13:31:52.224Z" how="h-e">
+  <point lat="34.1234" lon="-117.1234" hae="162.119" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <contact callsign="Example-Alert" />
+    <emergency type="911 Alert">Example</emergency>
+    <link relation="p-p" type="a-f-G-U-C" uid="ANDROID-example" />
+    <remarks>CALL 911 NOW</remarks>
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'Manual Alert Clear',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/AlertCancel.cot',
+    xml: `<event version="2.0" uid="ANDROID-example-9-1-1" type="b-a-o-can" time="2022-10-18T13:34:59.841Z" start="2022-10-18T13:34:59.841Z" stale="2022-10-18T13:35:09.841Z" how="h-e">
+  <point lat="34.1234" lon="-117.1234" hae="162.119" ce="9999999.0" le="9999999.0" />
+  <detail><emergency cancel="true">Example</emergency></detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: '2525 Marker',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/Marker%20-%202525.cot',
+    xml: `<event version="2.0" uid="marker-example" type="a-u-G" time="2020-12-16T19:59:34.910Z" start="2020-12-16T19:59:34.910Z" stale="2021-01-02T20:40:03.838Z" how="h-g-i-g-o">
+  <point lat="34.1234" lon="-117.1234" hae="9999999.0" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <status readiness="true" />
+    <archive />
+    <link uid="ANDROID-example" production_time="2020-12-16T19:50:57.629Z" type="a-f-G-U-C" parent_callsign="Example" relation="p-p" />
+    <contact callsign="U.16.135057" />
+    <remarks></remarks>
+    <color argb="-1" />
+    <precisionlocation altsrc="???" />
+    <usericon iconsetpath="COT_MAPPING_2525B/a-u/a-u-G" />
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'Spot Marker',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/Marker%20-%20Spot.cot',
+    xml: `<event version="2.0" uid="spot-example" type="b-m-p-s-m" time="2020-12-16T19:59:34.913Z" start="2020-12-16T19:59:34.913Z" stale="2021-01-02T20:40:03.841Z" how="h-g-i-g-o">
+  <point lat="34.1234" lon="-117.1234" hae="9999999.0" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <status readiness="true" />
+    <archive />
+    <link uid="ANDROID-example" production_time="2020-12-16T19:51:09.603Z" type="a-f-G-U-C" parent_callsign="Example" relation="p-p" />
+    <contact callsign="R 1" />
+    <remarks></remarks>
+    <color argb="-65536" />
+    <precisionlocation altsrc="???" />
+    <usericon iconsetpath="COT_MAPPING_SPOTMAP/b-m-p-s-m/-65536" />
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'In Contact Alert',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/AlertOpen.cot',
+    xml: `<event version="2.0" uid="ANDROID-example-9-1-1" type="b-a-o-opn" time="2022-10-18T13:36:21.385Z" start="2022-10-18T13:36:21.385Z" stale="2022-10-18T13:36:31.385Z" how="h-e">
+  <point lat="34.1234" lon="-117.1234" hae="162.119" ce="9999999" le="9999999" />
+  <detail>
+    <link uid="ANDROID-example" type="a-f-G-U-C" relation="p-p" />
+    <emergency type="In Contact">Example</emergency>
+    <contact callsign="Example-Alert" />
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'Waypoint',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/WayPoint.cot',
+    xml: `<event version="2.0" uid="waypoint-example" type="b-m-p-w-GOTO" time="2023-02-10T13:55:58.835Z" start="2023-02-10T13:55:58.835Z" stale="2023-02-10T14:00:58.835Z" how="h-g-i-g-o">
+  <point lat="34.1234" lon="-117.1234" hae="7.225993783295152" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <status readiness="true" />
+    <archive />
+    <contact callsign="Example waypoint" />
+    <precisionlocation altsrc="DTED0" />
+    <remarks />
+    <color argb="-1" />
+    <link uid="ANDROID-example" production_time="2020-09-26T14:57:51.532Z" type="a-f-G-U-C" parent_callsign="Example" relation="p-p" />
+    <marti><dest callsign="Example HQ" /></marti>
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'Circle',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/Drawing%20Shapes%20-%20Circle.cot',
+    xml: `<event version="2.0" uid="circle-example" type="u-d-c-c" time="2020-12-16T19:59:34.915Z" start="2020-12-16T19:59:34.915Z" stale="2020-12-17T19:59:34.915Z" how="h-e">
+  <point lat="34.1234" lon="-117.1234" hae="9999999.0" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <shape>
+      <ellipse major="226.98412686380018" minor="226.98412686380018" angle="360" />
+      <link uid="circle-example.Style" type="b-x-KmlStyle" relation="p-c">
+        <Style><LineStyle><color>ffffffff</color><width>4.0</width></LineStyle><PolyStyle><color>96ffffff</color></PolyStyle></Style>
+      </link>
+    </shape>
+    <strokeColor value="-1" />
+    <strokeWeight value="4.0" />
+    <fillColor value="-1761607681" />
+    <contact callsign="Example circle" />
+    <remarks />
+    <archive />
+    <labels_on value="true" />
+    <precisionlocation altsrc="???" />
+  </detail>
+</event>`,
+  },
+  {
+    platform: 'ATAK',
+    label: 'Video Feed',
+    sourceUrl: 'https://github.com/FreeTAKTeam/FreeTAKTest/blob/main/TestData/COT_examples/VideoFeed.cot',
+    xml: `<event version="2.0" uid="video-example" type="b-i-v" time="2023-07-14T14:08:59Z" start="2023-07-14T14:08:59Z" stale="2023-07-14T15:08:58Z" how="m-g">
+  <point lat="0.0" lon="0.0" hae="9999999.0000000000" ce="9999999.0" le="9999999.0" />
+  <detail>
+    <contact callsign="Example video" />
+    <precisionlocation geopointsrc="???" altsrc="???" />
+    <__video><ConnectionEntry protocol="raw" address="https://example.com/video" port="80" uid="video-example" alias="Example video" roverPort="-1" rtspReliable="0" ignoreEmbeddedKLV="False" networkTimeout="3000" bufferTime="5000" /></__video>
+    <_flow-tags_ TAK-Server-example="2023-07-14T14:08:59Z" />
+  </detail>
+</event>`,
+  },
+];
+
 // Special template for ATAK + MIL-STD-2525D Drop
 export const ATAK_MIL_STD_2525D_DROP_TEMPLATE = MIL_STD_2525D_DROP_TEMPLATE;
 
