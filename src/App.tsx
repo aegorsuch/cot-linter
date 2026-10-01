@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { validateCoTWithProfile } from './utils/cotValidator';
 import type { Platform, ValidationResult } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
@@ -18,6 +18,14 @@ const basePlatforms = [
 ];
 const platforms = basePlatforms;
 const availableMessageTypes = Array.from(new Set([...getAllTemplateLabels(), ...PUBLIC_SAMPLES.map(sample => sample.label)])).sort((a, b) => a.localeCompare(b));
+type CompatibilityStatus = 'pass' | 'warning' | 'fail' | 'unverified';
+
+const compatibilityStyles: Record<CompatibilityStatus, string> = {
+  pass: 'border-emerald-500 bg-emerald-950/40 text-emerald-200',
+  warning: 'border-amber-500 bg-amber-950/40 text-amber-200',
+  fail: 'border-rose-500 bg-rose-950/40 text-rose-200',
+  unverified: 'border-slate-500 bg-slate-900 text-slate-200',
+};
 
 export default function App() {
   const [messageType, setMessageType] = useState<string>(PUBLIC_SAMPLES[0].label);
@@ -34,6 +42,48 @@ export default function App() {
   const selectedProjectSample = samplePlatform === 'WearTAK' ? PROFILE_TEMPLATES.WearTAK[messageType] : undefined;
   const selectedExampleXml = selectedPublicSample?.xml ?? selectedProjectSample;
   const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState<boolean>(false);
+  const compatibilityMatrix = useMemo(() => {
+    if (!xml.trim()) {
+      return [] as Array<{ platform: Platform; status: CompatibilityStatus; summary: string }>;
+    }
+
+    return platforms.map((platform) => {
+      const profile = MESSAGE_PROFILES.find(profile => profile.platform === platform && profile.label === messageType) ?? null;
+      const result = validateCoTWithProfile(xml, platform as Platform, profile, { validateTimestamps });
+      const hasProfile = Boolean(profile);
+
+      if (result.errors.length > 0) {
+        return {
+          platform: platform as Platform,
+          status: 'fail' as const,
+          summary: `${result.errors.length} blocking issue${result.errors.length === 1 ? '' : 's'}`,
+        };
+      }
+
+      if (!hasProfile) {
+        return {
+          platform: platform as Platform,
+          status: 'unverified' as const,
+          summary: 'No behavior profile for this platform and event type',
+        };
+      }
+
+      if (result.warnings.length > 0) {
+        return {
+          platform: platform as Platform,
+          status: 'warning' as const,
+          summary: `${result.warnings.length} heuristic recommendation${result.warnings.length === 1 ? '' : 's'}`,
+        };
+      }
+
+      return {
+        platform: platform as Platform,
+        status: 'pass' as const,
+        summary: 'No structural or profile issues found',
+      };
+    });
+  }, [messageType, validateTimestamps, xml]);
+
   const openSubmitTemplateModal = () => {
     setSuggestionSaved(false);
     setShowSubmitTemplateModal(true);
@@ -165,6 +215,20 @@ export default function App() {
           >
             Check target compatibility
           </button>
+          {xml.trim() && compatibilityMatrix.length > 0 && (
+            <section aria-label="Compatibility matrix" role="region" className="border-t border-slate-700 pt-4 text-sm">
+              <h3 className="mb-3 text-sm font-semibold text-slate-100">Compatibility matrix</h3>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+                {compatibilityMatrix.map(({ platform, status, summary }) => (
+                  <div key={platform} className={`rounded border p-2 ${compatibilityStyles[status]}`}>
+                    <div className="text-[10px] uppercase tracking-wide opacity-80">{platform}</div>
+                    <div className="mt-1 text-xs font-semibold capitalize">{status}</div>
+                    <div className="mt-1 text-[11px] opacity-90">{summary}</div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
           {targetResult && (
             <section aria-label="Target validation" className="border-t border-slate-700 pt-4 text-sm">
               <h2 className="font-semibold">{targetPlatform} / {messageType}</h2>
