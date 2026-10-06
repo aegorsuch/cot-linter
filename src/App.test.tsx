@@ -20,6 +20,7 @@ it('shows a compatibility matrix after validation', async () => {
   const user = userEvent.setup()
   render(<App />)
   await user.click(screen.getByRole('button', { name: 'Load example' }))
+  expect(screen.queryByRole('region', { name: 'Compatibility matrix' })).not.toBeInTheDocument()
   await user.click(screen.getByRole('button', { name: 'Check target compatibility' }))
 
   const matrix = screen.getByRole('region', { name: 'Compatibility matrix' })
@@ -27,6 +28,10 @@ it('shows a compatibility matrix after validation', async () => {
   expect(within(matrix).getByText('ATAK')).toBeInTheDocument()
   expect(within(matrix).getByText('WinTAK')).toBeInTheDocument()
   expect(within(matrix).getAllByText(/pass|warning|fail|unverified/i).length).toBeGreaterThan(0)
+
+  await user.type(screen.getByPlaceholderText('Paste <event>...</event> XML here...'), ' ')
+  expect(screen.queryByRole('region', { name: 'Compatibility matrix' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Target validation' })).not.toBeInTheDocument()
 })
 
 it('uses one event type for public examples and target validation', async () => {
@@ -95,6 +100,7 @@ it('identifies a source profile mismatch separately from target errors', async (
   expect(within(within(result).getByRole('list', { name: 'Validation errors' })).getByText(/expects type 'b-a-o-can'/)).toBeInTheDocument()
   await user.selectOptions(screen.getByLabelText('Target platform:'), 'WinTAK')
   expect(screen.queryByRole('region', { name: 'Target validation' })).not.toBeInTheDocument()
+  expect(screen.queryByRole('region', { name: 'Compatibility matrix' })).not.toBeInTheDocument()
 })
 
 
@@ -111,7 +117,6 @@ it('saves a local template suggestion and closes it with Escape', async () => {
 });
 
   // Compatibility matrix heading removed from UI; test omitted.
-
 
 
 

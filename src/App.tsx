@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { validateCoTWithProfile } from './utils/cotValidator';
 import type { Platform, ValidationResult } from './utils/cotValidator';
 import { getAllTemplateLabels, MESSAGE_PROFILES } from './utils/messageProfiles';
@@ -20,6 +20,21 @@ const platforms = basePlatforms;
 const availableMessageTypes = Array.from(new Set([...getAllTemplateLabels(), ...PUBLIC_SAMPLES.map(sample => sample.label)])).sort((a, b) => a.localeCompare(b));
 type CompatibilityStatus = 'pass' | 'warning' | 'fail' | 'unverified';
 
+interface CompatibilityEntry {
+  platform: Platform;
+  status: CompatibilityStatus;
+  summary: string;
+}
+
+interface ValidationReport {
+  sourcePlatform: Platform;
+  targetPlatform: Platform;
+  messageType: string;
+  sourceResult: ValidationResult;
+  targetResult: ValidationResult;
+  compatibilityMatrix: CompatibilityEntry[];
+}
+
 const compatibilityStyles: Record<CompatibilityStatus, string> = {
   pass: 'border-emerald-500 bg-emerald-950/40 text-emerald-200',
   warning: 'border-amber-500 bg-amber-950/40 text-amber-200',
@@ -32,8 +47,7 @@ export default function App() {
   const [xml, setXml] = useState<string>('');
   const [samplePlatform, setSamplePlatform] = useState(PUBLIC_SAMPLES[0].platform);
   const [targetPlatform, setTargetPlatform] = useState<Platform>('ATAK');
-  const [targetResult, setTargetResult] = useState<ValidationResult | null>(null);
-  const [sourceResult, setSourceResult] = useState<ValidationResult | null>(null);
+  const [validationReport, setValidationReport] = useState<ValidationReport | null>(null);
   const [validateTimestamps, setValidateTimestamps] = useState(false);
   const [suggestionSaved, setSuggestionSaved] = useState(false);
   const closeModalButtonRef = useRef<HTMLButtonElement>(null);
@@ -42,12 +56,18 @@ export default function App() {
   const selectedProjectSample = samplePlatform === 'WearTAK' ? PROFILE_TEMPLATES.WearTAK[messageType] : undefined;
   const selectedExampleXml = selectedPublicSample?.xml ?? selectedProjectSample;
   const [showSubmitTemplateModal, setShowSubmitTemplateModal] = useState<boolean>(false);
-  const compatibilityMatrix = useMemo(() => {
+  function handleValidate() {
     if (!xml.trim()) {
-      return [] as Array<{ platform: Platform; status: CompatibilityStatus; summary: string }>;
+      setValidationReport(null);
+      return;
     }
 
-    return platforms.map((platform) => {
+    const sourceProfile = MESSAGE_PROFILES.find(profile => profile.platform === samplePlatform && profile.label === messageType) ?? null;
+    const targetProfile = MESSAGE_PROFILES.find(profile => profile.platform === targetPlatform && profile.label === messageType) ?? null;
+    const options = { validateTimestamps };
+    const sourceResult = validateCoTWithProfile(xml, samplePlatform, sourceProfile, options);
+    const targetResult = validateCoTWithProfile(xml, targetPlatform, targetProfile, options);
+    const compatibilityMatrix = platforms.map((platform): CompatibilityEntry => {
       const profile = MESSAGE_PROFILES.find(profile => profile.platform === platform && profile.label === messageType) ?? null;
       const result = validateCoTWithProfile(xml, platform as Platform, profile, { validateTimestamps });
       const hasProfile = Boolean(profile);
@@ -55,7 +75,7 @@ export default function App() {
       if (result.errors.length > 0) {
         return {
           platform: platform as Platform,
-          status: 'fail' as const,
+          status: 'fail',
           summary: `${result.errors.length} blocking issue${result.errors.length === 1 ? '' : 's'}`,
         };
       }
@@ -63,7 +83,7 @@ export default function App() {
       if (!hasProfile) {
         return {
           platform: platform as Platform,
-          status: 'unverified' as const,
+          status: 'unverified',
           summary: 'No behavior profile for this platform and event type',
         };
       }
@@ -71,18 +91,27 @@ export default function App() {
       if (result.warnings.length > 0) {
         return {
           platform: platform as Platform,
-          status: 'warning' as const,
+          status: 'warning',
           summary: `${result.warnings.length} heuristic recommendation${result.warnings.length === 1 ? '' : 's'}`,
         };
       }
 
       return {
         platform: platform as Platform,
-        status: 'pass' as const,
+        status: 'pass',
         summary: 'No structural or profile issues found',
       };
     });
-  }, [messageType, validateTimestamps, xml]);
+
+    setValidationReport({
+      sourcePlatform: samplePlatform,
+      targetPlatform,
+      messageType,
+      sourceResult,
+      targetResult,
+      compatibilityMatrix,
+    });
+  }
 
   const openSubmitTemplateModal = () => {
     setSuggestionSaved(false);
@@ -112,19 +141,6 @@ export default function App() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showSubmitTemplateModal]);
 
-  function handleValidate() {
-    if (!xml.trim()) {
-      setTargetResult(null);
-      setSourceResult(null);
-      return;
-    }
-    const sourceProfile = MESSAGE_PROFILES.find(profile => profile.platform === samplePlatform && profile.label === messageType) ?? null;
-    const targetProfile = MESSAGE_PROFILES.find(profile => profile.platform === targetPlatform && profile.label === messageType) ?? null;
-    const options = { validateTimestamps };
-    setSourceResult(validateCoTWithProfile(xml, samplePlatform, sourceProfile, options));
-    setTargetResult(validateCoTWithProfile(xml, targetPlatform, targetProfile, options));
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <header className="w-full py-4 px-8 border-b border-slate-800 bg-slate-900 flex items-center justify-between">
@@ -149,7 +165,7 @@ export default function App() {
               id="sample-platform-select"
               className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-100"
               value={samplePlatform}
-              onChange={e => { setSamplePlatform(e.target.value as Platform); setTargetResult(null); setSourceResult(null); }}
+              onChange={e => { setSamplePlatform(e.target.value as Platform); setValidationReport(null); }}
             >
               {platforms.map(platform => (
                 <option key={platform} value={platform}>{platform}</option>
@@ -160,7 +176,7 @@ export default function App() {
               id="message-type-select"
               className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-100"
               value={messageType}
-              onChange={e => { setMessageType(e.target.value); setTargetResult(null); setSourceResult(null); }}
+              onChange={e => { setMessageType(e.target.value); setValidationReport(null); }}
             >
               {availableMessageTypes.map(type => <option key={type} value={type}>{type}</option>)}
             </select>
@@ -170,8 +186,7 @@ export default function App() {
               onClick={() => {
                 if (!selectedExampleXml) return;
                 setXml(selectedExampleXml);
-                setTargetResult(null);
-                setSourceResult(null);
+                setValidationReport(null);
               }}
             >
               Load example
@@ -189,7 +204,7 @@ export default function App() {
               id="target-platform-select"
               className="rounded border border-slate-700 bg-slate-950 px-2 py-2 text-xs text-slate-100"
               value={targetPlatform}
-              onChange={e => { setTargetPlatform(e.target.value as Platform); setTargetResult(null); }}
+              onChange={e => { setTargetPlatform(e.target.value as Platform); setValidationReport(null); }}
             >
               {platforms.map(platform => <option key={platform} value={platform}>{platform}</option>)}
             </select>
@@ -197,7 +212,7 @@ export default function App() {
               <input
                 type="checkbox"
                 checked={validateTimestamps}
-                onChange={event => { setValidateTimestamps(event.target.checked); setTargetResult(null); setSourceResult(null); }}
+                onChange={event => { setValidateTimestamps(event.target.checked); setValidationReport(null); }}
                 className="h-4 w-4 accent-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400"
               />
               Validate timestamps
@@ -207,7 +222,7 @@ export default function App() {
             className="w-full h-48 rounded border border-slate-700 bg-slate-950 p-4 font-mono text-sm"
             placeholder="Paste <event>...</event> XML here..."
             value={xml}
-            onChange={e => { setXml(e.target.value); setTargetResult(null); setSourceResult(null); }}
+            onChange={e => { setXml(e.target.value); setValidationReport(null); }}
           />
           <button
             className="mt-2 rounded border border-emerald-500 px-4 py-2 text-xs text-emerald-200 bg-emerald-900 hover:border-emerald-400 shadow"
@@ -215,11 +230,11 @@ export default function App() {
           >
             Check target compatibility
           </button>
-          {xml.trim() && compatibilityMatrix.length > 0 && (
+          {validationReport && (
             <section aria-label="Compatibility matrix" role="region" className="border-t border-slate-700 pt-4 text-sm">
               <h3 className="mb-3 text-sm font-semibold text-slate-100">Compatibility matrix</h3>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
-                {compatibilityMatrix.map(({ platform, status, summary }) => (
+                {validationReport.compatibilityMatrix.map(({ platform, status, summary }) => (
                   <div key={platform} className={`rounded border p-2 ${compatibilityStyles[status]}`}>
                     <div className="text-[10px] uppercase tracking-wide opacity-80">{platform}</div>
                     <div className="mt-1 text-xs font-semibold capitalize">{status}</div>
@@ -229,27 +244,27 @@ export default function App() {
               </div>
             </section>
           )}
-          {targetResult && (
-            <section aria-label="Target validation" className="border-t border-slate-700 pt-4 text-sm">
-              <h2 className="font-semibold">{targetPlatform} / {messageType}</h2>
+          {validationReport && (
+            <section aria-label="Target validation" aria-live="polite" className="border-t border-slate-700 pt-4 text-sm">
+              <h2 className="font-semibold">{validationReport.targetPlatform} / {validationReport.messageType}</h2>
               <p className="text-xs text-slate-400">XML checks do not establish that the target client will display or clear this event.</p>
               <p className="mt-1 text-xs text-slate-500">Platform tag results are heuristic recommendations based on known rule data.</p>
-              {messageType.endsWith('Clear') && <p className="mt-2 text-xs text-slate-400">A single clear event cannot establish its relationship to the original point or the target's receive behavior.</p>}
-              {sourceResult && sourceResult.errors.some(error => error.code.startsWith('PROFILE_')) && (
+              {validationReport.messageType.endsWith('Clear') && <p className="mt-2 text-xs text-slate-400">A single clear event cannot establish its relationship to the original point or the target's receive behavior.</p>}
+              {validationReport.sourceResult.errors.some(error => error.code.startsWith('PROFILE_')) && (
                 <ul className="mt-2 space-y-1" aria-label="Source profile errors">
-                  {sourceResult.errors.filter(error => error.code.startsWith('PROFILE_')).map((error, index) => <li key={index} className="text-rose-300">{samplePlatform} source: {error.text}</li>)}
+                  {validationReport.sourceResult.errors.filter(error => error.code.startsWith('PROFILE_')).map((error, index) => <li key={index} className="text-rose-300">{validationReport.sourcePlatform} source: {error.text}</li>)}
                 </ul>
               )}
-              {!MESSAGE_PROFILES.some(profile => profile.platform === targetPlatform && profile.label === messageType) && (
-                <p className="mt-2 text-amber-200">No {targetPlatform} {messageType} behavior profile. Target display/clear compatibility is unverified.</p>
+              {!MESSAGE_PROFILES.some(profile => profile.platform === validationReport.targetPlatform && profile.label === validationReport.messageType) && (
+                <p className="mt-2 text-amber-200">No {validationReport.targetPlatform} {validationReport.messageType} behavior profile. Target display/clear compatibility is unverified.</p>
               )}
               <ul className="mt-2 space-y-1" aria-label="Validation errors">
-                {targetResult.errors.map((error, index) => <li key={index} className="text-rose-300">{error.text} (line {error.location.line}, column {error.location.column}){error.suggestion && <span className="block text-xs text-slate-400">Suggestion: {error.suggestion}</span>}</li>)}
+                {validationReport.targetResult.errors.map((error, index) => <li key={index} className="text-rose-300">{error.text} (line {error.location.line}, column {error.location.column}){error.suggestion && <span className="block text-xs text-slate-400">Suggestion: {error.suggestion}</span>}</li>)}
               </ul>
               <ul className="mt-2 space-y-1" aria-label="Validation warnings">
-                {targetResult.warnings.filter(warning => messageType === 'SA' || warning.code !== 'PLATFORM_TAG_MISSING').map((warning, index) => <li key={index} className="text-amber-200">{warning.text} (line {warning.location.line}, column {warning.location.column}){warning.suggestion && <span className="block text-xs text-slate-400">Suggestion: {warning.suggestion}</span>}</li>)}
+                {validationReport.targetResult.warnings.filter(warning => validationReport.messageType === 'SA' || warning.code !== 'PLATFORM_TAG_MISSING').map((warning, index) => <li key={index} className="text-amber-200">{warning.text} (line {warning.location.line}, column {warning.location.column}){warning.suggestion && <span className="block text-xs text-slate-400">Suggestion: {warning.suggestion}</span>}</li>)}
               </ul>
-              {targetResult.errors.length === 0 && !sourceResult?.errors.some(error => error.code.startsWith('PROFILE_')) && <p className="mt-2 text-emerald-300">No structural or known profile errors found. Client behavior is not confirmed.</p>}
+              {validationReport.targetResult.errors.length === 0 && !validationReport.sourceResult.errors.some(error => error.code.startsWith('PROFILE_')) && <p className="mt-2 text-emerald-300">No structural or known profile errors found. Client behavior is not confirmed.</p>}
             </section>
           )}
           {!MESSAGE_PROFILES.some(profile => profile.platform === targetPlatform && profile.label === messageType) && (
@@ -308,5 +323,4 @@ export default function App() {
     </div>
   );
 }
-
 
