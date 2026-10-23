@@ -34,32 +34,9 @@ jobs:
         run: |
           npm test
           npm run lint
-          node --test scripts/release-publisher.check.mjs
 
       - name: Build
         run: npm run build
-
-      - name: Prepare static web bundle
-        id: bundle
-        run: node scripts/release-publisher.mjs prepare
-
-      - name: Package static web bundle
-        env:
-          BUNDLE: ${{ steps.bundle.outputs.bundle }}
-        run: |
-          cd release/site
-          zip -q -r "../$BUNDLE" .
-          cd ../..
-          node scripts/release-publisher.mjs checksum
-
-      - name: Retain release candidate
-        uses: actions/upload-artifact@v4
-        with:
-          name: static-web-bundle
-          path: |
-            release/*.zip
-            release/*.sha256
-          if-no-files-found: error
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -79,24 +56,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  release:
-    if: github.ref == 'refs/heads/main'
-    needs: [build, deploy]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - uses: actions/download-artifact@v4
-        with:
-          name: static-web-bundle
-          path: release
-      - name: Publish verified static web bundle
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/release-publisher.mjs publish
