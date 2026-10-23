@@ -137,6 +137,50 @@ npm run preview
 npm run lint
 ```
 
+### Automated static web bundles
+
+The publisher extends the existing GitHub Pages workflow, not the canonical
+TAK Forge host. Pushes to `main` and manual workflow dispatches build with Node 22.
+Tests, lint, offline publisher checks (`node --test scripts/release-publisher.check.mjs`),
+and the production build must pass. Pages deployment remains at its existing site;
+release publication additionally requires successful Pages deployment and the
+`main` ref. Dispatching another branch does not publish a release.
+
+The release asset is a **static web bundle ZIP**, not an APK or npm package.
+It contains the validated `dist` contents plus `build-info.json` with the full
+source SHA, workflow path, run ID, attempt, and source/run links. The Vite base
+remains `/cot-linter/`; serve the extracted files under that path with a static
+HTTP server, not by opening `index.html` directly.
+
+Because the package version is `0.0.0`, build identities use
+`web-build-<full SHA>-run-<run ID>-attempt-<attempt>` rather than an invented
+semantic version. Each attempt creates a new prerelease, never GitHub's Latest.
+The ZIP has a readable asset label and adjacent standalone `.zip.sha256` file;
+release notes also show its SHA256. For example, from the download directory:
+
+```bash
+sha256sum --check cot-linter-static-web-<build ID>.zip.sha256
+```
+
+The publisher creates a draft, uploads both files, downloads them through the API,
+and compares their SHA256 digests before making the draft public. It rejects a
+changed `main` tip or newer workflow run both before draft creation and immediately
+before publication. Unique attempt tags and never updating Latest prevent an old
+run from replacing a newer release even if a push races the final check.
+Failures leave the draft for inspection and fail CI. There is no automatic retry
+within an attempt, overwrite, retention cleanup, or deletion: previous releases,
+existing tags/URLs, manual notes, and unrelated assets (including the existing
+`v0.1.0` draft) are untouched.
+
+The candidate ZIP/checksum are also retained as the `static-web-bundle` Actions
+artifact under the repository's normal artifact retention policy. Only the
+release job uses `contents: write` and `actions: read` (for stale-run checks)
+using the existing `GITHUB_TOKEN`; no new
+credentials or account settings are needed. No publisher runs on TAK Forge;
+its `main` changes must reach the existing GitHub mirror and trigger Actions.
+If mirroring, Actions, Pages, or write access for the job token is unavailable,
+publication is blocked rather than falling back to a new host or credentials.
+
 ## Usage
 
 
